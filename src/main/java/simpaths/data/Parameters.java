@@ -2461,29 +2461,29 @@ public class Parameters {
     public static void loadTimeSeriesFactorMaps(Country country) {
 
         // load demYear varying rates
-        priceMapRealSavingReturns = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_saving_returns", 1, 1);
-        priceMapRealDebtCostLow = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_debt_cost_low", 1, 1);
-        priceMapRealDebtCostHigh = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_debt_cost_hi", 1, 1);
+        priceMapRealSavingReturns = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "saving_returns", 1, 1);
+        priceMapRealDebtCostLow = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "debt_cost_low", 1, 1);
+        priceMapRealDebtCostHigh = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "debt_cost_hi", 1, 1);
 
         // load demYear varying wage rates
-        wageRateFormalSocialCare = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_carer_hourly_wage", 1, 1);
+        wageRateFormalSocialCare = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "carer_hourly_wage", 1, 1);
 
         // load demYear varying indices
-        upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_gdp", 1, 1);
-        upratingIndexMapInflation = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_inflation", 1, 1);
-        upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_wage_growth", 1, 1);
-        socialCareProvisionTimeAdjustment = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_care_adjustment", 1, 1);
-        partnershipTimeAdjustment = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_cohabitation_adjustment", 1, 1);
-        studentsTimeAdjustment = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() +"_students_adjustment", 1, 1);
-        fertilityTimeAdjustment = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_fertility_adjustment", 1, 1);
-        utilityTimeAdjustmentSingleMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_utility_adj_smales", 1, 1);
-        utilityTimeAdjustmentSingleFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_utility_adj_sfemales", 1, 1);
-        utilityTimeAdjustmentACMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_utility_adj_acmales", 1, 1);
-        utilityTimeAdjustmentACFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_utility_adj_acfemales", 1, 1);
+        upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "gdp", 1, 1);
+        upratingIndexMapInflation = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "inflation", 1, 1);
+        upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "wage_growth", 1, 1);
+        socialCareProvisionTimeAdjustment = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "care_adjustment", 1, 1);
+        partnershipTimeAdjustment = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "cohabitation_adjustment", 1, 1);
+        studentsTimeAdjustment = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "students_adjustment", 1, 1);
+        fertilityTimeAdjustment = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "fertility_adjustment", 1, 1);
+        utilityTimeAdjustmentSingleMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "utility_adj_smales", 1, 1);
+        utilityTimeAdjustmentSingleFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "utility_adj_sfemales", 1, 1);
+        utilityTimeAdjustmentACMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "utility_adj_acmales", 1, 1);
+        utilityTimeAdjustmentACFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "utility_adj_acfemales", 1, 1);
 
-        utilityTimeAdjustmentCouples = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_utility_adj_couples", 1, 1);
-        utilityTimeAdjustmentSingleDepMen = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_utility_adj_singledepmen", 1, 1);
-        utilityTimeAdjustmentSingleDepWomen = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_utility_adj_singledepwomen", 1, 1);
+        utilityTimeAdjustmentCouples = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "utility_adj_couples", 1, 1);
+        utilityTimeAdjustmentSingleDepMen = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "utility_adj_singledepmen", 1, 1);
+        utilityTimeAdjustmentSingleDepWomen = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "utility_adj_singledepwomen", 1, 1);
 
 
         // rebase indices to base year defined by BASE_PRICE_YEAR
@@ -2491,23 +2491,23 @@ public class Parameters {
         rebaseIndexMap(TimeSeriesVariable.Inflation);
         rebaseIndexMap(TimeSeriesVariable.WageGrowth);
 
-        //studentShare = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "policy parameters.xlsx", "students", 1,1);
-        studentShare = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "inSchool_targets.xlsx", "students", 1,1);
+        //studentShare = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "social_care_parameters.xlsx", "students", 1,1);
+        studentShare = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_targets_inSchool.xlsx", "students", 1,1);
 
-        // load year-specific fiscal policy parameters
-        socialCarePolicy = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "policy parameters.xlsx", "social care", 1, 8);
-        partneredShare = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "partnered_share_targets.xlsx", "partnered_share", 1, 1);
-        //employedShareSingleMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "policy parameters.xlsx", "employment_smales", 1, 1);
-        //employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "policy parameters.xlsx", "employment_sfemales", 1, 1);
-        //employedShareCouples = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "policy parameters.xlsx", "employment_couples", 1, 1);
+        // load year-specific social care policy parameters
+        socialCarePolicy = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "social_care_parameters.xlsx", "social care", 1, 8);
+        partneredShare = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_targets_partnered_share.xlsx", "partnered_share", 1, 1);
+        //employedShareSingleMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "social_care_parameters.xlsx", "employment_smales", 1, 1);
+        //employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "social_care_parameters.xlsx", "employment_sfemales", 1, 1);
+        //employedShareCouples = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "social_care_parameters.xlsx", "employment_couples", 1, 1);
 
-        employedShareSingleMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "employment_targets.xlsx", "Single_male", 1,1);
-        employedShareACMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "employment_targets.xlsx", "SingleAC_Males", 1,1);
-        employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() +  "employment_targets.xlsx", "Single_female", 1,1);
-        employedShareACFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "employment_targets.xlsx", "SingleAC_Females", 1,1);
-        employedShareCouples = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "employment_targets.xlsx", "Couples", 1,1);
-        employedShareSingleDepMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "employment_targets.xlsx", "SingleDep_Males", 1,1);
-        employedShareSingleDepFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "employment_targets.xlsx", "SingleDep_Females", 1,1);
+        employedShareSingleMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_targets_employment.xlsx", "Single_male", 1,1);
+        employedShareACMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_targets_employment.xlsx", "SingleAC_Males", 1,1);
+        employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() +  "alignment_targets_employment.xlsx", "Single_female", 1,1);
+        employedShareACFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_targets_employment.xlsx", "SingleAC_Females", 1,1);
+        employedShareCouples = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_targets_employment.xlsx", "Couples", 1,1);
+        employedShareSingleDepMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_targets_employment.xlsx", "SingleDep_Males", 1,1);
+        employedShareSingleDepFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_targets_employment.xlsx", "SingleDep_Females", 1,1);
 
     }
 
@@ -2525,15 +2525,15 @@ public class Parameters {
         TimeSeriesVariable index = getTimeSeriesVariable(UpratingCase.TaxDonor);
         switch (index) {
             case GDP -> {
-                upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_gdp", 1, 1);
+                upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "gdp", 1, 1);
                 rebaseIndexMap(TimeSeriesVariable.GDP);
             }
             case WageGrowth -> {
-                upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_wage_growth", 1, 1);
+                upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "wage_growth", 1, 1);
                 rebaseIndexMap(TimeSeriesVariable.WageGrowth);
             }
             case Inflation -> {
-                upratingIndexMapInflation = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_inflation", 1, 1);
+                upratingIndexMapInflation = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "inflation", 1, 1);
                 rebaseIndexMap(TimeSeriesVariable.Inflation);
             }
         }
