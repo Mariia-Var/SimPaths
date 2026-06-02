@@ -2572,6 +2572,25 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Ded_Yplgrs_dv_L2,
         Ded_Ypncp_L2,
         Ded_Ydses_c5_Q2_L1,
+        demDChildL1,
+        demYear2010,
+        demYear2011,
+        demYear2012,
+        demYear2013,
+        demYear2014,
+        demYear2015,
+        demYear2016,
+        demYear2017,
+        demYear2018,
+        demYear2019,
+        demYear2022,
+        demYear2023,
+        demYear2024,
+        demAge_10,
+        demAge_11,
+        demAge_12,
+        demAge_13,
+        demAge_14,
         Ded_Ydses_c5_Q3_L1,
         Ded_Ydses_c5_Q4_L1,
         Ded_Ydses_c5_Q5_L1,
@@ -2649,6 +2668,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Dhhtp_c4_CoupleNoChildren_L1,
         Dhhtp_c4_SingleChildren_L1,
         Dhhtp_c4_SingleChildren_L1_,
+        demCompHhC4SingleChL1,
         Dhhtp_c4_SingleNoChildren_L1,
         L_Dhhtp_c4_CoupleChildren,
         L_Dhhtp_c4_SingleChildren,
@@ -3294,6 +3314,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         demAgePartnerDiff,
         demAgePartnerDiffL1,
         demAgeSq,
+        demAge_Sq,
         demCompHhC4,
         demCompHhC4CoupleChL1,
         demCompHhC4CoupleNoChL1,
@@ -3323,6 +3344,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         demEthnC4_4,
         demMaleFlag,
         demNChild,
+        demDChild,
         demNChild0to2,
         demNChild0to2L1,
         demNChildL1,
@@ -3363,6 +3385,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         demRgn_8,
         demRgn_9,
         demYear,
+        demYearTransformed,
         demYear20,
         dot_1,
         dot_2,
@@ -3439,6 +3462,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         healthMentalPartnerMcsL1,
         healthPartnerSelfRated,
         healthPartnerSelfRatedExcellent,
+        healthPartnerSelfRatedExcel,
         healthPartnerSelfRatedFair,
         healthPartnerSelfRatedGood,
         healthPartnerSelfRatedPoor,
@@ -3454,10 +3478,14 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         healthPhysicalPcsL1,
         healthSelfRated,
         healthSelfRatedExcellent,
+        healthSelfRatedExcellentL1,
         healthSelfRatedFair,
+        healthSelfRatedFairL1,
         healthSelfRatedGood,
+        healthSelfRatedGoodL1,
         healthSelfRatedPoor,
         healthSelfRatedVeryGood,
+        healthSelfRatedVeryGoodL1,
         healthSelfRated_1,
         healthSelfRated_2,
         healthSelfRated_3,
@@ -3479,17 +3507,21 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         labStatusC4L1,
         labStatusC4NotEmployedL1,
         labStatusC4NotEmployedL1_Male,
+        labStatusC4NotEmployed_MaleL1,
         labStatusC4RetiredL1,
         labStatusC4RetiredL1_Male,
         labStatusC4StudentL1,
         labStatusC4StudentL1_Male,
+        labStatusC4Student_MaleL1,
+        labStatusC4Retired_MaleL1,
         labStatusPartnerAndOwnC4,
         labStatusPartnerAndOwnC41L1,
         labStatusPartnerAndOwnC42L1,
         labStatusPartnerAndOwnC43L1,
         labStatusPartnerAndOwnC44L1,
         labStatusPartnerAndOwnC4L1,
-        labStatusPartnerC3,
+        labStatusPartnerC3NotEmployedL1,
+        labWorkHist,
         need_care,
         receive_care,
         // New-naming variables and interaction terms from refactored estimation files (PR #465)
@@ -3746,16 +3778,13 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
         switch ((DoublesVariables) variableID) {
 
-            case Age -> {
-                return (double) demAge;
-            }
-            case Dag -> {
+            case Age, Dag, demAge -> {
                 return (double) demAge;
             }
             case Dag_L1 -> {
                 return (double) demAge - 1;
             }
-            case Dag_sq -> {
+            case demAgeSq, demAge_Sq, Dag_sq, AgeSquared -> {
                 return (double) demAge * demAge;
             }
             case Dag_sq_L1 -> {
@@ -3784,10 +3813,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             }
             case Dag_sqCeiling54 -> {
                 return (double) Math.min(demAge, 54) * Math.min(demAge, 54);
-            }
-            case AgeSquared -> {
-                //			log.debug("age sq");
-                return (double) demAge * demAge;
             }
             case AgeCubed -> {
                 //			log.debug("age cub");
@@ -4062,7 +4087,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case D_children_18over -> {
                 return (double) benefitUnit.getIndicatorChildren(18, 99).ordinal();
             }
-            case D_children, D_Children -> {
+            case D_children, D_Children, demDChild, demDChildL1 -> {
                 return (getNumberChildrenAll() > 0) ? 1. : 0.;
             }
             case Dnc_L1 -> {
@@ -4408,7 +4433,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case Dhhtp_c4_SingleNoChildren_L1, L_Dhhtp_c4_SingleNoChildren -> {
                 return (Dhhtp_c4.SingleNoChildren.equals(getDemCompHhC4L1())) ? 1.0 : 0.0;
             }
-            case Dhhtp_c4_SingleChildren_L1, L_Dhhtp_c4_SingleChildren, Dhhtp_c4_SingleChildren_L1_ -> {
+            case Dhhtp_c4_SingleChildren_L1, L_Dhhtp_c4_SingleChildren, Dhhtp_c4_SingleChildren_L1_, demCompHhC4SingleChL1 -> {
                 return (Dhhtp_c4.SingleChildren.equals(getDemCompHhC4L1())) ? 1.0 : 0.0;
             }
             case Dhhtp_c8_2_L1 -> {
@@ -4580,7 +4605,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 else
                     return 0.;
             }
-            case Lessp_c3_NotEmployed_L1 -> {
+            case Lessp_c3_NotEmployed_L1, labStatusPartnerC3NotEmployedL1 -> {
                 Person partner = getPartner();
                 if (partner != null && partner.labC4L1 != null)
                     return (partner.labC4L1.equals(Les_c4.NotEmployed) || partner.labC4L1.equals(Les_c4.Retired)) ? 1. : 0.;
@@ -4629,7 +4654,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 else
                     return 0.;
             }
-            case Liwwh -> {
+            case Liwwh, labWorkHist -> {
                 return (double) labEmpNyear;
             }
             case NotEmployed_L1 -> {
@@ -4692,37 +4717,37 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case Year2013, Y2013, Y2013_ -> {
                 return (getYear() == 2013) ? 1. : 0.;
             }
-            case Year2014, Y2014, Y2014_ -> {
+            case Year2014, Y2014, Y2014_, demYear2014 -> {
                 return (getYear() == 2014) ? 1. : 0.;
             }
-            case Year2015, Y2015 -> {
+            case Year2015, Y2015, demYear2015 -> {
                 return (getYear() == 2015) ? 1. : 0.;
             }
-            case Year2016, Y2016 -> {
+            case Year2016, Y2016, demYear2016 -> {
                 return (getYear() == 2016) ? 1. : 0.;
             }
-            case Year2017, Y2017 -> {
+            case Year2017, Y2017, demYear2017 -> {
                 return (getYear() == 2017) ? 1. : 0.;
             }
-            case Year2018, Y2018 -> {
+            case Year2018, Y2018, demYear2018 -> {
                 return (getYear() == 2018) ? 1. : 0.;
             }
-            case Year2019, Y2019 -> {
+            case Year2019, Y2019, demYear2019 -> {
                 return (getYear() == 2019) ? 1. : 0.;
             }
-            case Year2020, Y2020, Y2020_Mixed, Y2020_Formal -> {
+            case Year2020, Y2020, Y2020_Mixed, Y2020_Formal, demYear2020 -> {
                 return (getYear() == 2020) ? 1. : 0.;
             }
-            case Year2021, Y2021, Y2021_Mixed, Y2021_Formal -> {
+            case Year2021, Y2021, Y2021_Mixed, Y2021_Formal, demYear2021 -> {
                 return (getYear() == 2021) ? 1. : 0.;
             }
-            case Year2022, Y2022 -> {
+            case Year2022, Y2022, demYear2022 -> {
                 return (getYear() == 2022) ? 1. : 0.;
             }
-            case Year2023, Y2023 -> {
+            case Year2023, Y2023, demYear2023 -> {
                 return (getYear() == 2023) ? 1. : 0.;
             }
-            case Year2024, Y2024 -> {
+            case Year2024, Y2024, demYear2024 -> {
                 return (getYear() == 2024) ? 1. : 0.;
             }
             case Y2012_Poor -> {
@@ -5046,7 +5071,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case Year2079 -> {
                 return (getYear() >= 2079) ? 1. : 0.;
             }
-            case Year_transformed -> {
+            case Year_transformed, demYearTransformed -> {
                 return (Parameters.isFixTimeTrend && getYear() >= Parameters.timeTrendStopsIn) ? (double) Parameters.timeTrendStopsIn - 2000 : (double) getYear() - 2000;
             }
             case Year_transformed_monetary -> {
@@ -5236,7 +5261,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case Pt -> {
                 return (getLabourSupplyHoursWeekly() > 0 && getLabourSupplyHoursWeekly() < Parameters.MIN_HOURS_FULL_TIME_EMPLOYED) ? 1. : 0.;
             }
-            case L1_log_hourly_wage, Hourly_wage_L1 -> {
+            case L1_log_hourly_wage, Hourly_wage_L1, labWageHrlyLogL1 -> {
                 if (labWageFullTimeHrlyL1 == null) {
                     throw new RuntimeException("call to evaluate lag potential hourly earnings before initialisation");
                 } else {
@@ -5365,7 +5390,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case Dgn_baseline -> {
                 return 0.;
             }
-            case RealWageGrowth -> { // Note: the values provided to the wage regression must be rebased to 2015, the default BASE_PRICE_YEAR.
+            case RealWageGrowth, realWageGrowth -> { // Note: the values provided to the wage regression must be rebased to 2015, the default BASE_PRICE_YEAR.
                 return Parameters.getTimeSeriesIndex(getYear(), UpratingCase.Earnings);
             }
             case RealGDPGrowth -> {
@@ -5409,23 +5434,23 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return 0.;
             }
 
-            case Age_10 -> {
+            case Age_10, demAge_10 -> {
                 return (demAge == 10) ? 1.0 : 0.0;
             }
 
-            case Age_11 -> {
+            case Age_11, demAge_11 -> {
                 return (demAge == 11) ? 1.0 : 0.0;
             }
 
-            case Age_12 -> {
+            case Age_12, demAge_12 -> {
                 return (demAge == 12) ? 1.0 : 0.0;
             }
 
-            case Age_13 -> {
+            case Age_13, demAge_13 -> {
                 return (demAge == 13) ? 1.0 : 0.0;
             }
 
-            case Age_14 -> {
+            case Age_14, demAge_14 -> {
                 return (demAge == 14) ? 1.0 : 0.0;
             }
 
@@ -5503,10 +5528,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
             case careMarketMixedL1 -> {
                 return getDoubleValue(DoublesVariables.CareMarketMixed_L1);
-            }
-
-            case demAge -> {
-                return getDoubleValue(DoublesVariables.Age);
             }
 
             case demAge20to24 -> {
@@ -5761,10 +5782,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case demYear_Fair, demYear_Good, demYear_Low, demYear_Medium, demYear_Poor, demYear_VeryGood -> {
                 return (Parameters.isFixTimeTrend && getYear() >= Parameters.timeTrendStopsIn) ? (double) Parameters.timeTrendStopsIn : (double) getYear();
             }
-            case demYear2020, demYear2020_Formal, demYear2020_Mixed -> {
+            case demYear2020_Formal, demYear2020_Mixed -> {
                 return (getYear() == 2020) ? 1. : 0.;
             }
-            case demYear2021, demYear2021_Fair, demYear2021_Formal, demYear2021_Good,
+            case demYear2021_Fair, demYear2021_Formal, demYear2021_Good,
                     demYear2021_Mixed, demYear2021_Poor, demYear2021_VeryGood -> {
                 return (getYear() == 2021) ? 1. : 0.;
             }
@@ -5891,12 +5912,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case labWageHrlyL1 -> {
                 return (labWageFullTimeHrlyL1 != null && labWageFullTimeHrlyL1 > 0) ? labWageFullTimeHrlyL1 : 0.;
             }
-            case labWageHrlyLogL1 -> {
-                return (labWageFullTimeHrlyL1 != null && labWageFullTimeHrlyL1 > 0) ? Math.log(labWageFullTimeHrlyL1) : 0.;
-            }
-            case realWageGrowth -> {
-                return (labWageFullTimeHrly != null && labWageFullTimeHrlyL1 != null && labWageFullTimeHrly > 0 && labWageFullTimeHrlyL1 > 0) ? Math.log(labWageFullTimeHrly) - Math.log(labWageFullTimeHrlyL1) : 0.;
-            }
             case stm -> {
                 return (Parameters.isFixTimeTrend && getYear() >= Parameters.timeTrendStopsIn) ? (double) Parameters.timeTrendStopsIn : (double) getYear();
             }
@@ -5978,10 +5993,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case demAgePartnerDiffL1 -> {
                 return (demAgePartnerDiffL1 != null) ? (double) demAgePartnerDiffL1 : 0.0;
             }
-            case demAgeSq -> {
-                return (double) demAge * demAge;
-            }
-            case demCompHhC4CoupleChL1 -> {
+           case demCompHhC4CoupleChL1 -> {
                 return (Dhhtp_c4.CoupleChildren.equals(getDemCompHhC4L1())) ? 1.0 : 0.0;
             }
             case demCompHhC4L1SingleChL1 -> {
@@ -6124,6 +6136,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case eduHighestC4LowL1 -> {
                 return (Education.Low.equals(eduHighestC4L1)) ? 1.0 : 0.0;
             }
+            case eduHighestC4Low_demAge -> {
+                return (Education.Low.equals(eduHighestC4)) ? demAge : 0.0;
+            }
             case eduHighestC4LowL1_demAge -> {
                 return (Education.Low.equals(eduHighestC4L1)) ? demAge : 0.0;
             }
@@ -6133,8 +6148,14 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case eduHighestC4MediumL1 -> {
                 return (Education.Medium.equals(eduHighestC4L1)) ? 1.0 : 0.0;
             }
+            case eduHighestC4Medium_demAge -> {
+                return (Education.Medium.equals(eduHighestC4)) ? demAge : 0.0;
+            }
             case eduHighestC4MediumL1_demAge -> {
                 return (Education.Medium.equals(eduHighestC4L1)) ? demAge : 0.0;
+            }
+            case eduHighestC4Na -> {
+                return (Education.InEducation.equals(eduHighestC4) || Indicator.True.equals(eduSpellFlag)) ? 1.0 : 0.0;
             }
             case eduHighestC4NaL1 -> {
                 return (Education.InEducation.equals(eduHighestC4L1) || Indicator.True.equals(eduSpellFlagL1)) ? 1.0 : 0.0;
@@ -6144,6 +6165,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             }
             case eduHighestParentC3Medium -> {
                 return checkHighestParentalEducationEquals(Education.Medium) ? 1.0 : 0.0;
+            }
+            case eduHighestParentC3Low -> {
+                return (checkHighestParentalEducationEquals(Education.Low) || checkHighestParentalEducationEquals(Education.InEducation)) ? 1.0 : 0.0;
             }
             case eduHighestParentC3LowL1 -> {
                 return (checkHighestParentalEducationEquals(Education.Low) || checkHighestParentalEducationEquals(Education.InEducation)) ? 1.0 : 0.0;
@@ -6221,7 +6245,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 Person partner = getPartner();
                 return (partner != null && partner.getHealthMentalMcsL1() != null) ? partner.getHealthMentalMcsL1() : 0.;
             }
-            case healthPartnerSelfRatedExcellent -> {
+            case healthPartnerSelfRatedExcellent, healthPartnerSelfRatedExcel -> {
                 Person partner = getPartner();
                 return (partner != null && Dhe.Excellent.equals(partner.getHealthSelfRated())) ? 1. : 0.;
             }
@@ -6244,14 +6268,29 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case healthSelfRatedExcellent -> {
                 return (Dhe.Excellent.equals(healthSelfRated)) ? 1. : 0.;
             }
+            case healthSelfRatedExcellentL1 -> {
+                return (Dhe.Excellent.equals(healthSelfRatedL1)) ? 1. : 0.;
+            }
             case healthSelfRatedFair -> {
                 return (Dhe.Fair.equals(healthSelfRated)) ? 1. : 0.;
+            }
+            case healthSelfRatedFairL1 -> {
+                return (Dhe.Fair.equals(healthSelfRatedL1)) ? 1. : 0.;
             }
             case healthSelfRatedGood -> {
                 return (Dhe.Good.equals(healthSelfRated)) ? 1. : 0.;
             }
+            case healthSelfRatedGoodL1 -> {
+                return (Dhe.Good.equals(healthSelfRatedL1)) ? 1. : 0.;
+            }
             case healthSelfRatedVeryGood -> {
                 return (Dhe.VeryGood.equals(healthSelfRated)) ? 1. : 0.;
+            }
+            case healthSelfRatedVeryGoodL1 -> {
+                return (Dhe.VeryGood.equals(healthSelfRatedL1)) ? 1. : 0.;
+            }
+            case healthSelfRatedPoor -> {
+                return (Dhe.Poor.equals(healthSelfRated)) ? 1. : 0.;
             }
             case labPt -> {
                 return (getLabourSupplyHoursWeekly() > 0 && getLabourSupplyHoursWeekly() < Parameters.MIN_HOURS_FULL_TIME_EMPLOYED) ? 1. : 0.;
@@ -6271,7 +6310,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case labStatusC4NotEmployedL1 -> {
                 return (Les_c4.NotEmployed.equals(labC4L1)) ? 1.0 : 0.0;
             }
-            case labStatusC4NotEmployedL1_Male -> {
+            case labStatusC4NotEmployedL1_Male, labStatusC4NotEmployed_MaleL1 -> {
                 return (Les_c4.NotEmployed.equals(labC4L1) && Gender.Male.equals(demMaleFlag)) ? 1.0 : 0.0;
             }
             case labStatusC4RetiredL1 -> {
@@ -6283,8 +6322,11 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case labStatusC4StudentL1 -> {
                 return (Les_c4.Student.equals(labC4L1)) ? 1.0 : 0.0;
             }
-            case labStatusC4StudentL1_Male -> {
+            case labStatusC4StudentL1_Male, labStatusC4Student_MaleL1 -> {
                 return (Les_c4.Student.equals(labC4L1) && Gender.Male.equals(demMaleFlag)) ? 1.0 : 0.0;
+            }
+            case labStatusC4Retired_MaleL1 -> {
+                return (Les_c4.Retired.equals(labC4L1) && Gender.Male.equals(demMaleFlag)) ? 1.0 : 0.0;
             }
             case labStatusPartnerAndOwnC42L1 -> {
                 return (labStatusPartnerAndOwnC4L1 != null && Lesdf_c4.EmployedSpouseNotEmployed.equals(labStatusPartnerAndOwnC4L1)) ? 1. : 0.;
