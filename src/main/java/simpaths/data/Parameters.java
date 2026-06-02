@@ -422,12 +422,6 @@ public class Parameters {
     private static MultiKeyCoefficientMap projectionsHighEdu;			//Alignment projections for High Education
     private static MultiKeyCoefficientMap projectionsLowEdu;			//Alignment projections for Medium Education
 
-    //Student share projections for alignment
-    private static MultiKeyCoefficientMap studentShareProjections;		//Alignment projections for Student share of population
-
-    //Employment alignment targets
-    private static MultiKeyCoefficientMap employmentAlignment;
-
     //For marriage types:
     private static MultiKeyCoefficientMap marriageTypesFrequency;
     private static Map<Gender, MultiKeyMap<Region, Double>> marriageTypesFrequencyByGenderAndRegion;
@@ -959,11 +953,6 @@ public class Parameters {
         //Alignment of education levels
         projectionsHighEdu = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "align_educLevel.xlsx", "High", 1);
         projectionsLowEdu = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "align_educLevel.xlsx", "Low", 1);
-
-        studentShareProjections = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "align_student_under30.xlsx", countryString, 1);
-
-        //Employment alignment
-        employmentAlignment = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "align_employment.xlsx", countryString, 2);
 
         //Marriage types frequencies:
         marriageTypesFrequency = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "marriageTypes2.xlsx", countryString, 2);
@@ -1922,8 +1911,6 @@ public class Parameters {
 
     public static MultiKeyCoefficientMap getBenefitUnitVariableNames() { return benefitUnitVariableNames; }
 
-    public static MultiKeyCoefficientMap getStudentShareProjections() { return studentShareProjections; }
-
     public static MultinomialRegression getRegEducationLevel() {return regEducationLevel;}
 
     public static MultiKeyCoefficientMap getEmploymentsFurloughedFull() {
@@ -2620,9 +2607,6 @@ public class Parameters {
             }
             case LowEducationRate -> {
                 map = projectionsLowEdu;
-            }
-            case EmploymentAlignment -> {
-                map = employmentAlignment;
             }
             case FixedRetirementAge -> {
                 map = fixedRetireAge;
