@@ -1754,8 +1754,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
             // No --> Process E1b
             else {
+                // The InSchool alignment adjustment is applied to E1a (continuing students) only,
+                // consistent with the student-share target definition. E1b (re-entry) uses the raw score.
                 double score = Parameters.getRegEducationE1b().getScore(this, Person.DoublesVariables.class);
-                double prob = Parameters.getRegEducationE1b().getProbability(score + probitAdjustment);
+                double prob = Parameters.getRegEducationE1b().getProbability(score);
 
                 if (labourInnov < prob) {
                     // Become a student *OUTCOME E*
