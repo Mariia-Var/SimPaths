@@ -118,4 +118,4 @@ Tax donor matching therefore requires a two-step price bridge:
 1. Inflate SimPaths income to policy-year prices before matching.
 2. Deflate the imputed financial values from the matched donor record back to 2015 prices.
 
-The default uprating series is `TimeSeriesVariable.Inflation`, sourced from the `UK_inflation` worksheet in `input/time_series_factor.xlsx`. An alternative option (added 2026-04) allows wage growth to be used instead of price growth for the initial matching step, controlled via a config flag.
+The default uprating series is `TimeSeriesVariable.Inflation`, sourced from the `inflation` worksheet in `input/economic_time_series.xlsx`. An alternative option (added 2026-04) allows wage growth to be used instead of price growth for the initial matching step, controlled via a config flag.
