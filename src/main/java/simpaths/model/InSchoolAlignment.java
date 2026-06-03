@@ -21,8 +21,8 @@ import java.util.Set;
  */
 public class InSchoolAlignment implements IEvaluation {
 
-    private static final int MIN_STUDENT_AGE = 16;
-    private static final int MAX_STUDENT_AGE = 29;
+    private static final int MIN_STUDENT_AGE = Parameters.MIN_AGE_TO_LEAVE_EDUCATION;
+    private static final int MAX_STUDENT_AGE = Parameters.MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION;
 
     private double targetStudentShare;
     private Set<Person> persons;
