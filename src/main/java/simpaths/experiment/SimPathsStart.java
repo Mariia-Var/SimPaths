@@ -219,6 +219,8 @@ public class SimPathsStart implements ExperimentBuilder {
 	@Override
 	public void buildExperiment(SimulationEngine engine) {
 
+		Parameters.validateStartYear(startYear);
+
 		// instantiate simulation processes
 		SimPathsModel model = new SimPathsModel(country, startYear);
 		SimPathsCollector collector = new SimPathsCollector(model);
@@ -233,10 +235,12 @@ public class SimPathsStart implements ExperimentBuilder {
 
 	private static void runGUIlessSetup(int option) throws FileNotFoundException {
 
-		// Detect if data available; set to testing data if not
+		// Detect if data available; set to training data if not.
 		Collection<File> testList = FileUtils.listFiles(new File(Parameters.getInputDirectoryInitialPopulations()), new String[]{"csv"}, false);
 		if (testList.size()==0)
 			Parameters.setTrainingFlag(true);
+
+		Parameters.validateStartYear(startYear);
 
 		// Create EUROMODPolicySchedule input from files
 		if (!rewritePolicySchedule &&

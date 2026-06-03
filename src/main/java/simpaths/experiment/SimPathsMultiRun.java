@@ -107,6 +107,8 @@ public class SimPathsMultiRun extends MultiRun {
 		}
 		country = Country.getCountryFromNameString(countryString);
 
+		Parameters.validateStartYear(startYear);
+
 		//Save the last selected country and year to Excel to use in the model
 		String[] columnNames = {"Country", "Year"};
 		Object[][] data = new Object[1][columnNames.length];
