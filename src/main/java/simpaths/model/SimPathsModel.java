@@ -522,11 +522,11 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         yearlySchedule.addCollectionEvent(persons, Person.Processes.ConsiderRetirement, false);
 
         // EDUCATION MODULE
+        // In School alignment — runs before InSchool decisions so the solved adjustment applies in the same year
+        yearlySchedule.addEvent(this, Processes.InSchoolAlignment);
+
         // Check In School - check whether still in education, and if leaving school, reset Education Level
         yearlySchedule.addCollectionEvent(persons, Person.Processes.InSchool);
-
-        // In School alignment
-        yearlySchedule.addEvent(this, Processes.InSchoolAlignment);
         yearlySchedule.addCollectionEvent(persons, Person.Processes.LeavingSchool);
 
         // Align the level of education if required
@@ -2251,11 +2251,10 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         }
 
         lastInSchoolAdjustment = search.getTarget()[0];
-        // update and exit
-        if (search.isTargetAltered()) {
-            Parameters.putTimeSeriesValue(getYear(), search.getTarget()[0], TimeSeriesVariable.InSchoolAdjustment); // If adjustment is altered from the initial value, update the map
-            System.out.println("InSchool adjustment value was " + search.getTarget()[0]);
-        }
+        // Always persist the solved value for the current year so the InSchool process (which runs next in the
+        // schedule and reads timeseries[year] via getInSchoolAdjustment) applies exactly this adjustment.
+        Parameters.putTimeSeriesValue(getYear(), search.getTarget()[0], TimeSeriesVariable.InSchoolAdjustment);
+        System.out.println("InSchool adjustment value was " + search.getTarget()[0]);
     }
 
 
