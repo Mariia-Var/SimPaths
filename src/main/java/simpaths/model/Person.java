@@ -3277,7 +3277,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         careMarketL1,
         careMarketMixed,
         careMarketMixedL1,
-        careMarketMixedPsrtner,
+        careMarketMixedPartner,
         careNeedFlag,
         careNeedFlagL1,
         careNeedPartnerFlag,
@@ -5967,7 +5967,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 double hrs = (careHrsProvidedWeekL1 != null && careHrsProvidedWeekL1 > 0.0) ? careHrsProvidedWeekL1 : 0.0;
                 return Parameters.asinh(hrs);
             }
-            case careMarketMixedPsrtner -> {
+            case careMarketMixedPartner -> {
                 Person partner = getPartner();
                 if (partner == null) return 0.;
                 return (partner.getHoursFormalSocialCare() > 0.01 && partner.getHoursInformalSocialCare() > 0.01) ? 1. : 0.;
