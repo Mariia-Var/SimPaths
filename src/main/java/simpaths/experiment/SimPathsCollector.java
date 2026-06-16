@@ -17,7 +17,8 @@ import microsim.statistics.Series;
 import microsim.statistics.functions.*;
 // import plug-in packages
 import org.apache.commons.math3.util.Pair;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 // import JAS-mine packages
 import microsim.annotation.GUIparameter;
@@ -48,7 +49,7 @@ import static simpaths.model.Person.DoublesVariables.GrossLabourIncomeMonthly;
 public class SimPathsCollector extends AbstractSimulationCollectorManager implements EventListener {
 
     // default simulation parameters
-    private static Logger log = Logger.getLogger(SimPathsCollector.class);
+    private static Logger log = LogManager.getLogger(SimPathsCollector.class);
 
     @GUIparameter(description="Calculate the Gini coefficients of income (also displayed in charts)")
     private boolean calculateGiniCoefficients = false;

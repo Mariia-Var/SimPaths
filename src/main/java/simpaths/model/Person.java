@@ -10,7 +10,9 @@ import microsim.statistics.IIntSource;
 import microsim.statistics.Series;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import simpaths.data.ManagerRegressions;
 import simpaths.data.MultiValEvent;
 import simpaths.data.Parameters;
@@ -34,7 +36,7 @@ import static simpaths.data.Parameters.*;
 @Entity
 public class Person implements EventListener, IDoubleSource, IIntSource, Weight, Comparable<Person> {
 
-    @Transient private static Logger log = Logger.getLogger(Person.class);
+    @Transient private static Logger log = LogManager.getLogger(Person.class);
     @Transient private final SimPathsModel model;
     @Transient public static long personIdCounter = 1L;			//Could perhaps initialise this to one above the max key number in initial population, in the same way that we pull the max Age information from the input files.
 

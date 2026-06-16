@@ -18,7 +18,8 @@ import org.apache.commons.collections4.map.MultiKeyMap;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.tuple.Triple;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import simpaths.data.Parameters;
 import simpaths.model.decisions.DecisionParams;
@@ -36,7 +37,7 @@ import static java.lang.StrictMath.min;
 @Entity
 public class BenefitUnit implements EventListener, IDoubleSource, Weight, Comparable<BenefitUnit> {
 
-    @Transient private static Logger log = Logger.getLogger(BenefitUnit.class);
+    @Transient private static Logger log = LogManager.getLogger(BenefitUnit.class);
     @Transient private final SimPathsModel model;
     @Transient private final SimPathsCollector collector;
     @Transient public static long benefitUnitIdCounter = 1L;

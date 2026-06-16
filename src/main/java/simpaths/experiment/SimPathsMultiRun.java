@@ -2,7 +2,6 @@
 package simpaths.experiment;
 
 // import Java packages
-import org.apache.log4j.Level;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
 import org.yaml.snakeyaml.Yaml;
@@ -22,10 +21,15 @@ import microsim.engine.SimulationEngine;
 import microsim.gui.shell.MultiRunFrame;
 import simpaths.model.enums.Country;
 
+import org.apache.logging.log4j.Level;
 // Logging and file writing
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.FileAppender;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.core.layout.PatternLayout;
+
 import java.io.*;
 
 
@@ -58,7 +62,7 @@ public class SimPathsMultiRun extends MultiRun {
 	private static double interestRateInnov = 0.0;
 	private static double disposableIncomeFromLabourInnov = 0.0;
 	private Long counter = 0L;
-	public static Logger log = Logger.getLogger(SimPathsMultiRun.class);
+	public static Logger log = LogManager.getLogger(SimPathsMultiRun.class);
 
 	private static boolean persist_population;
 	private static boolean persist_root;
@@ -283,14 +287,17 @@ public class SimPathsMultiRun extends MultiRun {
 					System.setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream(logDir.getPath() + "/run_" + randomSeed + ".txt")), true));
 
 					// Writing logs to `run_[seed].log`
-					FileAppender appender = new FileAppender();
-					appender.setName("Run logging");
-					appender.setFile(logDir.getPath() + "/run_" + randomSeed + ".log");
-					appender.setAppend(false);
-					appender.setLayout(new PatternLayout("%d{yyyy MMM dd HH:mm:ss} - %m%n"));
-					appender.activateOptions();
-					Logger.getRootLogger().setLevel(Level.DEBUG);
-					Logger.getRootLogger().addAppender(appender);
+                    var layout = PatternLayout.newBuilder().setPattern("%d{yyyy MMM dd HH:mm:ss} - %m%n").build();
+					var appender = FileAppender.newBuilder()
+                        .setFileName(logDir.getPath() + "/run_" + randomSeed + ".log")
+                        .setName("Run logging")
+                        .setAppend(false)
+                        .setLayout(layout)
+                        .build();
+                    Configurator.setRootLevel(Level.DEBUG);
+                    var configuration = LoggerContext.getContext().getConfiguration();
+                    configuration.getRootLogger().addAppender(appender, Level.DEBUG, null);
+                    Configurator.reconfigure(configuration);
 				} catch (FileNotFoundException e) {
 					throw new RuntimeException(e);
 				}
