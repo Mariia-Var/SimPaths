@@ -5,7 +5,6 @@ import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.Persistence;
 import microsim.data.db.Experiment;
-import org.apache.log4j.Logger;
 import simpaths.data.Parameters;
 import simpaths.model.enums.Gender;
 
@@ -17,6 +16,8 @@ import java.sql.Statement;
 import java.util.*;
 import java.util.random.RandomGenerator;
 import java.util.stream.IntStream;
+
+import org.apache.logging.log4j.Logger;
 
 public class ManagerProjectLifetimeIncomes {
 

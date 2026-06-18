@@ -19,7 +19,6 @@ import simpaths.model.Validator;
 import simpaths.model.enums.*;
 import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.collections4.map.MultiKeyMap;
-import org.apache.log4j.Logger;
 import net.miginfocom.swing.MigLayout;
 
 // import JAS-mine packages
@@ -57,9 +56,6 @@ import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
  */
 public class SimPathsObserver extends AbstractSimulationObserverManager implements EventListener, ILongSource {
 
-	// default simulation parameters
-	private static Logger log = Logger.getLogger(SimPathsObserver.class);
-	
 	@GUIparameter(description="Toggle to turn all charts on/off")
 	private Boolean showCharts = true;
 

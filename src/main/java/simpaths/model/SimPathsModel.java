@@ -28,7 +28,8 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.math3.util.Pair;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import simpaths.data.*;
 import simpaths.data.startingpop.Processed;
@@ -83,7 +84,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
     private boolean isFirstRun = true;		// set default to true - this is required to support single run simulations
 
     // default simulation parameters
-    private static Logger log = Logger.getLogger(SimPathsModel.class);
+    private static Logger log = LogManager.getLogger(SimPathsModel.class);
 
     //@GUIparameter(description = "Country to be simulated")
     private Country country; // = Country.UK;

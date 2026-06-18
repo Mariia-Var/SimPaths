@@ -17,10 +17,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Set up JDK 19
+      - name: Set up JDK
         uses: actions/setup-java@v5
         with:
-          java-version: '19'
+          java-version: '25'
           distribution: 'temurin'
           cache: maven
 
@@ -36,7 +36,7 @@ jobs:
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           javadoc-branch: javadoc
-          java-version: 19
+          java-version: 25
           target-folder: javadoc
           project: maven
 
