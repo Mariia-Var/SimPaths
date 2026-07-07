@@ -123,19 +123,8 @@
 		<dependency>
 			<groupId>com.github.jasmineRepo</groupId>
 			<artifactId>JAS-mine-core</artifactId>
-			<version>4.3.25</version>
+            <version>5.0.0</version>
 			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.github.jasmineRepo</groupId>
-			<artifactId>JAS-mine-gui</artifactId>
-			<version>4.2.2</version>
-			<exclusions>
-				<exclusion>
-					<groupId>xml-apis</groupId>
-					<artifactId>xmlParserAPIs</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<!-- Modern replacement for xmlParserAPIs -->
 		<dependency>
@@ -200,6 +189,10 @@
         </dependency>
 	</dependencies>
 	<repositories>
+        <repository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+        </repository>
 		<repository>
 			<id>jitpack.io</id>
 			<url>https://jitpack.io</url>
