@@ -7,10 +7,6 @@
 /.settings/
 /target/
 
-
-*.iml
-*.ipr
-
 # CMake
 cmake-build-*/
 
@@ -45,9 +41,6 @@ modules.xml
 
 # BlueJ files
 *.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
 
 # Package Files #
 *.jar
@@ -92,10 +85,8 @@ $RECYCLE.BIN/
 /output/
 /classes/
 input/input.h2.db
-input/input.h2.db
 input/input.trace.db
 /input/input.mv.db
-model.iml
 src/main/resources/log4j/log.out
 
 
@@ -103,9 +94,8 @@ src/main/resources/log4j/log.out
 # eclipse specific
 *.pydevproject
 .metadata
-bin/**
-tmp/**
-tmp/**/*
+bin/
+tmp/
 *.tmp
 *.bak
 *.swp
@@ -141,26 +131,6 @@ input/programming test database/EUROMODpolicySchedule.xlsx
 input/programming test database/input.mv.db
 /input/databases
 /input/EUROMODoutput/base
-analysis/temp0.dta
-analysis/temp1.dta
-analysis/zero0.dta
-analysis/zero1.dta
-analysis/base1.dta
-analysis/base0.dta
-analysis/childcarebase.dta
-analysis/childcarenaive.dta
-analysis/childcarezero.dta
-analysis/link.dta
-analysis/naive0.dta
-analysis/naive1.dta
-analysis/ignore0.dta
-analysis/ignore1.dta
-analysis/test_base.dta
-analysis/test_naive.dta
-analysis/test_base_noalign.dta
-analysis/test_naive_noalign.dta
-analysis/test1.dta
-analysis/test2.dta
 *.dta
 src/main/java/simpaths/data/startingpop/DataParser.new
 src/main/java/simpaths/data/startingpop/DataParser.old
@@ -174,6 +144,5 @@ input/EUROMODoutput/baseline/*
 
 # macOS
 .DS_Store
-**/.DS_Store
 
 input/InitialPopulations/original/*
