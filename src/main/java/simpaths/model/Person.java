@@ -518,15 +518,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         demAgeDiffDesired = Objects.requireNonNullElseGet(originalPerson.demAgeDiffDesired, () -> sampleDifferentials[0]);
         yWageDesired = Objects.requireNonNullElseGet(originalPerson.yWageDesired, () -> sampleDifferentials[1]);
 
-        statMScore = originalPerson.statMScore;
-        statFScore = originalPerson.statFScore;
-        countMale = originalPerson.countMale;
-        countFemale = originalPerson.countFemale;
-        statInverseMillsRatioMaxM = originalPerson.statInverseMillsRatioMaxM;
-        statInverseMillsRatioMinM = originalPerson.statInverseMillsRatioMinM;
-        statInverseMillsRatioMaxF = originalPerson.statInverseMillsRatioMaxF;
-        statInverseMillsRatioMinF = originalPerson.statInverseMillsRatioMinF;
-
         demAdultChildFlag = originalPerson.demAdultChildFlag;
         yDispEquivYear = new Series.Double(this, DoublesVariables.EquivalisedIncomeYearly);
         xEquivYearL1 = new Series.Double(this, DoublesVariables.EquivalisedConsumptionYearly);

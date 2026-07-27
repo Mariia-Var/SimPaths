@@ -279,7 +279,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         }
 
 
-        this.log = originalBenefitUnit.log;
         yDispMonth = Objects.requireNonNullElse(originalBenefitUnit.getDisposableIncomeMonthly(),0.0);
         xDiscretionaryYear = Objects.requireNonNullElse(originalBenefitUnit.xDiscretionaryYear, 0.0);
         yGrossMonth = Objects.requireNonNullElse(originalBenefitUnit.getGrossIncomeMonthly(),0.0);
