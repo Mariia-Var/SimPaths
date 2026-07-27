@@ -7,7 +7,6 @@ import microsim.data.MultiKeyCoefficientMap;
 import microsim.data.excel.ExcelAssistant;
 import microsim.statistics.regression.*;
 // import plug-in packages
-import org.apache.commons.collections4.MapIterator;
 import org.apache.commons.io.FileUtils;
 import simpaths.data.startingpop.DataParser;
 import simpaths.model.AnnuityRates;
@@ -2552,7 +2551,7 @@ public class Parameters {
 
         MultiKeyCoefficientMap map = getTimeSeriesValueMap(timeSeriesVariable);
         double valueBase = getTimeSeriesValue(baseYear, timeSeriesVariable);
-        for (Object key: map.keySet()) {
+        for (var key : map.keySet()) {
 
             double valueHere = ((Number) map.getValue(key)).doubleValue();
             if (ratioAdjust) {
@@ -3413,26 +3412,24 @@ public class Parameters {
         if (map == null) return;
 
         // Get the values read from the REGRESSOR column by ExcelAssistant (excludes 'Constant')
-        Set<Object> regressorNames = map.keySet();
+        var regressorNames = map.keySet();
 
         // Check across all
-        for (Object regressor : regressorNames) {
-            if (regressor instanceof MultiKey mk) {
-                String keyName = mk.getKey(0).toString();
+        for (var mk : regressorNames) {
+            String keyName = mk.getKey(0).toString();
 
-                // Test if a Person Enum
+            // Test if a Person Enum
+            try {
+                Person.DoublesVariables.valueOf(keyName);
+            } catch (IllegalArgumentException e) {
                 try {
-                    Person.DoublesVariables.valueOf(keyName);
-                } catch (IllegalArgumentException e) {
-                    try {
-                        BenefitUnit.Regressors.valueOf(keyName);
-                    } catch (IllegalArgumentException e2) {
+                    BenefitUnit.Regressors.valueOf(keyName);
+                } catch (IllegalArgumentException e2) {
 
-                        // This fires if the string isn't in the Enum
-                        throw new RuntimeException("Validation failed for " + excelFileName + " in " + sheetName +
-                                ": Regressor '" + keyName + "' not found in Person.DoublesVariables. " +
-                                "Check for typos in Excel or missing Enums in Person.java.");
-                    }
+                    // This fires if the string isn't in the Enum
+                    throw new RuntimeException("Validation failed for " + excelFileName + " in " + sheetName +
+                            ": Regressor '" + keyName + "' not found in Person.DoublesVariables. " +
+                            "Check for typos in Excel or missing Enums in Person.java.");
                 }
             }
         }
@@ -3547,11 +3544,9 @@ public class Parameters {
             System.out.println("Bootstrap validation: missing COEFFICIENT column for " + name);
         }
         int issueCount = 0;
-        MapIterator<Object, Object> it = map.mapIterator();
-        while (it.hasNext()) {
-            it.next();
-            MultiKey key = (MultiKey) it.getKey();
-            Object rowObj = map.getValue(new Object[]{key});
+        for (var mapEntry : map.entrySet()) {
+            var key = mapEntry.getKey();
+            var rowObj = mapEntry.getValue();
             Object[] rowValues;
             if (rowObj instanceof Object[]) {
                 rowValues = (Object[]) rowObj;
