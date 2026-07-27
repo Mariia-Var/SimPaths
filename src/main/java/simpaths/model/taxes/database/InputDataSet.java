@@ -44,7 +44,7 @@ public class InputDataSet {
             throw new RuntimeException("failed to find file: " + filePath);
 
         Reader reader = new FileReader(filePath);
-        CSVFormat csvFormat = CSVFormat.TDF.builder().setHeader(variables).setSkipHeaderRecord(true).build();
+        var csvFormat = CSVFormat.TDF.builder().setHeader(variables).setSkipHeaderRecord(true).get();
         Iterable<CSVRecord> records = csvFormat.parse(reader);
         for (CSVRecord record : records) {
             Map values = new HashMap<>();
@@ -62,7 +62,7 @@ public class InputDataSet {
         safeDelete(filePath);
 
         Writer writer = new FileWriter(filePath);
-        CSVFormat csvFormat = CSVFormat.TDF.builder().setHeader(variables).build();
+        var csvFormat = CSVFormat.TDF.builder().setHeader(variables).get();
         CSVPrinter printer = new CSVPrinter(writer, csvFormat);
         for (Map obs : set) {
             List<String> record = new ArrayList<>();
