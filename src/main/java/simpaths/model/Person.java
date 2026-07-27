@@ -6342,12 +6342,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
 
 
-    ////////////////////////////////////////////////////////////////////////////////
-    //
     //	Override equals and hashCode to make unique BenefitUnit determined by Key.getId()
-    //
-    ////////////////////////////////////////////////////////////////////////////////
-
      @Override
     public boolean equals(Object o) {
 

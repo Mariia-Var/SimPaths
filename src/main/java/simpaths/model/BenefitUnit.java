@@ -1834,13 +1834,6 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         return logSumExp;
     }
 
-    /////////////////////////////////////////////////////////////////////////////////
-    //
-    //	Other Methods
-    //
-    ////////////////////////////////////////////////////////////////////////////////
-
-
     protected void calculateBUIncome() {
 
         /*
@@ -3847,12 +3840,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
     }
 
 
-    ////////////////////////////////////////////////////////////////////////////////
-    //
     //	Override equals and hashCode to make unique BenefitUnit determined by Key.getId()
-    //
-    ////////////////////////////////////////////////////////////////////////////////
-
     @Override
     public boolean equals(Object o) {
 
@@ -3882,11 +3870,6 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
     }
 
 
-    ////////////////////////////////////////////////////////////////////////////////
-    //
-    //	Other methods
-    //
-    ////////////////////////////////////////////////////////////////////////////////
     public boolean getAtRiskOfWork() {
 
         boolean atRiskOfWork = false;
@@ -3970,14 +3953,6 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             throw new RuntimeException("problem evaluating yearly change in log edi");
         return yearlyChangeInLogEquivalisedDisposableIncome;
     }
-
-
-    ////////////////////////////////////////////////////////////////////////////////
-    //
-    //	Access Methods
-    //
-    ////////////////////////////////////////////////////////////////////////////////
-
 
     /**
      *
