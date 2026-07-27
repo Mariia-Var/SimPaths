@@ -107,7 +107,7 @@ public class ComboBoxCountry extends JPanel implements ActionListener {
 	 *
 	 */
 	protected void updateLabel(String countryName) {
-		Country country = Country.UK.getCountryFromNameString(countryName);
+		var country = Country.getCountryFromNameString(countryName);
 		ImageIcon icon = createImageIcon("/images/" + country + ".png");
 		String text = "You have selected " + countryName;
 		picture.setText(text);
@@ -142,5 +142,5 @@ public class ComboBoxCountry extends JPanel implements ActionListener {
 	 * @return
 	 *
 	 */
-	public Country getCountryEnum() { return Country.UK.getCountryFromNameString(this.countryName); }
+	public Country getCountryEnum() { return Country.getCountryFromNameString(this.countryName); }
 }
