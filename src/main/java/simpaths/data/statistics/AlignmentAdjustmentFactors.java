@@ -255,9 +255,9 @@ public class AlignmentAdjustmentFactors {
         setFertilityAdjFactor(
                 Parameters.getTimeSeriesValue(year, TimeSeriesVariable.FertilityAdjustment)
                 + model.getFertilityAdjustment(year));
-        FertileFilter fertileFilter = new FertileFilter();
+        var fertileFilter = new FertileFilter<Person>();
         long numFertile = model.getPersons().stream()
-                .filter(p -> fertileFilter.evaluate(p))
+                .filter(fertileFilter)
                 .count();
         long numBirths = model.getPersons().stream()
                 .filter(p -> p.getDemAge() < 1)

@@ -23,7 +23,7 @@ public class FertilityAlignment implements IEvaluation {
     private double targetFertilityRate;
     private Set<Person> persons;
     private SimPathsModel model;
-    private FertileFilter fertileFilter;
+    private FertileFilter<Person> fertileFilter;
     private long numFertile;
 
 
@@ -32,9 +32,9 @@ public class FertilityAlignment implements IEvaluation {
         this.model = (SimPathsModel) SimulationEngine.getInstance().getManager(SimPathsModel.class.getCanonicalName());
         this.persons = persons;
         targetFertilityRate = Parameters.getFertilityRateByYear(model.getYear());
-        fertileFilter = new FertileFilter();
+        fertileFilter = new FertileFilter<Person>();
         numFertile = persons.stream()
-                .filter(person -> fertileFilter.evaluate(person))
+                .filter(fertileFilter)
                 .count();
     }
 
@@ -53,7 +53,7 @@ public class FertilityAlignment implements IEvaluation {
         if (numFertile == 0) return targetFertilityRate;
 
         double expectedBirths = persons.parallelStream()
-                .filter(person -> fertileFilter.evaluate(person))
+                .filter(fertileFilter)
                 .mapToDouble(person -> {
                     double score = Parameters.getRegFertilityF1()
                             .getScore(person, Person.DoublesVariables.class);

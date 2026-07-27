@@ -928,9 +928,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     public void fertility(double probitAdjustment) {
 
         demGiveBirthFlag = false;
-        FertileFilter filter = new FertileFilter();
+        var filter = new FertileFilter<Person>();
 
-        if (filter.evaluate(this)) {
+        if (filter.test(this)) {
 
             double prob;
 
