@@ -809,8 +809,8 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         double labourInnov2 = statInnovations.getDoubleDraw(3), labourInnov3 = statInnovations.getDoubleDraw(4);
         if (Les_c7_covid.Employee.equals(stateFrom)) {
             Map<Les_transitions_E1,Double> probs = Parameters.getRegC19LS_E1().getProbabilities(person, Person.DoublesVariables.class);
-            MultiValEvent event = new MultiValEvent(probs, labourInnov2);
-            Les_transitions_E1 transitionTo = (Les_transitions_E1) event.eval();
+            var event = new MultiValEvent<Les_transitions_E1>(probs, labourInnov2);
+            var transitionTo = event.eval();
             stateTo = transitionTo.convertToLes_c7_covid();
             person.setLabC7Covid(stateTo); // Use convert to les c6 covid method from the enum to convert the outcome to the les c6 scale and update the variable
 
@@ -834,8 +834,8 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             // Transitions from furlough full
         } else if (stateFrom.equals(Les_c7_covid.FurloughedFull)) {
             Map<Les_transitions_FF1,Double> probs = Parameters.getRegC19LS_FF1().getProbabilities(person, Person.DoublesVariables.class);
-            MultiValEvent event = new MultiValEvent(probs, labourInnov2);
-            Les_transitions_FF1 transitionTo = (Les_transitions_FF1) event.eval();
+            var event = new MultiValEvent<Les_transitions_FF1>(probs, labourInnov2);
+            var transitionTo = event.eval();
 
             stateTo = transitionTo.convertToLes_c7_covid();
             person.setLabC7Covid(stateTo); // Use convert to les c7 covid method from the enum to convert the outcome to the les c7 scale and update the variable
@@ -859,8 +859,8 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             // Transitions from furlough flex
         } else if (stateFrom.equals(Les_c7_covid.FurloughedFlex)) {
             Map<Les_transitions_FX1,Double> probs = Parameters.getRegC19LS_FX1().getProbabilities(person, Person.DoublesVariables.class);
-            MultiValEvent event = new MultiValEvent(probs, labourInnov2);
-            Les_transitions_FX1 transitionTo = (Les_transitions_FX1) event.eval();
+            var event = new MultiValEvent<Les_transitions_FX1>(probs, labourInnov2);
+            var transitionTo = event.eval();
             stateTo = transitionTo.convertToLes_c7_covid();
             person.setLabC7Covid(stateTo); // Use convert to les c7 covid method from the enum to convert the outcome to the les c7 scale and update the variable
 
@@ -883,8 +883,8 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             // Transitions from self-employment
         } else if (stateFrom.equals(Les_c7_covid.SelfEmployed)) {
             Map<Les_transitions_S1,Double> probs = Parameters.getRegC19LS_S1().getProbabilities(person, Person.DoublesVariables.class);
-            MultiValEvent event = new MultiValEvent(probs, labourInnov2);
-            Les_transitions_S1 transitionTo = (Les_transitions_S1) event.eval();
+            var event = new MultiValEvent<Les_transitions_S1>(probs, labourInnov2);
+            var transitionTo = event.eval();
             stateTo = transitionTo.convertToLes_c7_covid();
             person.setLabC7Covid(stateTo); // Use convert to les c6 covid method from the enum to convert the outcome to the les c6 scale and update the variable
 
@@ -911,8 +911,8 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             // Transitions from non-employment
         } else if (stateFrom.equals(Les_c7_covid.NotEmployed)) {
             Map<Les_transitions_U1,Double> probs = Parameters.getRegC19LS_U1().getProbabilities(person, Person.DoublesVariables.class);
-            MultiValEvent event = new MultiValEvent(probs, labourInnov2);
-            Les_transitions_U1 transitionTo = (Les_transitions_U1) event.eval();
+            var event = new MultiValEvent<Les_transitions_U1>(probs, labourInnov2);
+            var transitionTo = event.eval();
             stateTo = transitionTo.convertToLes_c7_covid();
             person.setLabC7Covid(stateTo); // Use convert to les c6 covid method from the enum to convert the outcome to the les c6 scale and update the variable
 
