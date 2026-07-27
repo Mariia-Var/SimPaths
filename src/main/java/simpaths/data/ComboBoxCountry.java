@@ -21,10 +21,10 @@ import simpaths.model.enums.Country;
  */
 public class ComboBoxCountry extends JPanel implements ActionListener {
 
-	// variables in multiple methods
 	private JLabel picture;
 	private String countryName;
 	private boolean disp_flag = true;
+    private JComboBox<String> countryList;
 
 
 	/**
@@ -63,7 +63,7 @@ public class ComboBoxCountry extends JPanel implements ActionListener {
 		for(int i = 0; i < numCountries; i++) {
 			countryNames[i] = Country.values()[i].getCountryName();
 		}
-		JComboBox<String> countryList = new JComboBox<String>(countryNames);
+		countryList = new JComboBox<>(countryNames);
 		countryList.setSelectedIndex(Country.UK.ordinal());
 		countryList.addActionListener(this);
 	
@@ -95,8 +95,7 @@ public class ComboBoxCountry extends JPanel implements ActionListener {
 	 *
 	 */
 	public void actionPerformed(ActionEvent e) {
-		JComboBox cb = (JComboBox)e.getSource();
-		countryName = (String)cb.getSelectedItem();
+		countryName = (String) this.countryList.getSelectedItem();
 		updateLabel(countryName);
 	}
 
