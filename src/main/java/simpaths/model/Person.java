@@ -1141,7 +1141,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     protected void healthMentalHM1Case() {
         if (demAge >= MIN_AGE_TO_HAVE_INCOME) {
             Map<DhmGhq,Double> probs = ManagerRegressions.getProbabilities(this, RegressionName.HealthHM1Case);
-            MultiValEvent event = new MultiValEvent(probs, statInnovations.getDoubleDraw(36));
+            var event = new MultiValEvent<DhmGhq>(probs, statInnovations.getDoubleDraw(36));
             healthPsyDstrss0to12 = Double.valueOf(event.eval().getValue());
         }
     }
@@ -1422,8 +1422,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         double healthInnov2 = statInnovations.getDoubleDraw(4);
         if (demAge >= MIN_AGE_TO_HAVE_INCOME) {
             Map<Dhe,Double> probs = ManagerRegressions.getProbabilities(this, RegressionName.HealthH1);
-            MultiValEvent event = new MultiValEvent(probs, healthInnov1);
-            healthSelfRated = (Dhe) event.eval();
+            var event = new MultiValEvent<Dhe>(probs, healthInnov1);
+            healthSelfRated = event.eval();
             if (event.isProblemWithProbs())
                 model.addCounterErrorH1a();
 
@@ -1475,8 +1475,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             // if probNeedCare > probRecCare, then code here implies that anyone who receives care will also need care
 
                 Map<SocialCareReceiptS2c,Double> probs1 = Parameters.getRegSocialCareMarketS2c().getProbabilities(this, Person.DoublesVariables.class);
-                MultiValEvent event = new MultiValEvent(probs1, statInnovations.getDoubleDraw(8));
-                SocialCareReceiptS2c socialCareReceiptS2c = (SocialCareReceiptS2c) event.eval();
+                var event = new MultiValEvent<SocialCareReceiptS2c>(probs1, statInnovations.getDoubleDraw(8));
+                var socialCareReceiptS2c = event.eval();
                 careReceivedFlag = SocialCareReceipt.getCode(socialCareReceiptS2c);
                 if (SocialCareReceipt.Mixed.equals(careReceivedFlag) || SocialCareReceipt.Formal.equals(careReceivedFlag))
                     careFormalFlag = true;
@@ -2106,8 +2106,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         // --- Step 1: Regression Result ---
         // The regression determines the highest possible qualification achieved this spell.
         Map<EducationLevel,Double> probs = Parameters.getRegEducationE2().getProbabilities(this, Person.DoublesVariables.class);
-        MultiValEvent event = new MultiValEvent(probs, statInnovations.getDoubleDraw(30));
-        EducationLevel regressionEducationLevel = (EducationLevel) event.eval();
+        var event = new MultiValEvent<EducationLevel>(probs, statInnovations.getDoubleDraw(30));
+        var regressionEducationLevel = event.eval();
         Education newEducationLevel = Education.valueOf(regressionEducationLevel.name());
 
         //Education has been set to Low by default for all new born babies, so it should never be null.
