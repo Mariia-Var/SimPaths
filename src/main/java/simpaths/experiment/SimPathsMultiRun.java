@@ -3,6 +3,7 @@ package simpaths.experiment;
 
 // import Java packages
 import org.apache.commons.cli.*;
+import org.apache.commons.cli.help.HelpFormatter;
 import org.apache.commons.io.FileUtils;
 import org.yaml.snakeyaml.Yaml;
 import java.io.FileInputStream;
@@ -217,8 +218,7 @@ public class SimPathsMultiRun extends MultiRun {
 		options.addOption(helpOption);
 
 		CommandLineParser parser = new DefaultParser();
-		HelpFormatter formatter = new HelpFormatter();
-		formatter.setOptionComparator(null);
+		var formatter = HelpFormatter.builder().get();
 
 		try {
 			CommandLine cmd = parser.parse(options, args);
@@ -304,7 +304,7 @@ public class SimPathsMultiRun extends MultiRun {
 			}
 		} catch (ParseException e) {
 			System.err.println("Error parsing command line arguments: " + e.getMessage());
-			formatter.printHelp("SimPathsMultiRun", options);
+            printHelpMessage(formatter, options);
 			return false;
 		}
 
@@ -316,7 +316,11 @@ public class SimPathsMultiRun extends MultiRun {
 				"resetting the population to the start year and iterating from the start seed. " +
 				"It takes the following options:";
 		String footer = "When running with no display, `-g` must be set to `false`.";
-		formatter.printHelp("SimPathsMultiRun", header, options, footer, true);
+        try {
+            formatter.printHelp("SimPathsMultiRun", header, options, footer, true);
+        } catch (IOException e) {
+            System.err.println("failed to print CLI help: " + e.getMessage());
+        }
 	}
 
 	private static boolean parseYamlConfig(String[] args) {
