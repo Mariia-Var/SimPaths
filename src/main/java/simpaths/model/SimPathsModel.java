@@ -459,7 +459,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
                 }
             }
         }
-        scalingFactor = (double)popSizeBaseYear / (double)persons.size();
+        scalingFactor = popSizeBaseYear / (double)persons.size();
         System.out.println("Scaling factor is " + scalingFactor);
 
         //Set up tests class
