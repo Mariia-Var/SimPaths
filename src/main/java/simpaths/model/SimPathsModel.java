@@ -1739,6 +1739,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         /*
          * Use matching method provided with JAS-mine:
          */
+        var ism = new IterativeSimpleMatching<Person>();
         for(String key : keysStringSet) {
 
             for(String keyOther : keysStringSet) {
@@ -1781,7 +1782,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
                      */
                     Pair<Set<Person>, Set<Person>> unmatchedSetsPair = new Pair<>(unmatchedQ1Set, unmatchedQ2Set);
                     //System.out.println("People in Q1 = " + unmatched.getFirst().size() + " People in Q2 = " + unmatched.getSecond().size());
-                    unmatchedSetsPair = IterativeSimpleMatching.getInstance().matching(
+                    unmatchedSetsPair = ism.matching(
                             unmatchedSetsPair.getFirst(), null, null, unmatchedSetsPair.getSecond(), null,
 
                             //This closure calculates the score for potential couple
