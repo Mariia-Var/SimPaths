@@ -1780,10 +1780,9 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
                                         " people in Q1 and " + unmatchedQ2.size() + " in Q2. (Originally Q2 had " + unmatchedQ2full.size() + " people.");
                     unmatchedQ2.stream().iterator().forEachRemaining(persontodisp -> System.out.println("PID " + persontodisp.getKey().getId() + " HHID " + persontodisp.getHousehold().getKey().getId()));
                      */
-                    Pair<Set<Person>, Set<Person>> unmatchedSetsPair = new Pair<>(unmatchedQ1Set, unmatchedQ2Set);
                     //System.out.println("People in Q1 = " + unmatched.getFirst().size() + " People in Q2 = " + unmatched.getSecond().size());
-                    unmatchedSetsPair = ism.matching(
-                            unmatchedSetsPair.getFirst(), null, null, unmatchedSetsPair.getSecond(), null,
+                    ism.matching(
+                            unmatchedQ1Set, null, null, unmatchedQ2Set, null,
 
                             //This closure calculates the score for potential couple
                             new MatchingScoreClosure<Person>() {
