@@ -20,7 +20,6 @@ import microsim.event.EventListener;
 import microsim.matching.IterativeSimpleMatching;
 import microsim.matching.MatchingClosure;
 import microsim.matching.MatchingScoreClosure;
-import org.apache.commons.collections4.MapIterator;
 import org.apache.commons.collections4.keyvalue.MultiKey;
 import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.collections4.map.MultiKeyMap;
@@ -459,7 +458,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
                 }
             }
         }
-        scalingFactor = (double)popSizeBaseYear / (double)persons.size();
+        scalingFactor = popSizeBaseYear / (double)persons.size();
         System.out.println("Scaling factor is " + scalingFactor);
 
         //Set up tests class
@@ -1515,7 +1514,6 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
     int malesUnmatched = 0;
     int femalesUnmatched = 0;
 
-    @SuppressWarnings("unchecked")
     private void unionMatchingSBAM() {
 
         int malesToBePartnered = 0;
@@ -1542,7 +1540,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         MultiKeyCoefficientMap marriageTypesToAdjustMap = Parameters.getMarriageTypesFrequency().clone(); //Clone the original map loaded from Excel to adjust frequencies on a copy
 
         //Create a set of keys on which the types are defined: currently Gender, Region, Education, Age Group
-        Set<MultiKey> keysMultiKeySet = new LinkedHashSet<MultiKey>();
+        var keysMultiKeySet = new LinkedHashSet<MultiKey<Object>>();
         Set<String> keysStringSet = new LinkedHashSet<String>();
         for(Gender gender : Gender.values()) {
 
@@ -1570,11 +1568,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
                         //Create a set containing row keys of marriageTypesToAdjust:
                         Set<String> tmpKeysStringSet = new LinkedHashSet<String>();
-                        MapIterator frequenciesIterator = marriageTypesToAdjustMap.mapIterator();
-                        while (frequenciesIterator.hasNext()) {
-
-                            frequenciesIterator.next();
-                            MultiKey tmpKeyMultiKey = (MultiKey) frequenciesIterator.getKey();
+                        for (var tmpKeyMultiKey : marriageTypesToAdjustMap.keySet()) {
                             String key0String = tmpKeyMultiKey.getKey(0).toString();
                             tmpKeysStringSet.add(key0String); //The only types not in the set should be those that don't have any matches in the data
                         }
@@ -1582,7 +1576,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
                         if(tmpKeysStringSet.contains(tmpKeyString)) { //Check if the target is contained in frequencies from the data - if not, 0 entries cannot be adjusted anyway
 
                             marriageTargetsByKey.put(tmpKeyString, tmpTargetDouble); //Update marriageTargetByKey
-                            MultiKey tmpKeyMultiKey = new MultiKey(gender, region, education, ageGroup);
+                            var tmpKeyMultiKey = new MultiKey<Object>(gender, region, education, ageGroup);
                             keysMultiKeySet.add(tmpKeyMultiKey); //Add MultiKey to set of keys
                             keysStringSet.add(tmpKeyString);
                         }
@@ -1595,7 +1589,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         //theoretically could occur? (i.e. no same sex matches, and no cross-region matches) but were not observed in the data.
         if(adjustZeroEntries) {
 
-            for (MultiKey key1 : keysMultiKeySet) { //For each row in the frequency matrix
+            for (var key1 : keysMultiKeySet) { //For each row in the frequency matrix
 
                 Gender gender1 = (Gender) key1.getKey(0);
                 Region region1 = (Region) key1.getKey(1);
@@ -1603,7 +1597,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
                 int ageGroup1 = (int) key1.getKey(3);
                 String key1String = gender1 + " " + region1 + " " + education1 + " " + ageGroup1;
                 // System.out.println();
-                for(MultiKey key2 : keysMultiKeySet) { //For each column
+                for(var key2 : keysMultiKeySet) { //For each column
 
                     Gender gender2 = (Gender) key2.getKey(0);
                     Region region2 = (Region) key2.getKey(1);
@@ -1643,23 +1637,12 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             //Instead of iterating through rows and columns, go through every element of the map and add to the row / col sum depending on key1 and key2
             //marriageTypesToAdjust is a map, where key is a MultiKey with two values (Strings): first value identifies one type, second value identifies second type, value stores the frequency of matches.
             //Instead of iterating through rows and columns, can iterate through each cell of the map and add it to rowSum (and later on to colSum).
-            MapIterator frequenciesIterator = marriageTypesToAdjustMap.mapIterator();
-
-            while (frequenciesIterator.hasNext()) {
-
-                frequenciesIterator.next();
-                MultiKey tmpKeyMultiKey = (MultiKey) frequenciesIterator.getKey(); //Get MultiKey identifying each cell (mk.getKey(0) is row, mk.getKey(1) is column)
-                double tmpValueDouble = 0.;
-                if (rowSumsMap.get(tmpKeyMultiKey.getKey(0).toString()) == null) { //If null value in rowSumsMap, then just put the current value, otherwise add
-
-                    tmpValueDouble = ((Number) frequenciesIterator.getValue()).doubleValue();
-                } else {
-
-                    tmpValueDouble = rowSumsMap.get(tmpKeyMultiKey.getKey(0).toString()) + ((Number) frequenciesIterator.getValue()).doubleValue();
-                }
-
-                //To get row sums add value to a map where key0 is the key
-                rowSumsMap.put(tmpKeyMultiKey.getKey(0).toString(), tmpValueDouble);
+            for (var mapEntry : marriageTypesToAdjustMap.entrySet()) {
+                var tmpKeyMultiKey = mapEntry.getKey(); //Get MultiKey identifying each cell (mk.getKey(0) is row, mk.getKey(1) is column)
+                var keyStr = tmpKeyMultiKey.getKey(0).toString();
+                double tmpValueDouble = ((Number) mapEntry.getValue()).doubleValue();
+                tmpValueDouble += rowSumsMap.getOrDefault(keyStr, 0.0);
+                rowSumsMap.put(keyStr, tmpValueDouble);
             }
             //Get target by key and divide by row sum for that key to get row multiplier, same for column later on
             marriageTargetsByKey.keySet().iterator().forEachRemaining(key -> rowMprMap.put(key, marriageTargetsByKey.get(key)/rowSumsMap.get(key)));
@@ -1672,11 +1655,11 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             });
 
             //Now knowing the row multiplier, multiply entries in the frequency map (marriageTypesToAdjust)
-            frequenciesIterator = marriageTypesToAdjustMap.mapIterator();
+            var frequenciesIterator = marriageTypesToAdjustMap.mapIterator();
             while (frequenciesIterator.hasNext()) {
 
                 frequenciesIterator.next();
-                MultiKey tmpKeyMultiKey = (MultiKey) frequenciesIterator.getKey();
+                var tmpKeyMultiKey = frequenciesIterator.getKey();
                 double tmpValueDouble = ((Number) frequenciesIterator.getValue()).doubleValue();
                 tmpValueDouble *= rowMprMap.get(tmpKeyMultiKey.getKey(0).toString());
                 frequenciesIterator.setValue(tmpValueDouble);
@@ -1687,7 +1670,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             while (frequenciesIterator.hasNext()) {
 
                 frequenciesIterator.next();
-                MultiKey tmpKeyMultiKey = (MultiKey) frequenciesIterator.getKey();
+                var tmpKeyMultiKey = frequenciesIterator.getKey();
                 double tmpValueDouble = 0.;
                 if (colSumsMap.get(tmpKeyMultiKey.getKey(1).toString()) == null) {
 
@@ -1715,7 +1698,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             while (frequenciesIterator.hasNext()) {
 
                 frequenciesIterator.next();
-                MultiKey tmpKeyMultiKey = (MultiKey) frequenciesIterator.getKey();
+                var tmpKeyMultiKey = frequenciesIterator.getKey();
                 double tmpValueDouble = ((Number) frequenciesIterator.getValue()).doubleValue();
                 tmpValueDouble *= colMprMap.get(tmpKeyMultiKey.getKey(1).toString());
                 frequenciesIterator.setValue(tmpValueDouble);
@@ -1739,6 +1722,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         /*
          * Use matching method provided with JAS-mine:
          */
+        var ism = new IterativeSimpleMatching<Person>();
         for(String key : keysStringSet) {
 
             for(String keyOther : keysStringSet) {
@@ -1779,10 +1763,9 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
                                         " people in Q1 and " + unmatchedQ2.size() + " in Q2. (Originally Q2 had " + unmatchedQ2full.size() + " people.");
                     unmatchedQ2.stream().iterator().forEachRemaining(persontodisp -> System.out.println("PID " + persontodisp.getKey().getId() + " HHID " + persontodisp.getHousehold().getKey().getId()));
                      */
-                    Pair<Set<Person>, Set<Person>> unmatchedSetsPair = new Pair<>(unmatchedQ1Set, unmatchedQ2Set);
                     //System.out.println("People in Q1 = " + unmatched.getFirst().size() + " People in Q2 = " + unmatched.getSecond().size());
-                    unmatchedSetsPair = IterativeSimpleMatching.getInstance().matching(
-                            unmatchedSetsPair.getFirst(), null, null, unmatchedSetsPair.getSecond(), null,
+                    ism.matching(
+                            unmatchedQ1Set, null, null, unmatchedQ2Set, null,
 
                             //This closure calculates the score for potential couple
                             new MatchingScoreClosure<Person>() {
@@ -3385,7 +3368,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             try {
 
                 // access database and obtain donor pool
-                Map propertyMap = new HashMap();
+                var propertyMap = new HashMap<String, String>();
                 propertyMap.put("hibernate.connection.url", "jdbc:h2:file:" + RunDatabasePath + ";TRACE_LEVEL_FILE=0;TRACE_LEVEL_SYSTEM_OUT=0;AUTO_SERVER=TRUE");
                 EntityManager em = Persistence.createEntityManagerFactory("tax-database", propertyMap).createEntityManager();
                 txn = em.getTransaction();
@@ -3517,7 +3500,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
             // query database
             String fileName = Parameters.getInputDirectory() + "input";
-            Map propertyMap = new HashMap();
+            var propertyMap = new HashMap<String, String>();
             propertyMap.put("hibernate.connection.url", "jdbc:h2:file:" + fileName + ";TRACE_LEVEL_FILE=0;TRACE_LEVEL_SYSTEM_OUT=0;AUTO_SERVER=TRUE");
             EntityManager em = Persistence.createEntityManagerFactory("lifetime-incomes", propertyMap).createEntityManager();
             txn = em.getTransaction();
@@ -3556,7 +3539,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         try {
 
             // query database
-            Map propertyMap = new HashMap();
+            var propertyMap = new HashMap<String, String>();
             propertyMap.put("hibernate.connection.url", "jdbc:h2:file:" + getPersistDatabasePath() + ";TRACE_LEVEL_FILE=0;TRACE_LEVEL_SYSTEM_OUT=0;AUTO_SERVER=TRUE");
             if (emfStartingPopulationPersist == null)
                 emfStartingPopulationPersist = Persistence.createEntityManagerFactory("starting-population", propertyMap);
@@ -3605,7 +3588,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         EntityTransaction txn = null;
         try {
 
-            Map propertyMap = new HashMap();
+            var propertyMap = new HashMap<String, String>();
             propertyMap.put("hibernate.connection.url", "jdbc:h2:file:" + RunDatabasePath + ";TRACE_LEVEL_FILE=0;TRACE_LEVEL_SYSTEM_OUT=0;AUTO_SERVER=TRUE");
             if (emfStartingPopulationRun == null)
                 emfStartingPopulationRun = Persistence.createEntityManagerFactory("starting-population", propertyMap);
@@ -3647,7 +3630,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         EntityTransaction txn = null;
         try {
 
-            Map propertyMap = new HashMap();
+            var propertyMap = new HashMap<String, String>();
             propertyMap.put("hibernate.connection.url", "jdbc:h2:file:" + getPersistDatabasePath() + ";TRACE_LEVEL_FILE=0;TRACE_LEVEL_SYSTEM_OUT=0;AUTO_SERVER=TRUE");
             if (emfStartingPopulationPersist == null)
                 emfStartingPopulationPersist = Persistence.createEntityManagerFactory("starting-population", propertyMap);

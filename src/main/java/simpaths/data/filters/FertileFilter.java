@@ -1,6 +1,6 @@
 package simpaths.data.filters;
 
-import org.apache.commons.collections4.Predicate;
+import java.util.function.Predicate;
 
 import simpaths.data.Parameters;
 import simpaths.model.Person;
@@ -18,7 +18,7 @@ public class FertileFilter<T extends Person> implements Predicate<T> {
 	}
 
 	@Override
-	public boolean evaluate(T agent) {
+	public boolean test(T agent) {
 		
 		int age = agent.getDemAge();
 		boolean fertile = false;

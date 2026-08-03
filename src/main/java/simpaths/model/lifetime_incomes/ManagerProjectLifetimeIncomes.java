@@ -97,7 +97,7 @@ public class ManagerProjectLifetimeIncomes {
         try {
             // initialise database for storing results
             String fileName = Parameters.getInputDirectory() + "input";
-            Map propertyMap = new HashMap();
+            var propertyMap = new HashMap<String, String>();
             propertyMap.put("hibernate.connection.url", "jdbc:h2:file:" + fileName + ";TRACE_LEVEL_FILE=0;TRACE_LEVEL_SYSTEM_OUT=0;AUTO_SERVER=TRUE");
             EntityManager em = Persistence.createEntityManagerFactory("lifetime-incomes", propertyMap).createEntityManager();
             txn = em.getTransaction();

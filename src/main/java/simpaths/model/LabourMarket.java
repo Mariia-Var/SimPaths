@@ -307,13 +307,6 @@ public class LabourMarket {
         }
     }
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////
-    //
-    //	Other Methods
-    //
-    ///////////////////////////////////////////////////////////////////////////////////////
-
     public void updateGrossLabourIncomeBaseline_Xt5(LinkedHashSet<Person> personsInBenefitUnit) {
         for (Person person : personsInBenefitUnit) {
             if (person != null && person.getCovidYLabGrossXt5() == null) {
