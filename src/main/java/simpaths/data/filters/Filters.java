@@ -26,6 +26,11 @@ public class Filters {
         return gender(Gender.Female);
     }
 
+    /// Filter persons strictly younger than given age.
+    public static Predicate<Person> youngerStrict(int age) {
+        return p -> p.getDemAge() < age;
+    }
+
     /// Filter given age range (both ends are included).
     public static Predicate<Person> ageRange(int from, int to) {
         return p -> p.getDemAge() >= from && p.getDemAge() <= to;

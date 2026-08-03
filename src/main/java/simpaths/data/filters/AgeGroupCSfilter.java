@@ -3,6 +3,8 @@ package simpaths.data.filters;
 import microsim.statistics.ICollectionFilter;
 import simpaths.model.Person;
 
+@Deprecated(forRemoval = true)
+@SuppressWarnings("removal")
 public class AgeGroupCSfilter implements ICollectionFilter{
 	
 	private final int ageFrom;

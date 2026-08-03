@@ -5,6 +5,7 @@ import org.apache.commons.collections.Predicate;
 import simpaths.model.Person;
 import simpaths.model.enums.Gender;
 
+@Deprecated(forRemoval = true)
 public class FemalesUnder45Filter implements Predicate {
 
 	@Override
