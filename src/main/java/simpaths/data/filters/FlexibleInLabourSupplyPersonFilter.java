@@ -6,6 +6,7 @@ import simpaths.model.Person;
 import simpaths.model.enums.Indicator;
 import simpaths.model.enums.Les_c4;
 
+@Deprecated(forRemoval = true)
 public class FlexibleInLabourSupplyPersonFilter<T extends Person> implements Predicate<T> {
 
 

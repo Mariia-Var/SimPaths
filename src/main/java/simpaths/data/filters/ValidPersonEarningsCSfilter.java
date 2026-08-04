@@ -3,6 +3,8 @@ package simpaths.data.filters;
 import microsim.statistics.ICollectionFilter;
 import simpaths.model.Person;
 
+@Deprecated(forRemoval = true)
+@SuppressWarnings("removal")
 public class ValidPersonEarningsCSfilter implements ICollectionFilter{	
 	
 	public boolean isFiltered(Object object) {

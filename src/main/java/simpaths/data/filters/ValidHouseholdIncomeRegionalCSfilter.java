@@ -4,6 +4,8 @@ import simpaths.model.BenefitUnit;
 import microsim.statistics.ICollectionFilter;
 import simpaths.model.enums.Region;
 
+@Deprecated(forRemoval = true)
+@SuppressWarnings("removal")
 public class ValidHouseholdIncomeRegionalCSfilter implements ICollectionFilter{
 	
 	private Region demRgn;

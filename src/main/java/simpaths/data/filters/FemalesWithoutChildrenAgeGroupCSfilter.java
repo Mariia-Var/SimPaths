@@ -5,6 +5,8 @@ import simpaths.model.Person;
 import simpaths.model.enums.Gender;
 import simpaths.model.enums.Indicator;
 
+@Deprecated(forRemoval = true)
+@SuppressWarnings("removal")
 public class FemalesWithoutChildrenAgeGroupCSfilter implements ICollectionFilter{
 	
 	private int ageFrom;

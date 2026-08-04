@@ -35,6 +35,11 @@ public class Filters {
         return p -> p.getDemAge() < age;
     }
 
+    /// Filter persons younger than given age, that age included.
+    public static Predicate<Person> youngerOr(int age) {
+        return p -> p.getDemAge() <= age;
+    }
+
     /// Filter given age range (both ends are included).
     public static Predicate<Person> ageRange(int from, int to) {
         return p -> p.getDemAge() >= from && p.getDemAge() <= to;
@@ -62,13 +67,33 @@ public class Filters {
         return p -> p.getEduHighestC4() == education;
     }
 
-    /// Filter employed persons.
-    public static Predicate<Person> employed() {
-        return p -> p.getLabC4() == Les_c4.EmployedOrSelfEmployed;
+    /// Filter by employment status.
+    public static Predicate<Person> employment(Les_c4 status) {
+        return p -> p.getLabC4() == status;
     }
 
     /// Filter by employment history.
     public static Predicate<Person> employmentHistory(Les_c4 employmentLag1) {
         return p -> p.getLabC4L1() == employmentLag1;
+    }
+
+    /// Filter persons without a partner.
+    public static Predicate<Person> single() {
+        return p -> p.getPartner() == null;
+    }
+
+    /// Filter persons with a non-negative disposable income.
+    public static Predicate<Person> validIncome() {
+        return p -> p.getBenefitUnit().getEquivalisedDisposableIncomeYearly() >= 0.0;
+    }
+
+    /// Filter persons by minimum yearly gross earnings (included).
+    public static Predicate<Person> grossEarningsYearlyAtLeast(double value) {
+        return p -> p.getGrossEarningsYearly() >= value;
+    }
+
+    /// Filter persons with long term disability.
+    public static Predicate<Person> hasLongTermDisability() {
+        return p -> p.getHealthDsblLongtermFlag() == Indicator.True;
     }
 }

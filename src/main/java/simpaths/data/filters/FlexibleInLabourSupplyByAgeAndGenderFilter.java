@@ -7,6 +7,8 @@ import simpaths.model.enums.Indicator;
 import simpaths.model.enums.Les_c4;
 import microsim.statistics.ICollectionFilter;
 
+@Deprecated(forRemoval = true)
+@SuppressWarnings("removal")
 public class FlexibleInLabourSupplyByAgeAndGenderFilter implements ICollectionFilter {
 
     private int ageFrom;

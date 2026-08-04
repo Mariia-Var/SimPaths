@@ -6,6 +6,8 @@ import microsim.statistics.ICollectionFilter;
 import java.util.function.Predicate;
 
 /// Filter women aged 20 to 65, with at least one child in the given age range.
+@Deprecated(forRemoval = true)
+@SuppressWarnings("removal")
 public class FemalesWithChildrenByChildAgeCSfilter implements ICollectionFilter {
 
     private Predicate<Person> checks;

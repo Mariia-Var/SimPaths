@@ -11,6 +11,8 @@ This filter is like an age group filter, but only selects individuals who are no
 
  */
 
+@Deprecated(forRemoval = true)
+@SuppressWarnings("removal")
 public class ValidEducationAgeGroupCSfilter implements ICollectionFilter{
 
 	private final int ageFrom;

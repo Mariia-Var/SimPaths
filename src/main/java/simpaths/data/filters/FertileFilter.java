@@ -7,6 +7,7 @@ import simpaths.model.Person;
 import simpaths.model.enums.Gender;
 import simpaths.model.enums.Region;
 
+@Deprecated(forRemoval = true)
 public class FertileFilter<T extends Person> implements Predicate<T> {
 	
 	private Region demRgn = null;

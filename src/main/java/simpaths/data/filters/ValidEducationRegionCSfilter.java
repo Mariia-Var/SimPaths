@@ -11,6 +11,8 @@ For individuals who have completed education and had education level assigned (i
 
  */
 
+@Deprecated(forRemoval = true)
+@SuppressWarnings("removal")
 public class ValidEducationRegionCSfilter implements ICollectionFilter{
 
 	private Region demRgn;

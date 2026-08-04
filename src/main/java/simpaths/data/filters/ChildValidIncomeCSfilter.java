@@ -4,6 +4,8 @@ import simpaths.data.Parameters;
 import microsim.statistics.ICollectionFilter;
 import simpaths.model.Person;
 
+@Deprecated(forRemoval = true)
+@SuppressWarnings("removal")
 public class ChildValidIncomeCSfilter implements ICollectionFilter{
 	
 	public boolean isFiltered(Object object) {

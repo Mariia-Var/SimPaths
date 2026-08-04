@@ -5,6 +5,8 @@ import simpaths.model.BenefitUnit;
 import simpaths.model.enums.Occupancy;
 import microsim.statistics.ICollectionFilter;
 
+@Deprecated(forRemoval = true)
+@SuppressWarnings("removal")
 public class ValidHomeownersCSfilter implements ICollectionFilter {
 
 	public boolean isFiltered(Object object) {

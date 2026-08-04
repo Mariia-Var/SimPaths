@@ -5,6 +5,8 @@ import simpaths.model.enums.Gender;
 import simpaths.model.enums.Les_c4;
 import microsim.statistics.ICollectionFilter;
 
+@Deprecated(forRemoval = true)
+@SuppressWarnings("removal")
 public class GenderWorkingCSfilter implements ICollectionFilter{
 
 	private Gender demSex;

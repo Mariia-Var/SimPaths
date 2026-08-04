@@ -6,6 +6,8 @@ import simpaths.model.Person;
 import simpaths.model.enums.Education;
 import simpaths.model.enums.Region;
 
+@Deprecated(forRemoval = true)
+@SuppressWarnings("removal")
 public class RegionEducationWorkingCSfilter implements ICollectionFilter{
 	
 	private Region demRgn;
