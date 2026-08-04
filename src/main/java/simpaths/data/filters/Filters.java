@@ -2,9 +2,13 @@ package simpaths.data.filters;
 
 import java.util.function.Predicate;
 
+import simpaths.data.Parameters;
 import simpaths.model.Person;
+import simpaths.model.enums.Education;
 import simpaths.model.enums.Gender;
 import simpaths.model.enums.Indicator;
+import simpaths.model.enums.Les_c4;
+import simpaths.model.enums.Region;
 
 /// Collection of [Person] filters.
 public class Filters {
@@ -40,5 +44,31 @@ public class Filters {
     /// ends included).
     public static Predicate<Person> hasChildInAgeRange(int from, int to) {
         return p -> p.getBenefitUnit().getIndicatorChildren(from, to) == Indicator.True;
+    }
+
+    /// Filter children (i.e. strictly younger than
+    /// [Parameters#AGE_TO_BECOME_RESPONSIBLE]).
+    public static Predicate<Person> child() {
+        return youngerStrict(Parameters.AGE_TO_BECOME_RESPONSIBLE);
+    }
+
+    /// Filter by region.
+    public static Predicate<Person> region(Region region) {
+        return p -> p.getRegion() == region;
+    }
+
+    /// Filter by education.
+    public static Predicate<Person> education(Education education) {
+        return p -> p.getEduHighestC4() == education;
+    }
+
+    /// Filter employed persons.
+    public static Predicate<Person> employed() {
+        return p -> p.getLabC4() == Les_c4.EmployedOrSelfEmployed;
+    }
+
+    /// Filter by employment history.
+    public static Predicate<Person> employmentHistory(Les_c4 employmentLag1) {
+        return p -> p.getLabC4L1() == employmentLag1;
     }
 }

@@ -5,6 +5,8 @@ import simpaths.model.Person;
 import simpaths.model.enums.Gender;
 import simpaths.model.enums.Region;
 
+@Deprecated(forRemoval = true)
+@SuppressWarnings("removal")
 public class FemaleRegionCSfilter implements ICollectionFilter{
 	
 	private Region demRgn;

@@ -5,6 +5,8 @@ import simpaths.model.Person;
 import simpaths.model.enums.Gender;
 import simpaths.model.enums.Les_c4;
 
+@Deprecated(forRemoval = true)
+@SuppressWarnings("removal")
 public class EmploymentHistoryFilter implements ICollectionFilter {
 
     private Les_c4 employmentLag1;

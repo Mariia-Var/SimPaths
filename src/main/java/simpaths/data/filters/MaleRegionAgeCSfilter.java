@@ -5,6 +5,8 @@ import simpaths.model.enums.Gender;
 import simpaths.model.enums.Region;
 import microsim.statistics.ICollectionFilter;
 
+@Deprecated(forRemoval = true)
+@SuppressWarnings("removal")
 public class MaleRegionAgeCSfilter implements ICollectionFilter{
 
 	private Region demRgn;

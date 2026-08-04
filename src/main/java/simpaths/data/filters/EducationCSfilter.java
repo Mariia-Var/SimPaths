@@ -4,6 +4,8 @@ import microsim.statistics.ICollectionFilter;
 import simpaths.model.Person;
 import simpaths.model.enums.Education;
 
+@Deprecated(forRemoval = true)
+@SuppressWarnings("removal")
 public class EducationCSfilter implements ICollectionFilter{
 	
 	private Education education;
