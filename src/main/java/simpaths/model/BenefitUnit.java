@@ -1881,20 +1881,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             double tmpHHYpnbihs_dv = (ypnbihsMaleMonthly + ypnbihsFemaleMonthly) / equivalisedWeight; //Equivalised
             setI_yNonBenHhGrossAsinh(asinh(tmpHHYpnbihs_dv)); //Asinh transformation of HH non-benefit income
 
-            //Based on the percentiles calculated by the collector, assign household to one of the quintiles of (equivalised) income distribution
-            if(collector.getStats() != null) { //Collector only gets initialised when simulation starts running
-                if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P20()) {
-                    yHhQuintilesMonthC5 = Ydses_c5.Q1;
-                } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P40()) {
-                    yHhQuintilesMonthC5 = Ydses_c5.Q2;
-                } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P60()) {
-                    yHhQuintilesMonthC5 = Ydses_c5.Q3;
-                } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P80()) {
-                    yHhQuintilesMonthC5 = Ydses_c5.Q4;
-                } else {
-                    yHhQuintilesMonthC5 = Ydses_c5.Q5;
-                }
-            }
+            updateIncomeQuintile();
         } else if(getOccupancy().equals(Occupancy.Single_Male)) {
 
             if (male != null) {
@@ -1909,19 +1896,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                 double tmpHHYpnbihs_dv = ypnbihsMaleMonthly / equivalisedWeight; //Equivalised
                 setI_yNonBenHhGrossAsinh(asinh(tmpHHYpnbihs_dv)); //Asinh transformation of HH non-benefit income
 
-                if(collector.getStats() != null) { //Collector only gets initialised when simulation starts running
-                    if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P20()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q1;
-                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P40()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q2;
-                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P60()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q3;
-                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P80()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q4;
-                    } else {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q5;
-                    }
-                }
+                updateIncomeQuintile();
             } else
                 throw new RuntimeException("single male unit does not include a single male");
         } else {
@@ -1939,22 +1914,25 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                 double tmpHHYpnbihs_dv = ypnbihsFemaleMonthly / equivalisedWeight; //Equivalised
                 setI_yNonBenHhGrossAsinh(asinh(tmpHHYpnbihs_dv)); //Asinh transformation of HH non-benefit income
 
-                if(collector.getStats() != null) { //Collector only gets initialised when simulation starts running
-
-                    if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P20()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q1;
-                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P40()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q2;
-                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P60()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q3;
-                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P80()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q4;
-                    } else {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q5;
-                    }
-                }
+                updateIncomeQuintile();
             } else
                 throw new RuntimeException("single female unit does not include a single male");
+        }
+    }
+
+    public void updateIncomeQuintile() {
+        if (collector.getStats() != null) {
+            if (getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P20()) {
+                yHhQuintilesMonthC5 = Ydses_c5.Q1;
+            } else if (getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P40()) {
+                yHhQuintilesMonthC5 = Ydses_c5.Q2;
+            } else if (getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P60()) {
+                yHhQuintilesMonthC5 = Ydses_c5.Q3;
+            } else if (getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P80()) {
+                yHhQuintilesMonthC5 = Ydses_c5.Q4;
+            } else {
+                yHhQuintilesMonthC5 = Ydses_c5.Q5;
+            }
         }
     }
 
