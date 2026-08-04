@@ -1881,7 +1881,6 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             double tmpHHYpnbihs_dv = (ypnbihsMaleMonthly + ypnbihsFemaleMonthly) / equivalisedWeight; //Equivalised
             setI_yNonBenHhGrossAsinh(asinh(tmpHHYpnbihs_dv)); //Asinh transformation of HH non-benefit income
 
-            updateIncomeQuintile();
         } else if(getOccupancy().equals(Occupancy.Single_Male)) {
 
             if (male != null) {
@@ -1896,7 +1895,6 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                 double tmpHHYpnbihs_dv = ypnbihsMaleMonthly / equivalisedWeight; //Equivalised
                 setI_yNonBenHhGrossAsinh(asinh(tmpHHYpnbihs_dv)); //Asinh transformation of HH non-benefit income
 
-                updateIncomeQuintile();
             } else
                 throw new RuntimeException("single male unit does not include a single male");
         } else {
@@ -1914,7 +1912,6 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                 double tmpHHYpnbihs_dv = ypnbihsFemaleMonthly / equivalisedWeight; //Equivalised
                 setI_yNonBenHhGrossAsinh(asinh(tmpHHYpnbihs_dv)); //Asinh transformation of HH non-benefit income
 
-                updateIncomeQuintile();
             } else
                 throw new RuntimeException("single female unit does not include a single male");
         }

@@ -428,6 +428,8 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
         private double p80HouseholdsGrossIncome;
 
+        private boolean initialDistributionCalculated;
+
         public void update() {
 
             //Ydses_c5
@@ -448,11 +450,12 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
             stats.setYHhQuintilesC5P60(p60HouseholdsGrossIncome);
             stats.setYHhQuintilesC5P80(p80HouseholdsGrossIncome);
 
-            if (model.getYear() > model.getStartYear()) {
+            if (initialDistributionCalculated) {
                 for (BenefitUnit benefitUnit : model.getBenefitUnits()) {
                     benefitUnit.updateIncomeQuintile();
                 }
             }
+            initialDistributionCalculated = true;
 
         }
 
