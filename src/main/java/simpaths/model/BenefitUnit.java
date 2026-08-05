@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 
 import microsim.data.db.PanelEntityKey;
 import org.hibernate.annotations.Fetch;
+import simpaths.data.filters.Filters;
 import simpaths.data.ManagerRegressions;
 import simpaths.data.MultiValEvent;
 import simpaths.model.annotations.Lag;
@@ -4130,16 +4131,13 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         }
         return nChildren;
     }
+
+    /// Whether the Person has children in the given age range (both ends included).
     public Indicator getIndicatorChildren(int minAge, int maxAge) {
-        Indicator flag = Indicator.False;
-        for (int aa=minAge; aa<=maxAge; aa++) {
-            if (getNumberChildrenByAge(aa) > 0) {
-                flag = Indicator.True;
-                break;
-            }
-        }
-        return flag;
+        var found = this.members.stream().anyMatch(Filters.ageRange(minAge, maxAge));
+        return found ? Indicator.True : Indicator.False;
     }
+
     public Indicator getIndicatorChildren0to3() {
 
         return getIndicatorChildren(0,3);
