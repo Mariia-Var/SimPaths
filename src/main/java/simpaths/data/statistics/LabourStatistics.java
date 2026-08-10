@@ -1,5 +1,8 @@
 package simpaths.data.statistics;
 
+import java.util.Collection;
+import java.util.function.Supplier;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Id;
 import jakarta.persistence.Entity;
@@ -132,17 +135,19 @@ public class LabourStatistics {
         this.labWorkPartTime55to74Share = labWorkPartTime55to74Share;
     }
 
-    public void update(SimPathsModel model, AgeBandAggregates agg) {
-
+    /// Update the statistics with an arbitrary [Supplier].
+    /// This is intended for testing.
+    void updateWithSupplier(Supplier<Collection<Person>> supplier, AgeBandAggregates agg) {
+        var persons = supplier.get();
         EmploymentHistoryFilter employmentHistoryEmployed = new EmploymentHistoryFilter(Les_c4.EmployedOrSelfEmployed);
         EmploymentHistoryFilter employmentHistoryUnemployed = new EmploymentHistoryFilter(Les_c4.NotEmployed);
 
 
         // Entering employment transition rate
-        CrossSection.Integer personsNotEmpToEmp = new CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
+        CrossSection.Integer personsNotEmpToEmp = new CrossSection.Integer(persons, Person.class, "getEmployed", true);
         personsNotEmpToEmp.setFilter(employmentHistoryUnemployed);
         // Entering not employed transition rate
-        CrossSection.Integer personsEmpToNotEmp = new CrossSection.Integer(model.getPersons(), Person.class, "getNonwork", true);
+        CrossSection.Integer personsEmpToNotEmp = new CrossSection.Integer(persons, Person.class, "getNonwork", true);
         personsEmpToNotEmp.setFilter(employmentHistoryEmployed);
 
 
@@ -157,8 +162,8 @@ public class LabourStatistics {
         // Employment and unemployment, working age adults 16-64
         AgeGroupCSfilter ageGroupCSfilter = new AgeGroupCSfilter(16, 64);
 
-        CrossSection.Integer personsEmployed = new CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
-        CrossSection.Integer personsUnemployed = new CrossSection.Integer(model.getPersons(), Person.class, "getNonwork", true);
+        CrossSection.Integer personsEmployed = new CrossSection.Integer(persons, Person.class, "getEmployed", true);
+        CrossSection.Integer personsUnemployed = new CrossSection.Integer(persons, Person.class, "getNonwork", true);
 
         personsEmployed.setFilter(ageGroupCSfilter);
         personsUnemployed.setFilter(ageGroupCSfilter);
@@ -179,5 +184,9 @@ public class LabourStatistics {
         setWorkParttime18to29(agg.workPT[0]);
         setWorkParttime30to54(agg.workPT[1]);
         setWorkParttime55to74(agg.workPT[2]);
+    }
+
+    public void update(SimPathsModel model, AgeBandAggregates agg) {
+        this.updateWithSupplier(model::getPersons, agg);
     }
 }
