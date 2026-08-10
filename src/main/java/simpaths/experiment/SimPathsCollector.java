@@ -8,30 +8,32 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import simpaths.data.filters.FlexibleInLabourSupplyFilter;
-import simpaths.data.statistics.LabourStatistics;
+import simpaths.data.filters.Filters;
 import simpaths.data.statistics.AgeBandAggregates;
+import simpaths.data.statistics.LabourStatistics;
 import simpaths.data.statistics.HealthStatistics;
 import simpaths.data.statistics.WellbeingByGender;
 import simpaths.model.BenefitUnit;
 import simpaths.model.SimPathsModel;
+import simpaths.model.enums.Les_c4;
 import simpaths.model.enums.Quintiles;
-import microsim.statistics.Series;
 import microsim.statistics.functions.*;
 // import plug-in packages
 import org.apache.commons.math3.util.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import microsim.FilteredCollection;
 // import JAS-mine packages
 import microsim.annotation.GUIparameter;
 import microsim.data.DataExport;
+import microsim.dev.statistics.CrossSection;
+import microsim.dev.statistics.Stats;
 import microsim.engine.AbstractSimulationCollectorManager;
 import microsim.engine.SimulationEngine;
 import microsim.engine.SimulationManager;
 import microsim.event.EventListener;
 import microsim.event.SingleTargetEvent;
-import microsim.statistics.CrossSection;
 import microsim.statistics.IDoubleSource;
 // import LABOURsim packages
 import simpaths.data.Parameters;
@@ -40,8 +42,6 @@ import simpaths.data.statistics.WealthIncomeStatistics;
 import simpaths.data.statistics.DemographicStatistics;
 import simpaths.model.Person;
 import simpaths.model.enums.Region;
-
-import static simpaths.model.Person.DoublesVariables.GrossLabourIncomeMonthly;
 
 
 /**
@@ -426,21 +426,23 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
     private class GrossLabourIncome {
 
         final SimPathsModel model = (SimPathsModel) getManager();
-        private CrossSection.Double personsGrossLabourIncomesCS;
-        private PercentileArrayFunction percentileFunctionGrossLabourIncomes;
 
         public void update() {
-            personsGrossLabourIncomesCS = new CrossSection.Double(model.getPersons(), GrossLabourIncomeMonthly); // Retrieve Gross Labour Income monthly value using native access through IDoubleSource
-            FlexibleInLabourSupplyFilter flexibleInLabourSupplyFilter = new FlexibleInLabourSupplyFilter();
-            personsGrossLabourIncomesCS.setFilter(flexibleInLabourSupplyFilter); // Filter only those who could work for calculation of quintiles of gross labour income
+            var toExclude = Filters
+                    .employment(Les_c4.Student)
+                    .or(Filters.employment(Les_c4.Retired))
+                    .or(Filters.hasLongTermDisability());
+            var flexibleLabourFilter = Filters
+                    .ageRange(Parameters.MIN_AGE_FLEXIBLE_LABOUR_SUPPLY, Parameters.MAX_AGE_FLEXIBLE_LABOUR_SUPPLY)
+                    .and(toExclude.negate());
+            var filtered = new FilteredCollection<>(model::getPersons, flexibleLabourFilter);
+            var income_cs = new CrossSection<>(filtered, Person::getCovidYLabGross);
+            var income_stats = new Stats(income_cs.get()).descrStats();
 
-            percentileFunctionGrossLabourIncomes = new PercentileArrayFunction(personsGrossLabourIncomesCS);
-            percentileFunctionGrossLabourIncomes.updateSource();
-
-            wealthIncomeStats.setYLabP20(percentileFunctionGrossLabourIncomes.getDoubleValue(PercentileArrayFunction.Variables.P20));
-            wealthIncomeStats.setYLabP40(percentileFunctionGrossLabourIncomes.getDoubleValue(PercentileArrayFunction.Variables.P40));
-            wealthIncomeStats.setYLabP60(percentileFunctionGrossLabourIncomes.getDoubleValue(PercentileArrayFunction.Variables.P60));
-            wealthIncomeStats.setYLabP80(percentileFunctionGrossLabourIncomes.getDoubleValue(PercentileArrayFunction.Variables.P80));
+            wealthIncomeStats.setYLabP20(income_stats.getPercentile(20.0));
+            wealthIncomeStats.setYLabP40(income_stats.getPercentile(40.0));
+            wealthIncomeStats.setYLabP60(income_stats.getPercentile(60.0));
+            wealthIncomeStats.setYLabP80(income_stats.getPercentile(80.0));
 
             for (Person person : model.getPersons()) {
                 double covidModuleGrossLabourIncomeBaseline = person.getCovidYLabGross();
@@ -465,45 +467,21 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
      *This method calculates quintiles of household gross income
      *
      */
-    private class Ydses_c5 implements IDoubleSource {
+    private class Ydses_c5 {
 
         final SimPathsModel model = (SimPathsModel) getManager();
-
-        private CrossSection.Double householdsGrossIncomesCS;
-
-        private PercentileArrayFunction percentileFunctionHouseholdsGrossIncomes;
-
-        private double p50HouseholdsGrossIncome;
-
-        private double p20HouseholdsGrossIncome;
-
-        private double p40HouseholdsGrossIncome;
-
-        private double p60HouseholdsGrossIncome;
-
-        private double p80HouseholdsGrossIncome;
 
         private boolean initialDistributionCalculated;
 
         public void update() {
-
             //Ydses_c5
-            householdsGrossIncomesCS = new CrossSection.Double(model.getBenefitUnits(), BenefitUnit.class, "getI_yNonBenHhGrossAsinhNoNull", true); //Populate CS
+            var hh_income_cs = new CrossSection<>(model::getBenefitUnits, BenefitUnit::getI_yNonBenHhGrossAsinhNoNull);
+            var hh_income_stats = new Stats(hh_income_cs.get()).descrStats();
 
-            percentileFunctionHouseholdsGrossIncomes = new PercentileArrayFunction(householdsGrossIncomesCS); //Get p50
-            percentileFunctionHouseholdsGrossIncomes.updateSource();
-            p50HouseholdsGrossIncome = percentileFunctionHouseholdsGrossIncomes.getDoubleValue(PercentileArrayFunction.Variables.P50); //Retrieve P50 value
-            p20HouseholdsGrossIncome = percentileFunctionHouseholdsGrossIncomes.getDoubleValue(PercentileArrayFunction.Variables.P20);
-            p40HouseholdsGrossIncome = percentileFunctionHouseholdsGrossIncomes.getDoubleValue(PercentileArrayFunction.Variables.P40);
-            p60HouseholdsGrossIncome = percentileFunctionHouseholdsGrossIncomes.getDoubleValue(PercentileArrayFunction.Variables.P60);
-            p80HouseholdsGrossIncome = percentileFunctionHouseholdsGrossIncomes.getDoubleValue(PercentileArrayFunction.Variables.P80);
-//			System.out.println("P50 value from the percentile function: " + p50HouseholdsGrossIncome + " P20: " + p20HouseholdsGrossIncome + " P40: " + p40HouseholdsGrossIncome +
-//								" P60: " + p60HouseholdsGrossIncome + " P80: " + p80HouseholdsGrossIncome);
-
-            wealthIncomeStats.setYHhQuintilesC5P20(p20HouseholdsGrossIncome);
-            wealthIncomeStats.setYHhQuintilesC5P40(p40HouseholdsGrossIncome);
-            wealthIncomeStats.setYHhQuintilesC5P60(p60HouseholdsGrossIncome);
-            wealthIncomeStats.setYHhQuintilesC5P80(p80HouseholdsGrossIncome);
+            wealthIncomeStats.setYHhQuintilesC5P20(hh_income_stats.getPercentile(20.0));
+            wealthIncomeStats.setYHhQuintilesC5P40(hh_income_stats.getPercentile(40.0));
+            wealthIncomeStats.setYHhQuintilesC5P60(hh_income_stats.getPercentile(60.0));
+            wealthIncomeStats.setYHhQuintilesC5P80(hh_income_stats.getPercentile(80.0));
 
             if (initialDistributionCalculated) {
                 for (BenefitUnit benefitUnit : model.getBenefitUnits()) {
@@ -511,37 +489,16 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
                 }
             }
             initialDistributionCalculated = true;
-
         }
-
-
-        @Override
-        public double getDoubleValue(Enum<?> variableID) {
-            // TODO Auto-generated method stub
-            return 0;
-        }
-
     }
 
-    private class EDI implements IDoubleSource {
+    private class EDI {
         final SimPathsModel model = (SimPathsModel) getManager();
-        private CrossSection.Double householdsEDICS;
-        private PercentileArrayFunction percentileFunctionHouseholdsEDI;
-        private double p50HouseholdsEDI;
 
         public void update() {
-            householdsEDICS = new CrossSection.Double(model.getBenefitUnits(), BenefitUnit.class, "getEquivalisedDisposableIncomeYearly", true);
-            percentileFunctionHouseholdsEDI = new PercentileArrayFunction(householdsEDICS);
-            percentileFunctionHouseholdsEDI.updateSource();
-            p50HouseholdsEDI = percentileFunctionHouseholdsEDI.getDoubleValue(PercentileArrayFunction.Variables.P50);
-            wealthIncomeStats.setEdi_p50(p50HouseholdsEDI);
-//			System.out.println("Median EDI (collector) "+p50HouseholdsEDI);
-        }
-
-        @Override
-        public double getDoubleValue(Enum<?> variableID) {
-            // TODO Auto-generated method stub
-            return 0;
+            var hh_edi_cs = new CrossSection<>(model::getBenefitUnits, BenefitUnit::getEquivalisedDisposableIncomeYearly);
+            var hh_edi_stats = new Stats(hh_edi_cs.get()).descrStats();
+            wealthIncomeStats.setEdi_p50(hh_edi_stats.getPercentile(50.0));
         }
     }
 
