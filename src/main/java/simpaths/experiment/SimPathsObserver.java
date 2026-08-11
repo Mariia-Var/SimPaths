@@ -166,8 +166,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 
 	private Weighted_CrossSection.Double wagesCS;
 	
-//	private Weighted_CrossSection.Double wagesAtRiskOfWorkCS;
-		
 	Set<JInternalFrame> updateChartSet;
 
 	Set<JComponent> tabSet;
@@ -218,9 +216,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			//Renderers - these allow different graphs to use different look for the series displayed
 			XYLineAndShapeRenderer studentAgeRenderer = new XYLineAndShapeRenderer(); //Set up a new renderer to define series colors for this chart
 
-			Stroke dashed =  new BasicStroke(1.0f,BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, new float[] {10.0f}, 0.0f);
-
-
 			//Filters - can be shared amongst different Cross Sections
 			AgeGroupCSfilter age0Filter = new AgeGroupCSfilter(0, 0);
 			AgeGroupCSfilter age2_10Filter = new AgeGroupCSfilter(2, 10);
@@ -237,19 +232,15 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			AgeGroupCSfilter age60_79Filter = new AgeGroupCSfilter(60, 79);
 			AgeGroupCSfilter age80_100Filter = new AgeGroupCSfilter(80, 100);
 
-			AgeGroupCSfilter age10_19Filter = new AgeGroupCSfilter(10, 19);
 			AgeGroupCSfilter age20_29Filter = new AgeGroupCSfilter(20,29);
 			AgeGroupCSfilter age30_39Filter = new AgeGroupCSfilter(30,39);			
 			AgeGroupCSfilter age40_49Filter = new AgeGroupCSfilter(40,49);
 			AgeGroupCSfilter age50_59Filter = new AgeGroupCSfilter(50,59);
-			AgeGroupCSfilter age60_69Filter = new AgeGroupCSfilter(60, 69);
-			AgeGroupCSfilter age70_80Filter = new AgeGroupCSfilter(70, 80);
 
 			AgeGroupCSfilter age0_49Filter = new AgeGroupCSfilter(0, 49);
 			AgeGroupCSfilter age50_74Filter = new AgeGroupCSfilter(50, 74);
 			AgeGroupCSfilter age75_100Filter = new AgeGroupCSfilter(75, 100);
 
-			ValidEducationAgeGroupCSfilter validEdAge15_19Filter = new ValidEducationAgeGroupCSfilter(15, 19);
 			ValidEducationAgeGroupCSfilter validEdAge20_29Filter = new ValidEducationAgeGroupCSfilter(20,29);
 			ValidEducationAgeGroupCSfilter validEdAge30_39Filter = new ValidEducationAgeGroupCSfilter(30,39);
 			ValidEducationAgeGroupCSfilter validEdAge40_49Filter = new ValidEducationAgeGroupCSfilter(40,49);
