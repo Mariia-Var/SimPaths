@@ -162,8 +162,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 
 	private LinkedHashSet<AgeGroupCSfilter> healthMentalAgeGroupFilterSet;
 
-	private LinkedHashSet<FemalesWithChildrenByChildAgeCSfilter> childrenByAgeFilterSet;
-
 	private ScatterplotSimulationPlotterRefreshable convergenceElasticitiesPlotter;
 
 	private Weighted_CrossSection.Double wagesCS;
@@ -262,15 +260,10 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 
 
 			decadeAgeGroupFilterSet = new LinkedHashSet<AgeGroupCSfilter>();
-//			decadeAgeGroupFilterSet.add(age0_18Filter);
-//			decadeAgeGroupFilterSet.add(age15_19Filter);
-//			decadeAgeGroupFilterSet.add(age10_19Filter);
 			decadeAgeGroupFilterSet.add(age20_29Filter);
 			decadeAgeGroupFilterSet.add(age30_39Filter);
 			decadeAgeGroupFilterSet.add(age40_49Filter);
 			decadeAgeGroupFilterSet.add(age50_59Filter);
-//			decadeAgeGroupFilterSet.add(age60_69Filter);
-//			decadeAgeGroupFilterSet.add(age70_80Filter);
 
 
 			decadeValidEducationAgeGroupFilterSet = new LinkedHashSet<ValidEducationAgeGroupCSfilter>();
@@ -292,8 +285,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 
 			
 			
-//			timeSeriesPlotSet = new LinkedHashSet<TimeSeriesSimulationPlotter>();
-//			histogramPlotSet = new LinkedHashSet<Weighted_HistogramSimulationPlotter>();
 			updateChartSet = new LinkedHashSet<JInternalFrame>();	//Set of all charts needed to be scheduled for updating (NOT the convergence plot!)
 			tabSet = new LinkedHashSet<JComponent>();		//Set of all JInternalFrames each having a tab.  Each tab frame will potentially contain more than one chart each.
 			labourMarketPlots = new LinkedHashMap<Education, ScatterplotSimulationPlotterRefreshable>();
@@ -320,37 +311,7 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			//	INTER-TIMESTEP CHARTS FOR CONVERGENCE PROCESS - those that update potentially several times in between 'time-steps' (scheduled events)
 			//
 			//----------------------------------------------------------------------------------------------------------------------------------------
-			
 		    
-//			//POTENTIAL EARNINGS
-//	    	potentialEarningsPlotter = new IndividualBarSimulationPlotter("Average Potential Earnings (per hour) (includes non-workers)", "currency (check whether national or euro!)");
-//			for(Region region: Parameters.getCountryRegions()) {
-//	    		for(Education edu: Education.values()) {
-//					RegionEducationCSfilter regionEduFilter = new RegionEducationCSfilter(region, edu);
-//					wagesCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getPotentialHourlyEarnings", true);
-//					wagesCS.setFilter(regionEduFilter);
-//					wagesCS.setCheckingTime(false);					//Need to set to false to enable updating during convergence process whilst the simulation time is still the same
-//					Weighted_MeanArrayFunction meanWages = new Weighted_MeanArrayFunction(wagesCS);
-//					meanWages.setCheckingTime(false);							
-//					potentialEarningsPlotter.addSources("(" + region.getName() + ", " + edu.toString() + ")", meanWages, colorOfEducation(edu));
-//				}
-//			}
-//			GuiUtils.addWindow(potentialEarningsPlotter, 500, 200, 100 * Parameters.getCountryRegions().size(), 400);
-//
-//	    	potentialEarningsAtRiskOfWorkPlotter = new IndividualBarSimulationPlotter("Average Potential Earnings (per hour) (excludes non-workers)", "currency (check whether national or euro!)");
-//			for(Region region: Parameters.getCountryRegions()) {
-//	    		for(Education edu: Education.values()) {
-//					RegionEducationAtRiskOfWorkCSfilter regionEduAtRiskOfWorkFilter = new RegionEducationAtRiskOfWorkCSfilter(region, edu);
-//					wagesAtRiskOfWorkCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getPotentialHourlyEarnings", true);
-//					wagesAtRiskOfWorkCS.setFilter(regionEduAtRiskOfWorkFilter);
-//					wagesAtRiskOfWorkCS.setCheckingTime(false);					//Need to set to false to enable updating during convergence process whilst the simulation time is still the same
-//					Weighted_MeanArrayFunction meanWagesAtRiskOfWork = new Weighted_MeanArrayFunction(wagesAtRiskOfWorkCS);
-//					meanWagesAtRiskOfWork.setCheckingTime(false);							
-//					potentialEarningsAtRiskOfWorkPlotter.addSources("(" + region.getName() + ", " + edu.toString() + ")", meanWagesAtRiskOfWork, colorOfEducation(edu));
-//				}
-//			}
-//			GuiUtils.addWindow(potentialEarningsAtRiskOfWorkPlotter, 1000, 200, 100 * Parameters.getCountryRegions().size(), 400);
-
 			//POTENTIAL EARNINGS & LABOUR MARKET CONVERGENCE PLOTS
 			int width = 400;
 			int height = 300;
@@ -391,19 +352,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			}
 			
 			
-	    		    	
-	    	//CREATE SCROLLABLE FRAME IN WHICH TO STORE ALL CONVERGENCE PLOTS FOR TIDY GUI
-//			if(!floatingConvergencePlots) {
-//							    
-//				tabSet.add(createScrollPaneFromPlots(convergencePlots, "Labour Market Convergence", 3));
-//				JInternalFrame convergenceFrame = new JInternalFrame("Labour Market Convergence Plots");				
-//		    	convergenceFrame.add(createScrollPaneFromPlots(convergencePlots, "Labour Market Convergence Plots", 3));				
-//				convergenceFrame.setResizable(true);
-//				convergenceFrame.setMaximizable(true);
-//				GuiUtils.addWindow(convergenceFrame, 500, 150, 1200, 600);
-//				
-//			}
-
 			//This is the color palette used by graphs in the simulation
 			ArrayList<Color> colorArrayList = new ArrayList<>();
 			colorArrayList.add(new Color(162,56,255));
@@ -448,15 +396,11 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 				}
 
 				TimeSeriesSimulationPlotter populationPlotter = new TimeSeriesSimulationPlotter("Population Statistics", "");
-			//	populationPlotter.addSeries("num of simulated Persons", model, "getNumberOfSimulatedPersons", true);
-			//	populationPlotter.addSeries("num of simulated Households", model, "getNumberOfSimulatedHouseholds", true);
 				if (showAdditionalCharts) {
-			//		populationPlotter.addSeries("Official population projection", model, "getPopulationProjection", true);
 					populationPlotter.addSeries("(Scaled) Number of Households, occupants below 80 yo", model, "getWeightedNumberOfHouseholds80minus", true);
 				}
 
 				populationPlotter.addSeries("(Scaled) Population Size", model, "getWeightedNumberOfPersons", true);
-			//	populationPlotter.addSeries("(Scaled) Number of Households", model, "getWeightedNumberOfHouseholds", true);
 
 
 				populationPlotter.setName("Population statistics");
@@ -513,14 +457,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 					populationAgePlotter.addSeries("40 - 59 official projection", validator, Validator.DoublesVariables.populationProjectionsByAge_40_59,  new Color (254, 0, 0), true);
 					populationAgePlotter.addSeries("60 - 79 official projection", validator, Validator.DoublesVariables.populationProjectionsByAge_60_79,  new Color (198, 0, 190), true);
 					populationAgePlotter.addSeries("80 - 100 official projection", validator, Validator.DoublesVariables.populationProjectionsByAge_80_100, new Color (175, 0, 0), true);
-//					populationAgePlotter.addSeries("0 - 18 official projection", model, "getPopulationProjectionByAge0_18", true);
-//					populationAgePlotter.addSeries("0 official projection", model, "getPopulationProjectionByAge0", true);
-//					populationAgePlotter.addSeries("2 - 10 official projection", model, "getPopulationProjectionByAge2_10", true);
-//					populationAgePlotter.addSeries("19 - 25 official projection", model, "getPopulationProjectionByAge19_25", true);
-//					populationAgePlotter.addSeries("40 - 59 official projection", model, "getPopulationProjectionByAge40_59", true);
-//					populationAgePlotter.addSeries("60 - 79 official projection", model, "getPopulationProjectionByAge60_79", true);
-//					populationAgePlotter.addSeries("80 - 100 official projection", model, "getPopulationProjectionByAge80_100", true);
-
 				}
 
 
@@ -547,7 +483,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 				activityStatusPlotter.addSeries("Employed validation", validator, Validator.DoublesVariables.activityStatus_Employed, colorArrayList.get(0), true);
 				activityStatusPlotter.addSeries("Not Employed / Retired validation", validator, Validator.DoublesVariables.activityStatus_NotEmployedRetired, colorArrayList.get(1), true);
 				activityStatusPlotter.addSeries("Student validation", validator, Validator.DoublesVariables.activityStatus_Student, colorArrayList.get(2), true);
-		//		activityStatusPlotter.addSeries("Retired validation", validator, Validator.DoublesVariables.activityStatus_Retired, colorArrayList.get(3), true);
 
 				activityStatusPlotter.setName("Activity status");
 				updateChartSet.add(activityStatusPlotter);
@@ -761,17 +696,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			    houseCompositionRegionPlotter.setName("Cohabitation status");
 			    updateChartSet.add(houseCompositionRegionPlotter);			//Add to set to be updated in buildSchedule method
 			    tabSet.add(houseCompositionRegionPlotter);
-
-			    /*
-			    //Add a graph showing share of individuals with a partner:
-				TimeSeriesSimulationPlotter personsWithPartnerPlotter = new TimeSeriesSimulationPlotter("Share of individuals with partner", "");
-				Weighted_CrossSection.Integer personsWithPartner = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getCoupleDummy", true);
-				personsWithPartnerPlotter.addSeries("Share of persons with partner", new Weighted_MeanArrayFunction(personsWithPartner));
-				personsWithPartnerPlotter.setName("Share of persons with partner");
-				updateChartSet.add(personsWithPartnerPlotter);
-				tabSet.add(personsWithPartnerPlotter);
-				*/
-
 		    }
 
 			//Number of males and females who want to cohabit
@@ -793,49 +717,9 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 
 		    //HEALTH CHARTS
 			
-			//Overall population by gender - because it is aligned, this chart is fairly boring, so do by age group below to provide more detailed information.
-//		    if(health) {
-////				MaleAgeGroupCSfilter males18_64Filter = new MaleAgeGroupCSfilter(18, 64);					
-//				Weighted_CrossSection.Integer males18_64CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getGoodHealth", true);
-//				males18_64CS.setFilter(males18_64Filter);
-////				FemaleAgeGroupCSfilter females18_64Filter = new FemaleAgeGroupCSfilter(18, 64);
-//				Weighted_CrossSection.Integer females18_64CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getGoodHealth", true);
-//				females18_64CS.setFilter(females18_64Filter);
-//				TimeSeriesSimulationPlotter healthPlotter = new TimeSeriesSimulationPlotter("Good Health proportion (18 - 64)", "");
-//			    healthPlotter.addSeries("males", new Weighted_MeanArrayFunction(males18_64CS));
-//			    healthPlotter.addSeries("females", new Weighted_MeanArrayFunction(females18_64CS));		 
-//			    healthPlotter.setName("Health");
-//				updateChartSet.add(healthPlotter);			//Add to set to be updated in buildSchedule method
-//				tabSet.add(healthPlotter);
-//		    }
-
 		    //Male/Female health by age groups
 		    if(healthByAge) {
-//			    Set<JInternalFrame> healthAgePlots = new LinkedHashSet<JInternalFrame>();
-//			    for(AgeGroupCSfilter ageFilter : decadeAgeGroupFilterSet) {
-//			    	int ageFrom = ageFilter.getAgeFrom();
-//			    	int ageTo = ageFilter.getAgeTo();
-//			    	
-//			    	MaleAgeGroupCSfilter maleAgeFilter = new MaleAgeGroupCSfilter(ageFrom, ageTo);
-//			    	FemaleAgeGroupCSfilter femaleAgeFilter = new FemaleAgeGroupCSfilter(ageFrom, ageTo);
-//			    	Weighted_CrossSection.Integer maleCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getGoodHealth", true);
-//					maleCS.setFilter(maleAgeFilter);
-//					Weighted_CrossSection.Integer femaleCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getGoodHealth", true);
-//					femaleCS.setFilter(femaleAgeFilter);
-//	
-//					TimeSeriesSimulationPlotter healthAgePlotter = new TimeSeriesSimulationPlotter("Proportion with good health: ages " + ageFilter.getAgeFrom() + " - " + ageFilter.getAgeTo(), "");
-//				    healthAgePlotter.addSeries("males", new Weighted_MeanArrayFunction(maleCS));
-//				    healthAgePlotter.addSeries("females", new Weighted_MeanArrayFunction(femaleCS));
-//				    
-//					updateChartSet.add(healthAgePlotter);			//Add to set to be updated in buildSchedule method
-//					healthAgePlots.add(healthAgePlotter);
-//				}
-//			    tabSet.add(createScrollPaneFromPlots(healthAgePlots, "Health: age/gender", 2));			
-
 				Set<JInternalFrame> disabledAgePlots = new LinkedHashSet<>();
-				//		for (AgeGroupCSfilter ageFilter : disabledHealthAgeGroupFilterSet) {
-				//			int ageFrom = ageFilter.getAgeFrom();
-				//			int ageTo = ageFilter.getAgeTo();
 
 				MaleAgeGroupCSfilter maleAgeFilterDisabled = new MaleAgeGroupCSfilter(16, 100);
 				FemaleAgeGroupCSfilter femaleAgeFilterDisabled = new FemaleAgeGroupCSfilter(16, 100);
@@ -972,8 +856,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 						TimeSeriesSimulationPlotter psychDistressEducationPlotter = new TimeSeriesSimulationPlotter("Share in psychological distress by education:", "");
 						psychDistressEducationPlotter.addSeries("males " + education + " educ", new Weighted_MeanArrayFunction(maleCS), null, colorArrayList.get(0), false);
 						psychDistressEducationPlotter.addSeries("females " + education + " educ", new Weighted_MeanArrayFunction(femaleCS), null, colorArrayList.get(1), false);
-						//	psychDistressAgeEducationPlotter.addSeries("Validation males", validator, Validator.DoublesVariables.valueOf("psychDistressMale_"+ageFrom+"_"+ageTo), colorArrayList.get(0), true);
-						//	psychDistressAgeEducationPlotter.addSeries("Validation females", validator, Validator.DoublesVariables.valueOf("psychDistressFemale_"+ageFrom+"_"+ageTo), colorArrayList.get(1), true);
 
 						updateChartSet.add(psychDistressEducationPlotter);
 						psychologicalDistressCasesEducationPlots.add(psychDistressEducationPlotter);
@@ -1054,52 +936,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 				}
 				
 				tabSet.add(createScrollPaneFromPlots(healthPCSAgePlots, "Physical health PCS score: age/gender", 2));
-
-				/*
-				TimeSeriesSimulationPlotter disabledAgePlotter = new TimeSeriesSimulationPlotter("Proportion of long-term sick or disabled by age & gender", "");
-			    disabledAgePlotter.setName("Disabled: age/gender");
-			    for(AgeGroupCSfilter ageFilter : decadeAgeGroupFilterSet) {
-			    	int ageFrom = ageFilter.getAgeFrom();
-			    	int ageTo = ageFilter.getAgeTo();
-			    	
-			    	MaleAgeGroupCSfilter maleAgeFilter = new MaleAgeGroupCSfilter(ageFrom, ageTo);
-			    	FemaleAgeGroupCSfilter femaleAgeFilter = new FemaleAgeGroupCSfilter(ageFrom, ageTo);
-			    	Weighted_CrossSection.Integer maleCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getBadHealth", true);
-					maleCS.setFilter(maleAgeFilter);
-					Weighted_CrossSection.Integer femaleCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getBadHealth", true);
-					femaleCS.setFilter(femaleAgeFilter);
-				
-				    disabledAgePlotter.addSeries("males (" + ageFrom + " - " + ageTo + ")", new Weighted_MeanArrayFunction(maleCS));
-				    disabledAgePlotter.addSeries("females (" + ageFrom + " - " + ageTo + ")", new Weighted_MeanArrayFunction(femaleCS));
-				    
-				}
-				updateChartSet.add(disabledAgePlotter);			//Add to set to be updated in buildSchedule method
-			    tabSet.add(disabledAgePlotter);	
-
-
-
-			    //Chart for continuous health status below:
-			    TimeSeriesSimulationPlotter healthAgePlotter = new TimeSeriesSimulationPlotter("Health status by age & gender", "");
-			    healthAgePlotter.setName("Health: age/gender");
-			    for(AgeGroupCSfilter ageFilter : decadeAgeGroupFilterSet) {
-			    	int ageFrom = ageFilter.getAgeFrom();
-			    	int ageTo = ageFilter.getAgeTo();
-			    	
-			    	MaleAgeGroupCSfilter maleAgeFilter = new MaleAgeGroupCSfilter(ageFrom, ageTo);
-			    	FemaleAgeGroupCSfilter femaleAgeFilter = new FemaleAgeGroupCSfilter(ageFrom, ageTo);
-			    	Weighted_CrossSection.Double maleCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getHealthSelfRated", true);
-					maleCS.setFilter(maleAgeFilter);
-					Weighted_CrossSection.Double femaleCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getHealthSelfRated", true);
-					femaleCS.setFilter(femaleAgeFilter);
-				
-				    healthAgePlotter.addSeries("males (" + ageFrom + " - " + ageTo + ")", new Weighted_MeanArrayFunction(maleCS));
-				    healthAgePlotter.addSeries("females (" + ageFrom + " - " + ageTo + ")", new Weighted_MeanArrayFunction(femaleCS));
-			    }
-			    
-			    updateChartSet.add(healthAgePlotter);
-			    tabSet.add(healthAgePlotter);
-
-		    	*/
 		    }
 		    
 		    
@@ -1109,20 +945,13 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 				FlexibleInLabourSupplyByAgeAndGenderFilter maleAgeFilter = new FlexibleInLabourSupplyByAgeAndGenderFilter(18, 64, Gender.Male);
 				Weighted_CrossSection.Integer males18_64CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
 				males18_64CS.setFilter(males18_64Filter);
-//				males18_64CS.setFilter(maleAgeFilter);
 				
-//				Weighted_CrossSection.Integer males18_64CSNE = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getNonwork", true);
-//				males18_64CSNE.setFilter(males18_64Filter);
-				
-//				FemaleAgeGroupCSfilter females18_64Filter = new FemaleAgeGroupCSfilter(18, 64);
 				FlexibleInLabourSupplyByAgeAndGenderFilter femaleAgeFilter = new FlexibleInLabourSupplyByAgeAndGenderFilter(18, 64, Gender.Female);
 				Weighted_CrossSection.Integer females18_64CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
 				females18_64CS.setFilter(females18_64Filter);
-//				females18_64CS.setFilter(femaleAgeFilter);
 
 				TimeSeriesSimulationPlotter emplPlotter = new TimeSeriesSimulationPlotter("Employment rate (18 - 64)", "");
 			    emplPlotter.addSeries("males", new Weighted_MeanArrayFunction(males18_64CS), null, colorArrayList.get(0), false);
-//			    emplPlotter.addSeries("males_NE", new Weighted_MeanArrayFunction(males18_64CSNE));
 			    emplPlotter.addSeries("females", new Weighted_MeanArrayFunction(females18_64CS), null, colorArrayList.get(1), false);
 			    emplPlotter.addSeries("Validation males", validator, Validator.DoublesVariables.employmentMale, colorArrayList.get(0), true);
 				emplPlotter.addSeries("Validation females", validator, Validator.DoublesVariables.employmentFemale, colorArrayList.get(1), true);
@@ -1140,9 +969,7 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			    	int ageTo = ageFilter.getAgeTo();
 			    	
 			    	MaleAgeGroupCSfilter maleAgeFilter = new MaleAgeGroupCSfilter(ageFrom, ageTo);
-//					FlexibleInLabourSupplyByAgeAndGenderFilter maleAgeFilter = new FlexibleInLabourSupplyByAgeAndGenderFilter(ageFrom, ageTo, Gender.Male); //New filter to obtain a cross-section of those who are flexible in labour supply
 			    	FemaleAgeGroupCSfilter femaleAgeFilter = new FemaleAgeGroupCSfilter(ageFrom, ageTo);
-//					FlexibleInLabourSupplyByAgeAndGenderFilter femaleAgeFilter = new FlexibleInLabourSupplyByAgeAndGenderFilter(ageFrom, ageTo, Gender.Female);
 			    	Weighted_CrossSection.Integer maleCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
 					maleCS.setFilter(maleAgeFilter);
 					Weighted_CrossSection.Integer femaleCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
@@ -1159,43 +986,9 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			    tabSet.add(createScrollPaneFromPlots(emplAgePlots, "Employment: age/gender", 2));
 		    }
 
-		    /*
-		    if(femaleEmploymentByMaternity) {
-				//Females with/without children by two lowest age groups
-			    Set<JInternalFrame> emplAgeMaternityPlots = new LinkedHashSet<JInternalFrame>();
-			    for(AgeGroupCSfilter ageFilter : decadeAgeGroupFilterSet) {
-			    	int ageFrom = ageFilter.getAgeFrom();
-			    	int ageTo = ageFilter.getAgeTo();
-			    	
-			    	if(ageFrom == 20 || ageFrom == 30) {		//Only do the lowest 2 decade age groups
-						FemalesWithChildrenAgeGroupCSfilter withChildrenFilter = new FemalesWithChildrenAgeGroupCSfilter(ageFrom, ageTo);
-						FemalesWithoutChildrenAgeGroupCSfilter withoutChildrenFilter = new FemalesWithoutChildrenAgeGroupCSfilter(ageFrom, ageTo);
-						Weighted_CrossSection.Integer withChildrenCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
-						withChildrenCS.setFilter(withChildrenFilter);
-						Weighted_CrossSection.Integer withoutChildrenCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
-						withoutChildrenCS.setFilter(withoutChildrenFilter);
-						
-						TimeSeriesSimulationPlotter emplChildPlotter = new TimeSeriesSimulationPlotter("Female employment rate: maternity for ages " + ageFrom + " - " + ageTo, "");
-					    emplChildPlotter.addSeries("with children under 18 yo", new Weighted_MeanArrayFunction(withChildrenCS));
-					    emplChildPlotter.addSeries("without children under 18 yo", new Weighted_MeanArrayFunction(withoutChildrenCS));		    
-						updateChartSet.add(emplChildPlotter);			//Add to set to be updated in buildSchedule method
-						emplAgeMaternityPlots.add(emplChildPlotter);
-			    	}
-			    }
-			    tabSet.add(createScrollPaneFromPlots(emplAgeMaternityPlots, "Employment (female): age/maternity", 2));
-		    }
-			*/
-
-
 		    //One graph for employment age by maternity status, conditional on age of children
 		    if (femaleEmploymentByMaternity) {
 				Set<JInternalFrame> emplAgeMaternityPlots = new LinkedHashSet<JInternalFrame>();
-//				for(AgeGroupCSfilter ageFilter : decadeAgeGroupFilterSet) {
-//					int ageFrom = ageFilter.getAgeFrom();
-//					int ageTo = ageFilter.getAgeTo();
-
-//					if(ageFrom == 20 || ageFrom == 30 || ageFrom == 40) {		//Only do the lowest 3 decade age groups
-
 						FemalesWithoutChildrenAgeGroupCSfilter withoutChildrenFilter = new FemalesWithoutChildrenAgeGroupCSfilter(20, 65);
 
 						Weighted_CrossSection.Integer withChildrenAged0_5CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
@@ -1215,25 +1008,7 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 
 						updateChartSet.add(emplChildPlotter);			//Add to set to be updated in buildSchedule method
 						emplAgeMaternityPlots.add(emplChildPlotter);
-//					}
-//				}
 				tabSet.add(createScrollPaneFromPlots(emplAgeMaternityPlots, "Employment (female): age/maternity", 2));
-
-
-		    	/*
-		    	Set<JInternalFrame> emplMaternityPlots = new LinkedHashSet<>();
-		    	for (FemalesWithChildrenByChildAgeCSfilter childAgeFilter : childrenByAgeFilterSet) {
-		    		//Need employment rate for females with children in a given age group, and general employment rate for females
-					Weighted_CrossSection.Integer withChildrenCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
-		    		withChildrenCS.setFilter(childAgeFilter);
-
-		    		TimeSeriesSimulationPlotter emplChildByAgePlotter = new TimeSeriesSimulationPlotter("Female employment rate by age of children", "");
-		    		emplChildByAgePlotter.addSeries("", new Weighted_MeanArrayFunction(withChildrenCS));
-
-
-		    	}
-		    	 */
-
 			}
 		    
 		    //Employment by region
@@ -1456,7 +1231,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			    ValidPersonEarningsCSfilter validEarningsFilter = new ValidPersonEarningsCSfilter();
 			    Weighted_HistogramSimulationPlotter grossEarningsHistPlotter = new Weighted_HistogramSimulationPlotter("Individual Gross Earnings (yearly)", "Euro", histogramType.getHistogramType(), numberOfHistogramBins);
 			    Weighted_CrossSection.Double grossEarningsCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getGrossEarningsYearly", true);
-	//		    Weighted_CrossSection.Double grossEarningsCS = new Weighted_CrossSection.Double(model.getPersons(), Person.DoublesVariables.GrossEarningsYearly);
 			    grossEarningsCS.setFilter(validEarningsFilter);
 			    
 			    grossEarningsHistPlotter.addCollectionSource("Gross Earnings", grossEarningsCS);
@@ -1466,7 +1240,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			    ValidHouseholdIncomeCSfilter validHouseholdIncomeFilter = new ValidHouseholdIncomeCSfilter();
 			    Weighted_HistogramSimulationPlotter dispIncomeHistPlotter = new Weighted_HistogramSimulationPlotter("Equivalised Disposable Income of Benefit Unit (yearly)", "Euro", histogramType.getHistogramType(), numberOfHistogramBins);
 			    Weighted_CrossSection.Double equivalisedDisposableIncomeCS = new Weighted_CrossSection.Double(model.getBenefitUnits(), BenefitUnit.class, "getEquivalisedDisposableIncomeYearly", true);
-	//		    Weighted_CrossSection.Double equivalisedDisposableIncomeCS = new Weighted_CrossSection.Double(model.getHouseholds(), BenefitUnit.DoublesVariables.EquivalisedDisposableIncomeYearly);
 			    equivalisedDisposableIncomeCS.setFilter(validHouseholdIncomeFilter);
 			    dispIncomeHistPlotter.addCollectionSource("Equivalised BenefitUnit Disposable Income", equivalisedDisposableIncomeCS);
 			    updateChartSet.add(dispIncomeHistPlotter);			//Add to set to be updated in buildSchedule method
@@ -1499,7 +1272,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 						EDIByGenderAndEducationPlotter.addSeries("Workers (" + gender.toString() + ", " + edu.toString() + ")", new Weighted_MeanArrayFunction(EDIWorkingCS), null, colorArrayList.get(colorCounter), false);
 						colorCounter++;
 						EDIByGenderAndEducationPlotter.addSeries("All (" + gender.toString() + ", " + edu.toString() + ")", new Weighted_MeanArrayFunction(EDIAllCS), null, colorArrayList.get(colorCounter), false);
-	//					EDIByGenderAndEducationPlotter.addSeries("Validation (" + gender + ", " + edu + ")", validator, Validator.DoublesVariables.valueOf("grossEarnings_"+ gender +"_"+ edu), colorArrayList.get(colorCounter), true);
 						colorCounter++;
 					}
 				}
@@ -1531,7 +1303,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 						DispIncByGenderAndEducationPlotter.addSeries("Workers (" + gender.toString() + ", " + edu.toString() + ")", new Weighted_MeanArrayFunction(DispIncWorkingCS), null, colorArrayList.get(colorCounter), false);
 						colorCounter++;
 						DispIncByGenderAndEducationPlotter.addSeries("All (" + gender.toString() + ", " + edu.toString() + ")", new Weighted_MeanArrayFunction(DispIncAllCS), null, colorArrayList.get(colorCounter), false);
-						//					EDIByGenderAndEducationPlotter.addSeries("Validation (" + gender + ", " + edu + ")", validator, Validator.DoublesVariables.valueOf("grossEarnings_"+ gender +"_"+ edu), colorArrayList.get(colorCounter), true);
 						colorCounter++;
 					}
 				}
@@ -1584,27 +1355,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 		    
 			
 			
-			//---------------------------------------------------------------------------
-			//	LABOUR MARKET CONVERGENCE UPDATED BETWEEN TIME-STEPS
-			//---------------------------------------------------------------------------
-			
-			//BOWKER NORM OF LABOUR DEMAND*SUPPLY ELASTICITIES		    
-		    //The condition for convergence (||AB||<1) for different skill levels (3 lines), at the regional level.  These charts are updated at each iteration of the convergence process.
-		    //This uses cross section objects and mean array functions to calculate averages on population aggregates and presents them in a scatterplot.
-//		    convergenceElasticitiesPlotter = new ScatterplotSimulationPlotterRefreshable("Labour Market Convergence Criterion", "iteration", "||labour demand * supply elasticities||");
-//		    convergenceElasticitiesPlotter.setMaxSamples(convergenceElasticitiesPlotMaxSamples);		//Show only the previous 'convergencePlotMaxSamples' number of iterations.		    	
-//	    	for(Region region: Parameters.getCountryRegions()) {
-//	    		convergenceElasticitiesPlotter.addSeries(region.getName(), (ILongSource)new MultiTraceFunction.Long(model.getLabourMarket().getBowkerNormRegional(), region), new MultiTraceFunction.Double(model.getLabourMarket().getBowkerNormRegional(), region));
-//	    	} 		
-//	    	if(floatingConvergencePlots) {
-//	    		GuiUtils.addWindow(convergenceElasticitiesPlotter, 0, 160, 450, 400);
-//	    	}
-//	    	else {
-//	    		convergencePlots.add(convergenceElasticitiesPlotter);
-//	    	}
-	    	
-			
-//			log.debug("Observer objects created");
 		}
 							
 	}	
@@ -1620,7 +1370,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			for(JInternalFrame plot: updateChartSet) {
 				chartingEvents.addEvent(plot, CommonEventType.Update);
 			}
-//			getEngine().getEventQueue().scheduleOnce(chartingEvents, model.getStartYear(), Order.BEFORE_ALL.getOrdering()+1);
 			getEngine().getEventQueue().scheduleRepeat(chartingEvents, model.getStartYear(), ordering, displayFrequency);
 			getEngine().getEventQueue().scheduleRepeat(new SingleTargetEvent(this, Processes.ResetConvergenceChart), model.getStartYear(), ordering, displayFrequency);
 
@@ -1682,18 +1431,12 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 		convergenceElasticitiesPlotter.update();
 	}
 
-/*	public void resetConvergencePlotter() {
-		model.getLabourMarket().getBowkerNormRegional().reset();
-		convergenceElasticitiesPlotter.refresh();
-	}
-*/
 	//For potential earnings and aggregate labour supply/demand plots updated during convergence process
 	public void updateLabourMarketPlots(Region region) {
 
 		//Potential Earnings
 		for(Education edu: Education.values()) {
 			meanPotentialEarningsMultiMap.get(region, edu).updateSource();	//Only updates when both the underlying cross section AND the mean array function has setCheckingTime(false).
-//			meanPotentialEarningsMultiMap.get(region, edu).applyFunction();		//Forces update of function, but still needs the underlying cross section object to have setCheckingTime(false).
 		}
 		for(ScatterplotSimulationPlotterRefreshable plot: potentialEarningsPlots.values()) {
 			plot.update();
@@ -1703,14 +1446,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 		for(ScatterplotSimulationPlotterRefreshable plot: labourMarketPlots.values()) {
 			plot.update();
 		}
-		
-		
-//		for(Education edu: Education.values()) {
-//			System.out.println("Average Potential Earnings: count " + countIterations + ", " + region.getName() + ": " + edu + ", " + meanPotentialEarningsMultiMap.get(region, edu).getDoubleValue(null));
-//		}
-//		Person p = model.getPerson(202L);
-//		System.out.println("Potential Earnings of person " + p.getKey().getId() + ": count " + countIterations + ", " + p.getRegion() + ": " + p.getEducation() + ", " + p.getPotentialHourlyEarnings());
-		
 		
 		//Increment iterations count
 		countIterations++;
@@ -1731,9 +1466,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			//Potential Earnings
 			potentialEarningsPlots.get(edu).addSeries(region.getName(), (ILongSource)new MultiTraceFunction.Long(this, LongVariables.CountIterations), ((IDoubleSource)meanPotentialEarningsMultiMap.get(region, edu)));
 			
-			//Labour supply/demand stats
-//			labourMarketPlots.get(edu).addSeries(region.getName() + ": Demand", (ILongSource)new MultiTraceFunction.Long(this, LongVariables.CountIterations), new MultiTraceFunction.Double(new AggregateLabourDemandStatistics(region), edu));
-//			labourMarketPlots.get(edu).addSeries(region.getName() + ": Supply", (ILongSource)new MultiTraceFunction.Long(this, LongVariables.CountIterations), new MultiTraceFunction.Double(new AggregateLabourSupplyStatistics(region), edu));
 		}
 
 	}
@@ -1753,7 +1485,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 		switch ((Processes) type) {
 		
 		case ResetConvergenceChart:
-//			resetConvergencePlotter();		    
 			break;
 			
 		}
@@ -1784,27 +1515,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 	
 	}
 
-	
-	//--------------------------------------------------------------------------
-	//	Classes to access region and education dependent aggregate data
-	//--------------------------------------------------------------------------
-	
-/*	public class AggregateLabourDemandStatistics implements IDoubleSource {
-		
-		private Region region;
-
-		public AggregateLabourDemandStatistics(Region region) {
-			this.region = region;
-		}
-		
-		@Override
-		public double getDoubleValue(Enum<?> education) {
-			return model.getLabourMarket().getAggregateWeeklyLabourDemandByRegionAndEducation().get(region).get(education);			
-		}
-			
-	}	
-*/
-	
 	
 	//--------------------------------------------------------------------------
 	// Access methods
@@ -2065,14 +1775,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 	public void setConvergenceElasticitiesPlotMaxSamples(Integer convergenceElasticitiesPlotMaxSamples) {
 		this.convergenceElasticitiesPlotMaxSamples = convergenceElasticitiesPlotMaxSamples;
 	}
-
-//	public boolean isHealth() {
-//		return health;
-//	}
-//
-//	public void setHealth(boolean health) {
-//		this.health = health;
-//	}
 
 	public boolean isHealthByAge() {
 		return healthByAge;
