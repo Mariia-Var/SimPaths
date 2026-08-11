@@ -82,6 +82,16 @@ public class Filters {
         return p -> p.getPartner() == null;
     }
 
+    /// Filter women susceptible to becoming pregnant.
+    public static Predicate<Person> fertile() {
+        var filter = Filters.female()
+                .and(Filters.ageRange(Parameters.MIN_AGE_MATERNITY, Parameters.MAX_AGE_MATERNITY));
+        if (!Parameters.FLAG_SINGLE_MOTHERS) {
+            filter = filter.and(Filters.single().negate());
+        }
+        return filter;
+    }
+
     /// Filter persons with a non-negative disposable income.
     public static Predicate<Person> validIncome() {
         return p -> p.getBenefitUnit().getEquivalisedDisposableIncomeYearly() >= 0.0;

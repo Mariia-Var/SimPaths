@@ -5,7 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import microsim.data.db.PanelEntityKey;
 import simpaths.data.Parameters;
-import simpaths.data.filters.FertileFilter;
+import simpaths.data.filters.Filters;
 import simpaths.model.BenefitUnit;
 import simpaths.model.Person;
 import simpaths.model.SimPathsModel;
@@ -255,9 +255,8 @@ public class AlignmentStatistics {
         setFertilityAdjFactor(
                 Parameters.getTimeSeriesValue(year, TimeSeriesVariable.FertilityAdjustment)
                 + model.getFertilityAdjustment(year));
-        var fertileFilter = new FertileFilter<Person>();
         long numFertile = model.getPersons().stream()
-                .filter(fertileFilter)
+                .filter(Filters.fertile())
                 .count();
         long numBirths = model.getPersons().stream()
                 .filter(p -> p.getDemAge() < 1)
