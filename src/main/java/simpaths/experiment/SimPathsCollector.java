@@ -17,7 +17,6 @@ import simpaths.model.BenefitUnit;
 import simpaths.model.SimPathsModel;
 import simpaths.model.enums.Les_c4;
 import simpaths.model.enums.Quintiles;
-import microsim.statistics.functions.*;
 // import plug-in packages
 import org.apache.commons.math3.util.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -27,6 +26,7 @@ import microsim.FilteredCollection;
 // import JAS-mine packages
 import microsim.annotation.GUIparameter;
 import microsim.data.DataExport;
+import microsim.dev.statistics.AccumulatorStats;
 import microsim.dev.statistics.CrossSection;
 import microsim.dev.statistics.Stats;
 import microsim.engine.AbstractSimulationCollectorManager;
@@ -143,13 +143,13 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
     private DataExport exportWellbeingByGender;
 
-    protected MultiTraceFunction.Double fGiniPersonalGrossEarningsNational;
+    protected AccumulatorStats fGiniPersonalGrossEarningsNational;
 
-    protected Map<Region, MultiTraceFunction.Double> fGiniPersonalGrossEarningsRegionalMap;
+    protected Map<Region, AccumulatorStats> fGiniPersonalGrossEarningsRegionalMap;
 
-    protected MultiTraceFunction.Double fGiniEquivalisedHouseholdDisposableIncomeNational;
+    protected AccumulatorStats fGiniEquivalisedHouseholdDisposableIncomeNational;
 
-    protected Map<Region, MultiTraceFunction.Double> fGiniEquivalisedHouseholdDisposableIncomeRegionalMap;
+    protected Map<Region, AccumulatorStats> fGiniEquivalisedHouseholdDisposableIncomeRegionalMap;
 
 
 
@@ -319,20 +319,20 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
             OutputReadme.write(this, model);
 
         if (calculateGiniCoefficients) {
-
+            var engine = model.getEngine();
             giniPersonalGrossEarnings = new GiniPersonalGrossEarnings();
-            fGiniPersonalGrossEarningsNational = new MultiTraceFunction.Double(giniPersonalGrossEarnings, "getGiniPersonalGrossEarningsNational", true);
-            fGiniPersonalGrossEarningsRegionalMap = new LinkedHashMap<Region, MultiTraceFunction.Double>();
+            fGiniPersonalGrossEarningsNational = new AccumulatorStats(giniPersonalGrossEarnings::getGiniPersonalGrossEarningsNational, engine::hookStepEnd);
+            fGiniPersonalGrossEarningsRegionalMap = new LinkedHashMap<>();
             for(Region region: Parameters.getCountryRegions()) {
-                MultiTraceFunction.Double fGiniPersonalGrossEarningsRegion = new MultiTraceFunction.Double(giniPersonalGrossEarnings, region);
+                var fGiniPersonalGrossEarningsRegion = new AccumulatorStats(() -> giniPersonalGrossEarnings.getDoubleValue(region), engine::hookStepEnd);
                 fGiniPersonalGrossEarningsRegionalMap.put(region, fGiniPersonalGrossEarningsRegion);
             }
 
             giniEquivalisedHouseholdDisposableIncome = new GiniEquivalisedHouseholdDisposableIncome();
-            fGiniEquivalisedHouseholdDisposableIncomeNational = new MultiTraceFunction.Double(giniEquivalisedHouseholdDisposableIncome, "getGiniEquivalisedHouseholdDisposableIncomeNational", true);
-            fGiniEquivalisedHouseholdDisposableIncomeRegionalMap = new LinkedHashMap<Region, MultiTraceFunction.Double>();
+            fGiniEquivalisedHouseholdDisposableIncomeNational = new AccumulatorStats(giniEquivalisedHouseholdDisposableIncome::getGiniEquivalisedHouseholdDisposableIncomeNational, engine::hookStepEnd);
+            fGiniEquivalisedHouseholdDisposableIncomeRegionalMap = new LinkedHashMap<>();
             for(Region region: Parameters.getCountryRegions()) {
-                MultiTraceFunction.Double fGiniEquivalisedHouseholdDisposableIncomeRegion = new MultiTraceFunction.Double(giniEquivalisedHouseholdDisposableIncome, region);
+                var fGiniEquivalisedHouseholdDisposableIncomeRegion = new AccumulatorStats(() -> giniEquivalisedHouseholdDisposableIncome.getDoubleValue(region), engine::hookStepEnd);
                 fGiniEquivalisedHouseholdDisposableIncomeRegionalMap.put(region, fGiniEquivalisedHouseholdDisposableIncomeRegion);
             }
         }

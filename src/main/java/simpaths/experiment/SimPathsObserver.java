@@ -1152,15 +1152,18 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			//Statistics dependent charts
 		    if(collector.isCalculateGiniCoefficients()) {	//As these charts need statistics to be calculated within the simulation, turn off these charts if the statistics are not calculated
 		    	
+                // FIXME: check what should be plotted here out of the AccumulatorStats
+                // and if `lastValue` there is no need to use AccumulatorStats...
+
 				//INCOME CHARTS - GINI
 			    Set<JInternalFrame> giniIncomeRegionPlots = new LinkedHashSet<JInternalFrame>();			    
 			    //Gini coefficient of market (gross) individual income
 			    TimeSeriesSimulationPlotter personalGrossEarningsGiniPlotter = new TimeSeriesSimulationPlotter("Gini: Gross individual earnings", "Gini coefficient");
 			    //Add Series at national and regional level
 			    for(Region region: Parameters.getCountryRegions()) {
-			    	personalGrossEarningsGiniPlotter.addSeries(region.getName(), (IDoubleSource)collector.fGiniPersonalGrossEarningsRegionalMap.get(region));
+			    	personalGrossEarningsGiniPlotter.addSource(region.getName(), () -> collector.fGiniPersonalGrossEarningsRegionalMap.get(region).lastValue());
 			    }
-			    personalGrossEarningsGiniPlotter.addSeries("national", (IDoubleSource)collector.fGiniPersonalGrossEarningsNational);
+			    personalGrossEarningsGiniPlotter.addSource("national", collector.fGiniPersonalGrossEarningsNational::lastValue);
 			    updateChartSet.add(personalGrossEarningsGiniPlotter);			//Add to set to be updated in buildSchedule method
 			    giniIncomeRegionPlots.add(personalGrossEarningsGiniPlotter);
 			    
@@ -1168,9 +1171,9 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			    TimeSeriesSimulationPlotter equivalisedHouseholdDisposableIncomeGiniPlotter = new TimeSeriesSimulationPlotter("Gini: Equivalised household disposable income", "Gini coefficient");
 			    //Add Series at national and regional level
 			    for(Region region: Parameters.getCountryRegions()) {
-			    	equivalisedHouseholdDisposableIncomeGiniPlotter.addSeries(region.getName(), (IDoubleSource)collector.fGiniEquivalisedHouseholdDisposableIncomeRegionalMap.get(region));
+			    	equivalisedHouseholdDisposableIncomeGiniPlotter.addSource(region.getName(), () -> collector.fGiniEquivalisedHouseholdDisposableIncomeRegionalMap.get(region).lastValue());
 			    }
-			    equivalisedHouseholdDisposableIncomeGiniPlotter.addSeries("national", (IDoubleSource)collector.fGiniEquivalisedHouseholdDisposableIncomeNational);
+			    equivalisedHouseholdDisposableIncomeGiniPlotter.addSource("national", collector.fGiniEquivalisedHouseholdDisposableIncomeNational::lastValue);
 			    updateChartSet.add(equivalisedHouseholdDisposableIncomeGiniPlotter);			//Add to set to be updated in buildSchedule method		    
 			    giniIncomeRegionPlots.add(equivalisedHouseholdDisposableIncomeGiniPlotter);
 			    
