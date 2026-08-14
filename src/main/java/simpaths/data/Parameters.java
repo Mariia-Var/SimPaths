@@ -297,7 +297,7 @@ public class Parameters {
     public static final double MIN_HOURLY_WAGE_RATE = 1.5;
     public static final double MAX_HOURLY_WAGE_RATE = 150.0;
     public static final double MAX_HOURS_WEEKLY_FORMAL_CARE = 150.0;
-    public static final double MAX_HOURS_WEEKLY_INFORMAL_CARE = 16 * 7;
+    public static final double MAX_HOURS_WEEKLY_INFORMAL_CARE = HOURS_IN_WEEK;
     public static final double CHILDCARE_COST_EARNINGS_CAP = 0.5;  // maximum share of earnings payable as childcare (for benefit units with some earnings)
     public static final int MIN_DIFFERENCE_AGE_MOTHER_CHILD_IN_ALIGNMENT = 15; //When assigning children to mothers in the population alignment, specify how much older (at the minimum) the mother must be than the child
     public static final int MAX_EM_DONOR_RATIO = 3; // Used by BenefitUnit => convertGrossToDisposable() to decide whether gross-to-net ratio should be applied or disposable income from the donor used directly
@@ -737,8 +737,8 @@ public class Parameters {
     // private static LinearRegression regFormalCareHoursS2k; // retired process
     private static BinomialRegression<Indicator> regCarePartnerProvCareToOtherS3a;
     private static BinomialRegression<Indicator> regNoCarePartnerProvCareToOtherS3b;
-    private static LinearRegression regCareHoursProvS3c;
-    private static LinearRegression regCareHoursProvS3d;
+    private static OrderedRegression<CareHoursProvidedCategory> regCareHoursProvS3c;
+    private static OrderedRegression<CareHoursProvidedCategory> regCareHoursProvS3d;
     // private static LinearRegression regCareHoursProvS3e; // retired process
 
     //Unemployment
@@ -1425,8 +1425,8 @@ public class Parameters {
         // regFormalCareHoursS2k = new LinearRegression(coeffCovarianceSocialCareS2k); // retired process
         regCarePartnerProvCareToOtherS3a = new BinomialRegression<>(RegressionType.Probit, Indicator.class, coeffCovarianceSocialCareS3a);
         regNoCarePartnerProvCareToOtherS3b = new BinomialRegression<>(RegressionType.Probit, Indicator.class, coeffCovarianceSocialCareS3b);
-        regCareHoursProvS3c = new LinearRegression(coeffCovarianceSocialCareS3c);
-        regCareHoursProvS3d = new LinearRegression(coeffCovarianceSocialCareS3d);
+        regCareHoursProvS3c = new OrderedRegression<>(RegressionType.OrderedLogit, CareHoursProvidedCategory.class, coeffCovarianceSocialCareS3c);
+        regCareHoursProvS3d = new OrderedRegression<>(RegressionType.OrderedLogit, CareHoursProvidedCategory.class, coeffCovarianceSocialCareS3d);
         // regCareHoursProvS3e = new LinearRegression(coeffCovarianceSocialCareS3e); // retired process
 
         //lifetime incomes
@@ -1950,8 +1950,8 @@ public class Parameters {
     // public static LinearRegression getRegFormalCareHoursS2k() { return regFormalCareHoursS2k; } // retired process
     public static BinomialRegression<Indicator> getRegCarePartnerProvCareToOtherS3a() { return regCarePartnerProvCareToOtherS3a; }
     public static BinomialRegression<Indicator> getRegNoCarePartnerProvCareToOtherS3b() { return regNoCarePartnerProvCareToOtherS3b; }
-    public static LinearRegression getRegCareHoursProvS3c() { return regCareHoursProvS3c; }
-    public static LinearRegression getRegCareHoursProvS3d() { return regCareHoursProvS3d; }
+    public static OrderedRegression<CareHoursProvidedCategory> getRegCareHoursProvS3c() { return regCareHoursProvS3c; }
+    public static OrderedRegression<CareHoursProvidedCategory> getRegCareHoursProvS3d() { return regCareHoursProvS3d; }
     // public static LinearRegression getRegCareHoursProvS3e() { return regCareHoursProvS3e; } // retired process
 
     public static LinearRegression getRegEquivalisedIncomeMales() {return regEquivalisedIncomeMales;}
