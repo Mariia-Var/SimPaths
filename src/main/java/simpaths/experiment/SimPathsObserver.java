@@ -8,7 +8,10 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import javax.swing.JComponent;
 import javax.swing.JInternalFrame;
@@ -119,6 +122,11 @@ record AgeRange(int from, int to) implements Predicate<Person> {
     public boolean test(Person arg0) {
         return Filters.ageRange(this.from, this.to).test(arg0);
     }
+}
+
+@FunctionalInterface
+interface AgeGenderValidation {
+    Double apply(AgeRange ar, int year, Gender gender);
 }
 
 
@@ -268,6 +276,44 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 	public SimPathsObserver(SimulationManager manager, SimulationCollectorManager simulationCollectionManager) {
 		super(manager, simulationCollectionManager);		
 	}
+
+    private void ageGenderPlots(String label,
+            Function<? super Person, ? extends Number> getObservable,
+            AgeGenderValidation validation) {
+        var engine = this.getEngine();
+        var plots = new LinkedHashSet<JInternalFrame>();
+
+        // FIXME: reduce duplication with colorArrayList
+        var colors = new ArrayList<Color>();
+        colors.add(new Color(162, 56, 255));
+        colors.add(new Color(254, 131, 0));
+
+        for (var ar : this.decades) {
+            var inRange = new FilteredCollection<>(this.model::getPersons, ar).oncePerSimTime(engine);
+            var males = new FilteredCollection<>(inRange, Filters.male());
+            var females = new FilteredCollection<>(inRange, Filters.female());
+
+            var maleCs = new WeightedCrossSection<>(males, getObservable, Person::getWeight);
+            var femaleCs = new WeightedCrossSection<>(females, getObservable, Person::getWeight);
+
+            // FIXME: should this be cached? What about validation values?
+            var meanMale = OnceUntil.timeChanges(() -> new WeightedStats(maleCs.get()).mean(), engine);
+            var meanFemale = OnceUntil.timeChanges(() -> new WeightedStats(femaleCs.get()).mean(), engine);
+
+            Supplier<Double> validMale = () -> validation.apply(ar, this.model.getYear(), Gender.Male);
+            Supplier<Double> validFemale = () -> validation.apply(ar, this.model.getYear(), Gender.Female);
+
+            var plotter = new TimeSeriesSimulationPlotter(label + " by age: " + ar.from() + " - " + ar.to(), "");
+            plotter.addSource("males", meanMale, colors.get(0), false);
+            plotter.addSource("females", meanFemale, colors.get(1), false);
+            plotter.addSource("Validation males", validMale, colors.get(0), true);
+            plotter.addSource("Validation females", validFemale, colors.get(1), true);
+
+            this.updateChartSet.add(plotter); // set to be updated in buildSchedule method
+            plots.add(plotter);
+        }
+        this.tabSet.add(createScrollPaneFromPlots(plots, label + ": age/gender", 2));
+    }
 
 
 	/**
@@ -830,30 +876,7 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 				tabSet.add(createScrollPaneFromPlots(healthAgePlots, "Health: age/gender", 2));
 
                 // mental health plots
-                var healthMentalAgePlots = new LinkedHashSet<JInternalFrame>();
-                for (var ar : this.decades) {
-                    var inRange = new FilteredCollection<>(model::getPersons, ar).oncePerSimTime(engine);
-                    var males = new FilteredCollection<>(inRange, Filters.male());
-                    var females = new FilteredCollection<>(inRange, Filters.female());
-
-                    var maleCs = new WeightedCrossSection<>(males, Person::getHealthWbScore0to36, Person::getWeight);
-                    var femaleCs = new WeightedCrossSection<>(females, Person::getHealthWbScore0to36, Person::getWeight);
-
-                    // FIXME: should this be cached? What about validation values?
-                    var calcMale = OnceUntil.timeChanges(() -> new WeightedStats(maleCs.get()).mean(), engine);
-                    var calcFemale = OnceUntil.timeChanges(() -> new WeightedStats(femaleCs.get()).mean(), engine);
-
-                    var healthMentalAgePlotter = new TimeSeriesSimulationPlotter("Psychological distress score by age: " + ar.from() + " - " + ar.to(), "");
-                    healthMentalAgePlotter.addSource("males", calcMale, colorArrayList.get(0), false);
-                    healthMentalAgePlotter.addSource("females", calcFemale, colorArrayList.get(1), false);
-                    healthMentalAgePlotter.addSource("Validation males", () -> ar.mentalHealthValidation(model.getYear(), Gender.Male), colorArrayList.get(0), true);
-                    healthMentalAgePlotter.addSource("Validation females", () -> ar.mentalHealthValidation(model.getYear(), Gender.Female), colorArrayList.get(1), true);
-
-                    updateChartSet.add(healthMentalAgePlotter);
-                    healthMentalAgePlots.add(healthMentalAgePlotter);
-                }
-
-                tabSet.add(createScrollPaneFromPlots(healthMentalAgePlots, "Psychological distress score: age/gender", 2));
+                ageGenderPlots("Psychological distress score", Person::getHealthWbScore0to36, AgeRange::mentalHealthValidation);
 
 				Set<JInternalFrame> psychologicalDistressCasesAgePlots = new LinkedHashSet<>();
 				for (AgeGroupCSfilter ageFilter : healthMentalAgeGroupFilterSet) {
@@ -1028,28 +1051,7 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 
             // Male/Female employment rates by age groups
             if(employmentByAge) {
-                var emplAgePlots = new LinkedHashSet<JInternalFrame>();
-                for (var ar : this.decades) {
-                    var inRange = new FilteredCollection<>(model::getPersons, ar).oncePerSimTime(engine);
-                    var males = new FilteredCollection<>(inRange, Filters.male());
-                    var females = new FilteredCollection<>(inRange, Filters.female());
-
-                    var maleEmployedCs = new WeightedCrossSection<>(males, Person::getEmployed, Person::getWeight);
-                    var femaleEmployedCs = new WeightedCrossSection<>(females, Person::getEmployed, Person::getWeight);
-
-                    // FIXME: should this be cached? What about validation values?
-                    var calcMale = OnceUntil.timeChanges(() -> new WeightedStats(maleEmployedCs.get()).mean(), engine);
-                    var calcFemale = OnceUntil.timeChanges(() -> new WeightedStats(femaleEmployedCs.get()).mean(), engine);
-
-                    var emplAgePlotter = new TimeSeriesSimulationPlotter("Employment rate by age: " + ar.from() + " - " + ar.to(), "");
-                    emplAgePlotter.addSource("males", calcMale, colorArrayList.get(0), false);
-                    emplAgePlotter.addSource("females", calcFemale, colorArrayList.get(1), false);
-                    emplAgePlotter.addSource("Validation males", () -> ar.employmentValidation(model.getYear(), Gender.Male), colorArrayList.get(0), true);
-                    emplAgePlotter.addSource("Validation females", () -> ar.employmentValidation(model.getYear(), Gender.Female), colorArrayList.get(1), true);
-                    updateChartSet.add(emplAgePlotter); // Add to set to be updated in buildSchedule method
-                    emplAgePlots.add(emplAgePlotter);
-                }
-                tabSet.add(createScrollPaneFromPlots(emplAgePlots, "Employment: age/gender", 2));
+                ageGenderPlots("Employment rate", Person::getEmployed, AgeRange::employmentValidation);
             }
 
 		    //One graph for employment age by maternity status, conditional on age of children
