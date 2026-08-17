@@ -2415,7 +2415,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             return (isToBePartnered())? 1 : 0;
 
         case isPsychologicallyDistressed:
-            return (healthPsyDstrss0to12 >= PSYCHOLOGICAL_DISTRESS_GHQ12_CASES_CUTOFF)? 1 : 0;
+            return this.isPsychologicallyDistressed();
 
         case isNeedSocialCare:
             return (Indicator.True.equals(careNeedFlag)) ? 1 : 0;
@@ -6907,6 +6907,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     public void setHealthPsyDstrss0to12(Double dhm_ghq) {
         this.healthPsyDstrss0to12 = dhm_ghq;
+    }
+
+    public int isPsychologicallyDistressed() {
+        return (healthPsyDstrss0to12 >= PSYCHOLOGICAL_DISTRESS_GHQ12_CASES_CUTOFF) ? 1 : 0;
     }
 
     public Ethnicity getDemEthnC6() {
