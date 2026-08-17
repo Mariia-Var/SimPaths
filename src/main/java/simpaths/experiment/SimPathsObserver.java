@@ -27,6 +27,7 @@ import simpaths.model.enums.Country;
 import simpaths.model.enums.Education;
 import simpaths.model.enums.Gender;
 import simpaths.model.enums.HistogramTypeEnum;
+import simpaths.model.enums.Les_c4;
 import simpaths.model.enums.Region;
 
 import org.apache.commons.collections4.map.LinkedMap;
@@ -167,6 +168,15 @@ record AgeRange(int from, int to) implements Predicate<Person> {
         return val.doubleValue();
     }
 
+    public double eduValidation(int year, String level) {
+        var label = "educ_" + level + "_" + this.from + "_" + this.to;
+        var val = (Number) Parameters.getValidationEducationLevelByAge().getValue(year - 1, label);
+        if (val == null) {
+            return Double.NaN;
+        }
+        return val.doubleValue();
+    }
+
     @Override
     public boolean test(Person arg0) {
         return Filters.ageRange(this.from, this.to).test(arg0);
@@ -286,8 +296,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 
     private ArrayList<AgeRange> decades;
 
-	private LinkedHashSet<ValidEducationAgeGroupCSfilter> decadeValidEducationAgeGroupFilterSet;
-
 	private LinkedHashSet<AgeGroupCSfilter> disabledHealthAgeGroupFilterSet;
 
 	private ScatterplotSimulationPlotterRefreshable convergenceElasticitiesPlotter;
@@ -403,11 +411,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			AgeGroupCSfilter age50_74Filter = new AgeGroupCSfilter(50, 74);
 			AgeGroupCSfilter age75_100Filter = new AgeGroupCSfilter(75, 100);
 
-			ValidEducationAgeGroupCSfilter validEdAge20_29Filter = new ValidEducationAgeGroupCSfilter(20,29);
-			ValidEducationAgeGroupCSfilter validEdAge30_39Filter = new ValidEducationAgeGroupCSfilter(30,39);
-			ValidEducationAgeGroupCSfilter validEdAge40_49Filter = new ValidEducationAgeGroupCSfilter(40,49);
-			ValidEducationAgeGroupCSfilter validEdAge50_59Filter = new ValidEducationAgeGroupCSfilter(50,59);
-
 			FemalesWithChildrenByChildAgeCSfilter childAged0_5Filter = new FemalesWithChildrenByChildAgeCSfilter(0, 5);
 			FemalesWithChildrenByChildAgeCSfilter childAged6_18Filter = new FemalesWithChildrenByChildAgeCSfilter(6, 18);
 
@@ -417,12 +420,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
             this.decades.add(new AgeRange(30, 39));
             this.decades.add(new AgeRange(40, 49));
             this.decades.add(new AgeRange(50, 59));
-
-			decadeValidEducationAgeGroupFilterSet = new LinkedHashSet<ValidEducationAgeGroupCSfilter>();
-			decadeValidEducationAgeGroupFilterSet.add(validEdAge20_29Filter);
-			decadeValidEducationAgeGroupFilterSet.add(validEdAge30_39Filter);
-			decadeValidEducationAgeGroupFilterSet.add(validEdAge40_49Filter);
-			decadeValidEducationAgeGroupFilterSet.add(validEdAge50_59Filter);
 
 			disabledHealthAgeGroupFilterSet = new LinkedHashSet<>();
 			disabledHealthAgeGroupFilterSet.add(age0_49Filter);
@@ -754,37 +751,42 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 				}
 			}
 			
-		    //Education levels by age groups
-			if(educationByAge && showAdditionalCharts) {
-			    Set<JInternalFrame> eduAgePlots = new LinkedHashSet<JInternalFrame>();
-			    for(ValidEducationAgeGroupCSfilter ageFilter : decadeValidEducationAgeGroupFilterSet) {
-			    	
-					Weighted_CrossSection.Integer lowEducationCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getLowEducation", true);
-					lowEducationCS.setFilter(ageFilter);
-					Weighted_CrossSection.Integer midEducationCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getMidEducation", true);
-					midEducationCS.setFilter(ageFilter);
-					Weighted_CrossSection.Integer highEducationCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getHighEducation", true);
-					highEducationCS.setFilter(ageFilter);
-					
-					TimeSeriesSimulationPlotter eduAgePlotter = new TimeSeriesSimulationPlotter("Education level by age: " + ageFilter.getAgeFrom() + " - " + ageFilter.getAgeTo() + "\n(excluding students)", "");		//'yo' means "years old"
-				    eduAgePlotter.addSeries("low", new Weighted_MeanArrayFunction(lowEducationCS), null, colorArrayList.get(0), false);
-				    eduAgePlotter.addSeries("mid", new Weighted_MeanArrayFunction(midEducationCS), null, colorArrayList.get(1), false);
-				    eduAgePlotter.addSeries("high", new Weighted_MeanArrayFunction(highEducationCS), null, colorArrayList.get(2), false);
+            // Education levels by age groups
+            if (educationByAge && showAdditionalCharts) {
+                var plots = new LinkedHashSet<JInternalFrame>();
+                for (var ar : this.decades) {
+                    var filter = ar.and(Filters.employment(Les_c4.Student).negate());
+                    var filtered = new FilteredCollection<>(model::getPersons, filter).oncePerSimTime(engine);
 
-					if (showValidationStatistics) {
-						eduAgePlotter.addSeries("Validation Low", validator, Validator.DoublesVariables.valueOf("educationLevelLowByAge_"+ageFilter.getAgeFrom()+"_"+ageFilter.getAgeTo()), colorArrayList.get(0), true); //Note the use of valueOf instead of calling the enum in validator's doubles variables directly
-						eduAgePlotter.addSeries("Validation Medium", validator, Validator.DoublesVariables.valueOf("educationLevelMediumByAge_"+ageFilter.getAgeFrom()+"_"+ageFilter.getAgeTo()), colorArrayList.get(1), true);
-						eduAgePlotter.addSeries("Validation High", validator, Validator.DoublesVariables.valueOf("educationLevelHighByAge_"+ageFilter.getAgeFrom()+"_"+ageFilter.getAgeTo()), colorArrayList.get(2), true);
-					}
+                    var lowEduCs = new WeightedCrossSection<>(filtered, Person::getLowEducation, Person::getWeight);
+                    var midEduCs = new WeightedCrossSection<>(filtered, Person::getMidEducation, Person::getWeight);
+                    var highEduCs = new WeightedCrossSection<>(filtered, Person::getHighEducation, Person::getWeight);
 
-					updateChartSet.add(eduAgePlotter);			//Add to set to be updated in buildSchedule method
-					eduAgePlots.add(eduAgePlotter);
+                    var meanLow = OnceUntil.timeChanges(() -> new WeightedStats(lowEduCs.get()).mean(), engine);
+                    var meanMid = OnceUntil.timeChanges(() -> new WeightedStats(midEduCs.get()).mean(), engine);
+                    var meanHigh = OnceUntil.timeChanges(() -> new WeightedStats(highEduCs.get()).mean(), engine);
 
+                    var plotter = new TimeSeriesSimulationPlotter(
+                            "Education level by age: " + ar.from() + " - " + ar.to() + "\n(excluding students)", "");
+                    plotter.addSource("low", meanLow, colorArrayList.get(0), false);
+                    plotter.addSource("mid", meanMid, colorArrayList.get(1), false);
+                    plotter.addSource("high", meanHigh, colorArrayList.get(2), false);
 
-			    }
-			    tabSet.add(createScrollPaneFromPlots(eduAgePlots, "Education by age", 2));
-			}
-			
+                    if (showValidationStatistics) {
+                        Supplier<Double> validLow = () -> ar.eduValidation(this.model.getYear(), "low");
+                        Supplier<Double> validMid = () -> ar.eduValidation(this.model.getYear(), "med");
+                        Supplier<Double> validHigh = () -> ar.eduValidation(this.model.getYear(), "high");
+                        plotter.addSource("Validation Low", validLow, colorArrayList.get(0), true);
+                        plotter.addSource("Validation Medium", validMid, colorArrayList.get(1), true);
+                        plotter.addSource("Validation High", validMid, colorArrayList.get(2), true);
+                    }
+
+                    updateChartSet.add(plotter);
+                    plots.add(plotter);
+                }
+                tabSet.add(createScrollPaneFromPlots(plots, "Education by age", 2));
+            }
+
 		    //Low & High Education By Region
 			if(educationByRegion && showAdditionalCharts) {
 			    Set<JInternalFrame> eduLowHighRegionalPlots = new LinkedHashSet<JInternalFrame>();
