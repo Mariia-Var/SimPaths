@@ -102,6 +102,19 @@ record AgeRange(int from, int to) implements Predicate<Person> {
         return val.doubleValue();
     }
 
+    public double mentalHealthValidation(int year, Gender gender) {
+        var stem = switch (gender) {
+            case Female -> "female";
+            case Male -> "male";
+        };
+        var label = "mental_health_" + stem + "_" + this.from + "_" + this.to;
+        var val = (Number) Parameters.getValidationMentalHealthByAge().getValue(year - 1, label);
+        if (val == null) {
+            return Double.NaN;
+        }
+        return val.doubleValue();
+    }
+
     @Override
     public boolean test(Person arg0) {
         return Filters.ageRange(this.from, this.to).test(arg0);
@@ -266,7 +279,8 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 	public void buildObjects() {
 		
 		//TODO: Change construction of objects like Weighted_CrossSection.Integer from using Java reflection to using getIntValue methods in Person class in order to improve speed?
-		
+        var engine = this.getEngine();
+
 		if(showCharts) {
 			
 			model = (SimPathsModel) getManager();
@@ -815,30 +829,31 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 
 				tabSet.add(createScrollPaneFromPlots(healthAgePlots, "Health: age/gender", 2));
 
-				// mental health plots
-				Set<JInternalFrame> healthMentalAgePlots = new LinkedHashSet<>();
-				for (AgeGroupCSfilter ageFilter : healthMentalAgeGroupFilterSet) {
-					int ageFrom = ageFilter.getAgeFrom();
-					int ageTo = ageFilter.getAgeTo();
+                // mental health plots
+                var healthMentalAgePlots = new LinkedHashSet<JInternalFrame>();
+                for (var ar : this.decades) {
+                    var inRange = new FilteredCollection<>(model::getPersons, ar).oncePerSimTime(engine);
+                    var males = new FilteredCollection<>(inRange, Filters.male());
+                    var females = new FilteredCollection<>(inRange, Filters.female());
 
-					MaleAgeGroupCSfilter maleAgeFilter = new MaleAgeGroupCSfilter(ageFrom, ageTo);
-					FemaleAgeGroupCSfilter femaleAgeFilter = new FemaleAgeGroupCSfilter(ageFrom, ageTo);
-					Weighted_CrossSection.Double maleCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getHealthWbScore0to36", true);
-					maleCS.setFilter(maleAgeFilter);
-					Weighted_CrossSection.Double femaleCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getHealthWbScore0to36", true);
-					femaleCS.setFilter(femaleAgeFilter);
+                    var maleCs = new WeightedCrossSection<>(males, Person::getHealthWbScore0to36, Person::getWeight);
+                    var femaleCs = new WeightedCrossSection<>(females, Person::getHealthWbScore0to36, Person::getWeight);
 
-					TimeSeriesSimulationPlotter healthMentalAgePlotter = new TimeSeriesSimulationPlotter("Psychological distress score by age: " + ageFilter.getAgeFrom() + " - " + ageFilter.getAgeTo(), "");
-					healthMentalAgePlotter.addSeries("males", new Weighted_MeanArrayFunction(maleCS), null, colorArrayList.get(0), false);
-					healthMentalAgePlotter.addSeries("females", new Weighted_MeanArrayFunction(femaleCS), null, colorArrayList.get(1), false);
-					healthMentalAgePlotter.addSeries("Validation males", validator, Validator.DoublesVariables.valueOf("mentalHealthMale_" + ageFrom + "_" + ageTo), colorArrayList.get(0), true);
-					healthMentalAgePlotter.addSeries("Validation females", validator, Validator.DoublesVariables.valueOf("mentalHealthFemale_" + ageFrom + "_" + ageTo), colorArrayList.get(1), true);
+                    // FIXME: should this be cached? What about validation values?
+                    var calcMale = OnceUntil.timeChanges(() -> new WeightedStats(maleCs.get()).mean(), engine);
+                    var calcFemale = OnceUntil.timeChanges(() -> new WeightedStats(femaleCs.get()).mean(), engine);
 
-					updateChartSet.add(healthMentalAgePlotter);
-					healthMentalAgePlots.add(healthMentalAgePlotter);
-				}
+                    var healthMentalAgePlotter = new TimeSeriesSimulationPlotter("Psychological distress score by age: " + ar.from() + " - " + ar.to(), "");
+                    healthMentalAgePlotter.addSource("males", calcMale, colorArrayList.get(0), false);
+                    healthMentalAgePlotter.addSource("females", calcFemale, colorArrayList.get(1), false);
+                    healthMentalAgePlotter.addSource("Validation males", () -> ar.mentalHealthValidation(model.getYear(), Gender.Male), colorArrayList.get(0), true);
+                    healthMentalAgePlotter.addSource("Validation females", () -> ar.mentalHealthValidation(model.getYear(), Gender.Female), colorArrayList.get(1), true);
 
-				tabSet.add(createScrollPaneFromPlots(healthMentalAgePlots, "Psychological distress score: age/gender", 2));
+                    updateChartSet.add(healthMentalAgePlotter);
+                    healthMentalAgePlots.add(healthMentalAgePlotter);
+                }
+
+                tabSet.add(createScrollPaneFromPlots(healthMentalAgePlots, "Psychological distress score: age/gender", 2));
 
 				Set<JInternalFrame> psychologicalDistressCasesAgePlots = new LinkedHashSet<>();
 				for (AgeGroupCSfilter ageFilter : healthMentalAgeGroupFilterSet) {
@@ -1012,7 +1027,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 		    }
 
             // Male/Female employment rates by age groups
-            var engine = this.getEngine();
             if(employmentByAge) {
                 var emplAgePlots = new LinkedHashSet<JInternalFrame>();
                 for (var ar : this.decades) {
