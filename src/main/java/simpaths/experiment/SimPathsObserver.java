@@ -2,8 +2,13 @@
 package simpaths.experiment;
 
 // import Java packages
-import java.awt.*;
-import java.util.*;
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+
 import javax.swing.JComponent;
 import javax.swing.JInternalFrame;
 import javax.swing.JPanel;
@@ -12,11 +17,15 @@ import javax.swing.JTabbedPane;
 import javax.swing.ScrollPaneConstants;
 
 // import plug-in packages
-import simpaths.data.filters.*;
 import simpaths.model.BenefitUnit;
 import simpaths.model.SimPathsModel;
 import simpaths.model.Validator;
-import simpaths.model.enums.*;
+import simpaths.model.enums.Country;
+import simpaths.model.enums.Education;
+import simpaths.model.enums.Gender;
+import simpaths.model.enums.HistogramTypeEnum;
+import simpaths.model.enums.Region;
+
 import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.collections4.map.MultiKeyMap;
 import net.miginfocom.swing.MigLayout;
@@ -46,6 +55,32 @@ import microsim.statistics.weighted.functions.Weighted_SumArrayFunction;
 // import LABOURsim packages
 import simpaths.model.Person;
 import simpaths.data.Parameters;
+import simpaths.data.filters.AgeGroupCSfilter;
+import simpaths.data.filters.ChildValidIncomeCSfilter;
+import simpaths.data.filters.ChildValidIncomeRegionalCSfilter;
+import simpaths.data.filters.FemaleAgeGroupCSfilter;
+import simpaths.data.filters.FemaleAgeGroupEducationCSfilter;
+import simpaths.data.filters.FemaleRegionAgeCSfilter;
+import simpaths.data.filters.FemalesWithChildrenByChildAgeCSfilter;
+import simpaths.data.filters.FemalesWithoutChildrenAgeGroupCSfilter;
+import simpaths.data.filters.FlexibleInLabourSupplyByAgeAndGenderFilter;
+import simpaths.data.filters.FlexibleInLabourSupplyByEducationFilter;
+import simpaths.data.filters.GenderCSfilter;
+import simpaths.data.filters.GenderEducationCSfilter;
+import simpaths.data.filters.GenderEducationWorkingCSfilter;
+import simpaths.data.filters.GenderWorkingCSfilter;
+import simpaths.data.filters.MaleAgeGroupCSfilter;
+import simpaths.data.filters.MaleAgeGroupEducationCSfilter;
+import simpaths.data.filters.MaleRegionAgeCSfilter;
+import simpaths.data.filters.RegionCSfilter;
+import simpaths.data.filters.RegionEducationCSfilter;
+import simpaths.data.filters.RegionEducationWorkingCSfilter;
+import simpaths.data.filters.ValidEducationAgeGroupCSfilter;
+import simpaths.data.filters.ValidEducationRegionCSfilter;
+import simpaths.data.filters.ValidHouseholdIncomeCSfilter;
+import simpaths.data.filters.ValidHouseholdIncomeRegionalCSfilter;
+import simpaths.data.filters.ValidPersonEarningsCSfilter;
+
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 
 
