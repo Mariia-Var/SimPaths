@@ -65,7 +65,6 @@ import simpaths.data.filters.AgeGroupCSfilter;
 import simpaths.data.filters.ChildValidIncomeCSfilter;
 import simpaths.data.filters.ChildValidIncomeRegionalCSfilter;
 import simpaths.data.filters.FemaleAgeGroupCSfilter;
-import simpaths.data.filters.FemaleAgeGroupEducationCSfilter;
 import simpaths.data.filters.FemaleRegionAgeCSfilter;
 import simpaths.data.filters.FemalesWithChildrenByChildAgeCSfilter;
 import simpaths.data.filters.FemalesWithoutChildrenAgeGroupCSfilter;
@@ -77,7 +76,6 @@ import simpaths.data.filters.GenderEducationCSfilter;
 import simpaths.data.filters.GenderEducationWorkingCSfilter;
 import simpaths.data.filters.GenderWorkingCSfilter;
 import simpaths.data.filters.MaleAgeGroupCSfilter;
-import simpaths.data.filters.MaleAgeGroupEducationCSfilter;
 import simpaths.data.filters.MaleRegionAgeCSfilter;
 import simpaths.data.filters.RegionCSfilter;
 import simpaths.data.filters.RegionEducationCSfilter;
@@ -292,8 +290,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 
 	private LinkedHashSet<AgeGroupCSfilter> disabledHealthAgeGroupFilterSet;
 
-	private LinkedHashSet<AgeGroupCSfilter> healthMentalAgeGroupFilterSet;
-
 	private ScatterplotSimulationPlotterRefreshable convergenceElasticitiesPlotter;
 
 	private Weighted_CrossSection.Double wagesCS;
@@ -403,11 +399,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			AgeGroupCSfilter age60_79Filter = new AgeGroupCSfilter(60, 79);
 			AgeGroupCSfilter age80_100Filter = new AgeGroupCSfilter(80, 100);
 
-			AgeGroupCSfilter age20_29Filter = new AgeGroupCSfilter(20,29);
-			AgeGroupCSfilter age30_39Filter = new AgeGroupCSfilter(30,39);			
-			AgeGroupCSfilter age40_49Filter = new AgeGroupCSfilter(40,49);
-			AgeGroupCSfilter age50_59Filter = new AgeGroupCSfilter(50,59);
-
 			AgeGroupCSfilter age0_49Filter = new AgeGroupCSfilter(0, 49);
 			AgeGroupCSfilter age50_74Filter = new AgeGroupCSfilter(50, 74);
 			AgeGroupCSfilter age75_100Filter = new AgeGroupCSfilter(75, 100);
@@ -438,14 +429,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			disabledHealthAgeGroupFilterSet.add(age50_74Filter);
 			disabledHealthAgeGroupFilterSet.add(age75_100Filter);
 
-			healthMentalAgeGroupFilterSet = new LinkedHashSet<>();
-			healthMentalAgeGroupFilterSet.add(age20_29Filter);
-			healthMentalAgeGroupFilterSet.add(age30_39Filter);
-			healthMentalAgeGroupFilterSet.add(age40_49Filter);
-			healthMentalAgeGroupFilterSet.add(age50_59Filter);
-
-			
-			
 			updateChartSet = new LinkedHashSet<JInternalFrame>();	//Set of all charts needed to be scheduled for updating (NOT the convergence plot!)
 			tabSet = new LinkedHashSet<JComponent>();		//Set of all JInternalFrames each having a tab.  Each tab frame will potentially contain more than one chart each.
 			labourMarketPlots = new LinkedHashMap<Education, ScatterplotSimulationPlotterRefreshable>();
@@ -931,54 +914,59 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
                 ageGenderPlots("Share in psychological distress (case-based)",
                         Person::isPsychologicallyDistressed, AgeRange::psychDistressValidation);
 
-				// Psychological distress (case-based) by education
-				Set<JInternalFrame> psychologicalDistressCasesAgeEducationPlots = new LinkedHashSet<>();
-				for (Education education : Education.values()) {
-					for (AgeGroupCSfilter ageFilter : healthMentalAgeGroupFilterSet) {
-						int ageFrom = ageFilter.getAgeFrom();
-						int ageTo = ageFilter.getAgeTo();
+                // Psychological distress (case-based) by education
+                var psychologicalDistressCasesAgeEducationPlots = new LinkedHashSet<JInternalFrame>();
+                for (Education education : Education.values()) {
+                    for (var ar : this.decades) {
+                        var withEduInAgeRange = new FilteredCollection<>(model::getPersons, ar.and(Filters.education(education))).oncePerSimTime(engine);
+                        var males = new FilteredCollection<>(withEduInAgeRange, Filters.male());
+                        var females = new FilteredCollection<>(withEduInAgeRange, Filters.female());
 
-						MaleAgeGroupEducationCSfilter maleAgeEducationFilter = new MaleAgeGroupEducationCSfilter(ageFrom, ageTo, education);
-						FemaleAgeGroupEducationCSfilter femaleAgeEducationFilter = new FemaleAgeGroupEducationCSfilter(ageFrom, ageTo, education);
-						Weighted_CrossSection.Integer maleCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.IntegerVariables.isPsychologicallyDistressed);
-						maleCS.setFilter(maleAgeEducationFilter);
-						Weighted_CrossSection.Integer femaleCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.IntegerVariables.isPsychologicallyDistressed);
-						femaleCS.setFilter(femaleAgeEducationFilter);
+                        var maleCs = new WeightedCrossSection<>(males, Person::isPsychologicallyDistressed, Person::getWeight);
+                        var femaleCs = new WeightedCrossSection<>(females, Person::isPsychologicallyDistressed, Person::getWeight);
 
-						TimeSeriesSimulationPlotter psychDistressAgeEducationPlotter = new TimeSeriesSimulationPlotter("Share in psychological distress by age: " + ageFilter.getAgeFrom() + " - " + ageFilter.getAgeTo(), "");
-						psychDistressAgeEducationPlotter.addSeries("males " + education + " educ", new Weighted_MeanArrayFunction(maleCS), null, colorArrayList.get(0), false);
-						psychDistressAgeEducationPlotter.addSeries("females " + education + " educ", new Weighted_MeanArrayFunction(femaleCS), null, colorArrayList.get(1), false);
-						psychDistressAgeEducationPlotter.addSeries("Validation males", validator, Validator.DoublesVariables.valueOf("psychDistressMale_"+ageFrom+"_"+ageTo), colorArrayList.get(0), true);
-						psychDistressAgeEducationPlotter.addSeries("Validation females", validator, Validator.DoublesVariables.valueOf("psychDistressFemale_"+ageFrom+"_"+ageTo), colorArrayList.get(1), true);
-						updateChartSet.add(psychDistressAgeEducationPlotter);
-						psychologicalDistressCasesAgeEducationPlots.add(psychDistressAgeEducationPlotter);
-					}
-			}
+                        // FIXME: should this be cached? What about validation values?
+                        var meanMale = OnceUntil.timeChanges(() -> new WeightedStats(maleCs.get()).mean(), engine);
+                        var meanFemale = OnceUntil.timeChanges(() -> new WeightedStats(femaleCs.get()).mean(), engine);
 
-				tabSet.add(createScrollPaneFromPlots(psychologicalDistressCasesAgeEducationPlots, "Share in psychological distress (case-based): age/gender/education", 2));
+                        Supplier<Double> validMale = () -> ar.psychDistressValidation(model.getYear(), Gender.Male);
+                        Supplier<Double> validFemale = () -> ar.psychDistressValidation(model.getYear(), Gender.Female);
 
-				// Psychological distress (case-based) by education
-				Set<JInternalFrame> psychologicalDistressCasesEducationPlots = new LinkedHashSet<>();
-				for (Education education : Education.values()) {
-						int ageFrom = 25;
-						int ageTo = 64;
+                        var plotter = new TimeSeriesSimulationPlotter("Share in psychological distress by age: " + ar.from() + " - " + ar.to(), "");
+                        plotter.addSource("males " + education + " educ", meanMale, colorArrayList.get(0), false);
+                        plotter.addSource("females " + education + " educ", meanFemale, colorArrayList.get(1), false);
+                        plotter.addSource("Validation males", validMale, colorArrayList.get(0), true);
+                        plotter.addSource("Validation females", validFemale, colorArrayList.get(1), true);
+                        updateChartSet.add(plotter);
+                        psychologicalDistressCasesAgeEducationPlots.add(plotter);
+                    }
+                }
+                tabSet.add(createScrollPaneFromPlots(psychologicalDistressCasesAgeEducationPlots, "Share in psychological distress (case-based): age/gender/education", 2));
 
-						MaleAgeGroupEducationCSfilter maleAgeEducationFilter = new MaleAgeGroupEducationCSfilter(ageFrom, ageTo, education);
-						FemaleAgeGroupEducationCSfilter femaleAgeEducationFilter = new FemaleAgeGroupEducationCSfilter(ageFrom, ageTo, education);
-						Weighted_CrossSection.Integer maleCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.IntegerVariables.isPsychologicallyDistressed);
-						maleCS.setFilter(maleAgeEducationFilter);
-						Weighted_CrossSection.Integer femaleCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.IntegerVariables.isPsychologicallyDistressed);
-						femaleCS.setFilter(femaleAgeEducationFilter);
+                // Psychological distress (case-based) by education
+                var psychologicalDistressCasesEducationPlots = new LinkedHashSet<JInternalFrame>();
+                for (Education education : Education.values()) {
+                    var filter = Filters.ageRange(25, 64).and(Filters.education(education));
+                    var withEduInAgeRange = new FilteredCollection<>(model::getPersons, filter).oncePerSimTime(engine);
 
-						TimeSeriesSimulationPlotter psychDistressEducationPlotter = new TimeSeriesSimulationPlotter("Share in psychological distress by education:", "");
-						psychDistressEducationPlotter.addSeries("males " + education + " educ", new Weighted_MeanArrayFunction(maleCS), null, colorArrayList.get(0), false);
-						psychDistressEducationPlotter.addSeries("females " + education + " educ", new Weighted_MeanArrayFunction(femaleCS), null, colorArrayList.get(1), false);
+                    var males = new FilteredCollection<>(withEduInAgeRange, Filters.male());
+                    var females = new FilteredCollection<>(withEduInAgeRange, Filters.female());
 
-						updateChartSet.add(psychDistressEducationPlotter);
-						psychologicalDistressCasesEducationPlots.add(psychDistressEducationPlotter);
-					}
+                    var maleCs = new WeightedCrossSection<>(males, Person::isPsychologicallyDistressed, Person::getWeight);
+                    var femaleCs = new WeightedCrossSection<>(females, Person::isPsychologicallyDistressed, Person::getWeight);
 
-				tabSet.add(createScrollPaneFromPlots(psychologicalDistressCasesEducationPlots, "Share in psychological distress (case-based): gender/education", 2));
+                    // FIXME: should this be cached? What about validation values?
+                    var meanMale = OnceUntil.timeChanges(() -> new WeightedStats(maleCs.get()).mean(), engine);
+                    var meanFemale = OnceUntil.timeChanges(() -> new WeightedStats(femaleCs.get()).mean(), engine);
+
+                    var plotter = new TimeSeriesSimulationPlotter("Share in psychological distress by education:", "");
+                    plotter.addSource("males " + education + " educ", meanMale, colorArrayList.get(0), false);
+                    plotter.addSource("females " + education + " educ", meanFemale, colorArrayList.get(1), false);
+
+                    updateChartSet.add(plotter);
+                    psychologicalDistressCasesEducationPlots.add(plotter);
+                }
+                tabSet.add(createScrollPaneFromPlots(psychologicalDistressCasesEducationPlots, "Share in psychological distress (case-based): gender/education", 2));
 
                 ageGenderPlots("Life satisfaction score", Person::getDemLifeSatScore0to10, AgeRange::lifeSatValidation);
                 ageGenderPlots("Mental health MCS score", Person::getHealthMentalMcs, AgeRange::mcsValidation);
