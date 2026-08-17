@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import javax.swing.JComponent;
 import javax.swing.JInternalFrame;
@@ -29,9 +30,12 @@ import simpaths.model.enums.Region;
 import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.collections4.map.MultiKeyMap;
 import net.miginfocom.swing.MigLayout;
-
+import microsim.FilteredCollection;
 // import JAS-mine packages
 import microsim.annotation.GUIparameter;
+import microsim.caching.OnceUntil;
+import microsim.dev.statistics.WeightedCrossSection;
+import microsim.dev.statistics.WeightedStats;
 import microsim.engine.AbstractSimulationObserverManager;
 import microsim.engine.SimulationCollectorManager;
 import microsim.engine.SimulationManager;
@@ -63,6 +67,7 @@ import simpaths.data.filters.FemaleAgeGroupEducationCSfilter;
 import simpaths.data.filters.FemaleRegionAgeCSfilter;
 import simpaths.data.filters.FemalesWithChildrenByChildAgeCSfilter;
 import simpaths.data.filters.FemalesWithoutChildrenAgeGroupCSfilter;
+import simpaths.data.filters.Filters;
 import simpaths.data.filters.FlexibleInLabourSupplyByAgeAndGenderFilter;
 import simpaths.data.filters.FlexibleInLabourSupplyByEducationFilter;
 import simpaths.data.filters.GenderCSfilter;
@@ -82,6 +87,26 @@ import simpaths.data.filters.ValidHouseholdIncomeRegionalCSfilter;
 import simpaths.data.filters.ValidPersonEarningsCSfilter;
 
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+
+record AgeRange(int from, int to) implements Predicate<Person> {
+    public double employmentValidation(int year, Gender gender) {
+        var stem = switch (gender) {
+            case Female -> "female";
+            case Male -> "male";
+        };
+        var label = "employed_" + stem + "_" + this.from + "_" + this.to;
+        var val = (Number) Parameters.getValidationEmploymentByAgeAndGender().getValue(year - 1, label);
+        if (val == null) {
+            return Double.NaN;
+        }
+        return val.doubleValue();
+    }
+
+    @Override
+    public boolean test(Person arg0) {
+        return Filters.ageRange(this.from, this.to).test(arg0);
+    }
+}
 
 
 /**
@@ -189,7 +214,7 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 //	@GUIparameter(description = "Allow convergence plots to float freely in GUI, otherwise contain plots in a frame")
 	private boolean floatingConvergencePlots = false;		//Allow convergence plots to float freely in GUI, otherwise contain plots in a frame 
 
-	private LinkedHashSet<AgeGroupCSfilter> decadeAgeGroupFilterSet;
+    private ArrayList<AgeRange> decades;
 
 	private LinkedHashSet<ValidEducationAgeGroupCSfilter> decadeValidEducationAgeGroupFilterSet;
 
@@ -285,12 +310,11 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			FemalesWithChildrenByChildAgeCSfilter childAged6_18Filter = new FemalesWithChildrenByChildAgeCSfilter(6, 18);
 
 
-			decadeAgeGroupFilterSet = new LinkedHashSet<AgeGroupCSfilter>();
-			decadeAgeGroupFilterSet.add(age20_29Filter);
-			decadeAgeGroupFilterSet.add(age30_39Filter);
-			decadeAgeGroupFilterSet.add(age40_49Filter);
-			decadeAgeGroupFilterSet.add(age50_59Filter);
-
+            this.decades = new ArrayList<>();
+            this.decades.add(new AgeRange(20, 29));
+            this.decades.add(new AgeRange(30, 39));
+            this.decades.add(new AgeRange(40, 49));
+            this.decades.add(new AgeRange(50, 59));
 
 			decadeValidEducationAgeGroupFilterSet = new LinkedHashSet<ValidEducationAgeGroupCSfilter>();
 			decadeValidEducationAgeGroupFilterSet.add(validEdAge20_29Filter);
@@ -986,31 +1010,33 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 				updateChartSet.add(emplPlotter);			//Add to set to be updated in buildSchedule method
 				tabSet.add(emplPlotter);
 		    }
-		    
-		    //Male/Female employment rates by age groups
-		    if(employmentByAge) {
-			    Set<JInternalFrame> emplAgePlots = new LinkedHashSet<JInternalFrame>();
-			    for(AgeGroupCSfilter ageFilter : decadeAgeGroupFilterSet) {
-			    	int ageFrom = ageFilter.getAgeFrom();
-			    	int ageTo = ageFilter.getAgeTo();
-			    	
-			    	MaleAgeGroupCSfilter maleAgeFilter = new MaleAgeGroupCSfilter(ageFrom, ageTo);
-			    	FemaleAgeGroupCSfilter femaleAgeFilter = new FemaleAgeGroupCSfilter(ageFrom, ageTo);
-			    	Weighted_CrossSection.Integer maleCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
-					maleCS.setFilter(maleAgeFilter);
-					Weighted_CrossSection.Integer femaleCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
-					femaleCS.setFilter(femaleAgeFilter);
-	
-					TimeSeriesSimulationPlotter emplAgePlotter = new TimeSeriesSimulationPlotter("Employment rate by age: " + ageFilter.getAgeFrom() + " - " + ageFilter.getAgeTo(), "");
-				    emplAgePlotter.addSeries("males", new Weighted_MeanArrayFunction(maleCS), null, colorArrayList.get(0), false);
-				    emplAgePlotter.addSeries("females", new Weighted_MeanArrayFunction(femaleCS), null, colorArrayList.get(1), false);
-					emplAgePlotter.addSeries("Validation males", validator, Validator.DoublesVariables.valueOf("employmentMaleByAge_"+ageFrom+"_"+ageTo), colorArrayList.get(0), true);
-					emplAgePlotter.addSeries("Validation females", validator, Validator.DoublesVariables.valueOf("employmentFemaleByAge_"+ageFrom+"_"+ageTo), colorArrayList.get(1), true);
-					updateChartSet.add(emplAgePlotter);			//Add to set to be updated in buildSchedule method
-					emplAgePlots.add(emplAgePlotter);
-				}
-			    tabSet.add(createScrollPaneFromPlots(emplAgePlots, "Employment: age/gender", 2));
-		    }
+
+            // Male/Female employment rates by age groups
+            var engine = this.getEngine();
+            if(employmentByAge) {
+                var emplAgePlots = new LinkedHashSet<JInternalFrame>();
+                for (var ar : this.decades) {
+                    var inRange = new FilteredCollection<>(model::getPersons, ar).oncePerSimTime(engine);
+                    var males = new FilteredCollection<>(inRange, Filters.male());
+                    var females = new FilteredCollection<>(inRange, Filters.female());
+
+                    var maleEmployedCs = new WeightedCrossSection<>(males, Person::getEmployed, Person::getWeight);
+                    var femaleEmployedCs = new WeightedCrossSection<>(females, Person::getEmployed, Person::getWeight);
+
+                    // FIXME: should this be cached? What about validation values?
+                    var calcMale = OnceUntil.timeChanges(() -> new WeightedStats(maleEmployedCs.get()).mean(), engine);
+                    var calcFemale = OnceUntil.timeChanges(() -> new WeightedStats(femaleEmployedCs.get()).mean(), engine);
+
+                    var emplAgePlotter = new TimeSeriesSimulationPlotter("Employment rate by age: " + ar.from() + " - " + ar.to(), "");
+                    emplAgePlotter.addSource("males", calcMale, colorArrayList.get(0), false);
+                    emplAgePlotter.addSource("females", calcFemale, colorArrayList.get(1), false);
+                    emplAgePlotter.addSource("Validation males", () -> ar.employmentValidation(model.getYear(), Gender.Male), colorArrayList.get(0), true);
+                    emplAgePlotter.addSource("Validation females", () -> ar.employmentValidation(model.getYear(), Gender.Female), colorArrayList.get(1), true);
+                    updateChartSet.add(emplAgePlotter); // Add to set to be updated in buildSchedule method
+                    emplAgePlots.add(emplAgePlotter);
+                }
+                tabSet.add(createScrollPaneFromPlots(emplAgePlots, "Employment: age/gender", 2));
+            }
 
 		    //One graph for employment age by maternity status, conditional on age of children
 		    if (femaleEmploymentByMaternity) {
