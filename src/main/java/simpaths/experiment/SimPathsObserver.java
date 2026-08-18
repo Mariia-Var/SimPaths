@@ -56,22 +56,12 @@ import microsim.gui.plot.ScatterplotSimulationPlotterRefreshable;
 import microsim.gui.plot.Weighted_PyramidPlotter;
 import microsim.gui.plot.TimeSeriesSimulationPlotter;
 import microsim.gui.plot.Weighted_HistogramSimulationPlotter;
-import microsim.statistics.weighted.Weighted_CrossSection;
-import microsim.statistics.weighted.functions.Weighted_MeanArrayFunction;
 
 // import LABOURsim packages
 import simpaths.model.Person;
 import simpaths.data.Parameters;
 import simpaths.data.filters.BenefitUnitFilters;
-import simpaths.data.filters.ChildValidIncomeCSfilter;
-import simpaths.data.filters.ChildValidIncomeRegionalCSfilter;
 import simpaths.data.filters.Filters;
-import simpaths.data.filters.GenderCSfilter;
-import simpaths.data.filters.GenderEducationCSfilter;
-import simpaths.data.filters.GenderEducationWorkingCSfilter;
-import simpaths.data.filters.ValidHouseholdIncomeCSfilter;
-import simpaths.data.filters.ValidHouseholdIncomeRegionalCSfilter;
-import simpaths.data.filters.ValidPersonEarningsCSfilter;
 
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 
@@ -1117,154 +1107,164 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 		    }			
 			
 		    
-		    //POVERTY CHARTS
-		    if(poverty) { 
-			    Set<JInternalFrame> povertyPlots = new LinkedHashSet<JInternalFrame>();
-			    TimeSeriesSimulationPlotter housePovertyPlotter = new TimeSeriesSimulationPlotter("Share of Households at risk of poverty", "");
-			    TimeSeriesSimulationPlotter childPovertyPlotter = new TimeSeriesSimulationPlotter("Share of Children at risk of poverty", "");
-			    for(Region region: Parameters.getCountryRegions()) {
-			    	//Households
-					ValidHouseholdIncomeRegionalCSfilter validHouseholdIncomeRegionalFilter = new ValidHouseholdIncomeRegionalCSfilter(region);				
-					Weighted_CrossSection.Integer validHousesAtRiskOfPovertyRegionCS = new Weighted_CrossSection.Integer(model.getBenefitUnits(), BenefitUnit.class, "getYPvrtyFlag", true);
-					validHousesAtRiskOfPovertyRegionCS.setFilter(validHouseholdIncomeRegionalFilter);
-					housePovertyPlotter.addSeries(region.getName(), new Weighted_MeanArrayFunction(validHousesAtRiskOfPovertyRegionCS));
-					
-					//Children
-					ChildValidIncomeRegionalCSfilter childValidIncomeRegionalFilter = new ChildValidIncomeRegionalCSfilter(region);				
-					Weighted_CrossSection.Integer childAtRiskOfPovertyRegionCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getAtRiskOfPoverty", true);
-					childAtRiskOfPovertyRegionCS.setFilter(childValidIncomeRegionalFilter);
-					childPovertyPlotter.addSeries(region.getName(), new Weighted_MeanArrayFunction(childAtRiskOfPovertyRegionCS));		    		
-			    }
-			    //Households
-			    ValidHouseholdIncomeCSfilter validHouseholdIncomeFilter = new ValidHouseholdIncomeCSfilter();
-			    Weighted_CrossSection.Integer validHousesAtRiskOfPovertyCS = new Weighted_CrossSection.Integer(model.getBenefitUnits(), BenefitUnit.class, "getYPvrtyFlag", true);
-			    validHousesAtRiskOfPovertyCS.setFilter(validHouseholdIncomeFilter);
-			    housePovertyPlotter.addSeries("national", new Weighted_MeanArrayFunction(validHousesAtRiskOfPovertyCS));		    
-				updateChartSet.add(housePovertyPlotter);			//Add to set to be updated in buildSchedule method
-				povertyPlots.add(housePovertyPlotter);
-				
-				//Children
-				ChildValidIncomeCSfilter childValidIncomeFilter = new ChildValidIncomeCSfilter();				
-				Weighted_CrossSection.Integer childAtRiskOfPovertyCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getAtRiskOfPoverty", true);
-				childAtRiskOfPovertyCS.setFilter(childValidIncomeFilter);
-				childPovertyPlotter.addSeries("national", new Weighted_MeanArrayFunction(childAtRiskOfPovertyCS));		    				    
-				updateChartSet.add(childPovertyPlotter);			//Add to set to be updated in buildSchedule method
-			    povertyPlots.add(childPovertyPlotter);
-			    
-			    tabSet.add(createScrollPaneFromPlots(povertyPlots, "Poverty", 2));
-		    }
-		    
-		    // HISTOGRAMS OF INCOME
-		    if(incomeHistograms) {
-			    Set<JInternalFrame> histogramIncomePlots = new LinkedHashSet<JInternalFrame>();
-			    
-			    ValidPersonEarningsCSfilter validEarningsFilter = new ValidPersonEarningsCSfilter();
-			    Weighted_HistogramSimulationPlotter grossEarningsHistPlotter = new Weighted_HistogramSimulationPlotter("Individual Gross Earnings (yearly)", "Euro", histogramType.getHistogramType(), numberOfHistogramBins);
-			    Weighted_CrossSection.Double grossEarningsCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getGrossEarningsYearly", true);
-			    grossEarningsCS.setFilter(validEarningsFilter);
-			    
-			    grossEarningsHistPlotter.addCollectionSource("Gross Earnings", grossEarningsCS);
-			    updateChartSet.add(grossEarningsHistPlotter);			//Add to set to be updated in buildSchedule method
-			    histogramIncomePlots.add(grossEarningsHistPlotter);
-			    
-			    ValidHouseholdIncomeCSfilter validHouseholdIncomeFilter = new ValidHouseholdIncomeCSfilter();
-			    Weighted_HistogramSimulationPlotter dispIncomeHistPlotter = new Weighted_HistogramSimulationPlotter("Equivalised Disposable Income of Benefit Unit (yearly)", "Euro", histogramType.getHistogramType(), numberOfHistogramBins);
-			    Weighted_CrossSection.Double equivalisedDisposableIncomeCS = new Weighted_CrossSection.Double(model.getBenefitUnits(), BenefitUnit.class, "getEquivalisedDisposableIncomeYearly", true);
-			    equivalisedDisposableIncomeCS.setFilter(validHouseholdIncomeFilter);
-			    dispIncomeHistPlotter.addCollectionSource("Equivalised BenefitUnit Disposable Income", equivalisedDisposableIncomeCS);
-			    updateChartSet.add(dispIncomeHistPlotter);			//Add to set to be updated in buildSchedule method
-			    histogramIncomePlots.add(dispIncomeHistPlotter);
-			    
-			    tabSet.add(createScrollPaneFromPlots(histogramIncomePlots, "Income", 2));
-		    }
+            var buWithIncome = new FilteredCollection<>(model::getBenefitUnits, BenefitUnitFilters.validIncome())
+                    .oncePerSimTime(engine);
+            // poverty charts
+            if (poverty) {
+                var povertyPlots = new LinkedHashSet<JInternalFrame>();
+                var housePlot = new TimeSeriesSimulationPlotter("Share of Households at risk of poverty", "");
+                var childPlot = new TimeSeriesSimulationPlotter("Share of Children at risk of poverty", "");
+                var childWithIncome = new FilteredCollection<>(model::getPersons, Filters.child().and(Filters.validIncome()))
+                        .oncePerSimTime(engine);
+                for (var region : Parameters.getCountryRegions()) {
+                    // Households
+                    var buInRegion = new FilteredCollection<>(buWithIncome, BenefitUnitFilters.region(region));
+                    var buAtRiskCs = new WeightedCrossSection<>(buInRegion, BenefitUnit::getYPvrtyFlag, BenefitUnit::getWeight);
+                    var buStats = WeightedStats.supplier(buAtRiskCs);
+                    housePlot.addSource(region.getName(), () -> buStats.get().mean());
+
+                    // Children
+                    var childInRegion = new FilteredCollection<>(childWithIncome, Filters.region(region));
+                    var childAtRiskCs = new WeightedCrossSection<>(childInRegion, Person::getAtRiskOfPoverty, Person::getWeight);
+                    var childStats = WeightedStats.supplier(childAtRiskCs);
+                    childPlot.addSource(region.getName(), () -> childStats.get().mean());
+                }
+                // Households
+                var buCs = new WeightedCrossSection<>(buWithIncome, BenefitUnit::getYPvrtyFlag, BenefitUnit::getWeight);
+                var buStats = WeightedStats.supplier(buCs);
+                housePlot.addSource("national", () -> buStats.get().mean());
+                updateChartSet.add(housePlot);
+                povertyPlots.add(housePlot);
+
+                // Children
+                var childCs = new WeightedCrossSection<>(childWithIncome, Person::getAtRiskOfPoverty, Person::getWeight);
+                var childStats = WeightedStats.supplier(childCs);
+                childPlot.addSource("national", () -> childStats.get().mean());
+                updateChartSet.add(childPlot);
+                povertyPlots.add(childPlot);
+
+                tabSet.add(createScrollPaneFromPlots(povertyPlots, "Poverty", 2));
+            }
+
+            // histograms of income
+            if (incomeHistograms) {
+                var histogramIncomePlots = new LinkedHashSet<JInternalFrame>();
+
+                var plot = new Weighted_HistogramSimulationPlotter("Individual Gross Earnings (yearly)", "Euro", histogramType.getHistogramType(), numberOfHistogramBins);
+                var withValidEarnings = new FilteredCollection<>(model::getPersons, Filters.grossEarningsYearlyAtLeast(0.0));
+                var cs = new WeightedCrossSection<>(withValidEarnings, Person::getGrossEarningsYearly, Person::getWeight);
+                plot.addSource("Gross Earnings", cs);
+                updateChartSet.add(plot);
+                histogramIncomePlots.add(plot);
+
+                var houseCs = new WeightedCrossSection<>(buWithIncome, BenefitUnit::getEquivalisedDisposableIncomeYearly, BenefitUnit::getWeight);
+                var plotHouse = new Weighted_HistogramSimulationPlotter("Equivalised Disposable Income of Benefit Unit (yearly)", "Euro", histogramType.getHistogramType(), numberOfHistogramBins);
+                plotHouse.addSource("Equivalised BenefitUnit Disposable Income", houseCs);
+                updateChartSet.add(plotHouse);
+                histogramIncomePlots.add(plotHouse);
+
+                tabSet.add(createScrollPaneFromPlots(histogramIncomePlots, "Income", 2));
+            }
 
 
-			if (incomeHistograms) {
-				TimeSeriesSimulationPlotter EDIByGenderAndEducationPlotter;
-				int colorCounter = 0;
-				if (model.getCountry().equals(Country.UK)) {
-					EDIByGenderAndEducationPlotter = new TimeSeriesSimulationPlotter("EDI by Gender And Education", "£");
-				}
-				else {
-					EDIByGenderAndEducationPlotter = new TimeSeriesSimulationPlotter("EDI by Gender And Education", "Euro");
-				}
-				for(Education edu: Education.values()) {
-					if (Education.InEducation.equals(edu)) {
-						continue;
-					}
-					for (Gender gender : Gender.values()) {
-						GenderEducationWorkingCSfilter genderEducationWorkingFilter = new GenderEducationWorkingCSfilter(gender, edu);
-						Weighted_CrossSection.Double EDIWorkingCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getEquivalisedDisposableIncomeYearly", true); // Note: these are nominal values for each simulated year
-						EDIWorkingCS.setFilter(genderEducationWorkingFilter);
-						GenderEducationCSfilter genderEducationCSfilter = new GenderEducationCSfilter(gender, edu);
-						Weighted_CrossSection.Double EDIAllCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getEquivalisedDisposableIncomeYearly", true); // Note: these are nominal values for each simulated year
-						EDIAllCS.setFilter(genderEducationCSfilter);
-						EDIByGenderAndEducationPlotter.addSeries("Workers (" + gender.toString() + ", " + edu.toString() + ")", new Weighted_MeanArrayFunction(EDIWorkingCS), null, colorArrayList.get(colorCounter), false);
-						colorCounter++;
-						EDIByGenderAndEducationPlotter.addSeries("All (" + gender.toString() + ", " + edu.toString() + ")", new Weighted_MeanArrayFunction(EDIAllCS), null, colorArrayList.get(colorCounter), false);
-						colorCounter++;
-					}
-				}
-				EDIByGenderAndEducationPlotter.setName("EDI by Gender / Education");
-				updateChartSet.add(EDIByGenderAndEducationPlotter);
-				tabSet.add(EDIByGenderAndEducationPlotter);
-			}
+            // FIXME: reuse where relevant
+            var currency = model.getCountry().equals(Country.UK) ? "£" : "€";
+            if (incomeHistograms) {
+                var plot = new TimeSeriesSimulationPlotter("EDI by Gender And Education", currency);
+                int icolor = 0;
 
-			if (incomeHistograms) {
-				TimeSeriesSimulationPlotter DispIncByGenderAndEducationPlotter;
-				int colorCounter = 0;
-				if (model.getCountry().equals(Country.UK)) {
-					DispIncByGenderAndEducationPlotter = new TimeSeriesSimulationPlotter("Disp income by Gender And Education", "£");
-				}
-				else {
-					DispIncByGenderAndEducationPlotter = new TimeSeriesSimulationPlotter("Disp income by Gender And Education", "Euro");
-				}
-				for(Education edu: Education.values()) {
-					if (Education.InEducation.equals(edu)) {
-						continue;
-					}
-					for (Gender gender : Gender.values()) {
-						GenderEducationWorkingCSfilter genderEducationWorkingFilter = new GenderEducationWorkingCSfilter(gender, edu);
-						Weighted_CrossSection.Double DispIncWorkingCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getDisposableIncomeMonthlyNoNull", true); // Note: these are nominal values for each simulated year
-						DispIncWorkingCS.setFilter(genderEducationWorkingFilter);
-						GenderEducationCSfilter genderEducationCSfilter = new GenderEducationCSfilter(gender, edu);
-						Weighted_CrossSection.Double DispIncAllCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getDisposableIncomeMonthlyNoNull", true); // Note: these are nominal values for each simulated year
-						DispIncAllCS.setFilter(genderEducationCSfilter);
-						DispIncByGenderAndEducationPlotter.addSeries("Workers (" + gender.toString() + ", " + edu.toString() + ")", new Weighted_MeanArrayFunction(DispIncWorkingCS), null, colorArrayList.get(colorCounter), false);
-						colorCounter++;
-						DispIncByGenderAndEducationPlotter.addSeries("All (" + gender.toString() + ", " + edu.toString() + ")", new Weighted_MeanArrayFunction(DispIncAllCS), null, colorArrayList.get(colorCounter), false);
-						colorCounter++;
-					}
-				}
-				DispIncByGenderAndEducationPlotter.setName("Disp income by Gender / Education");
-				updateChartSet.add(DispIncByGenderAndEducationPlotter);
-				tabSet.add(DispIncByGenderAndEducationPlotter);
-			}
+                // FIXME: why slightly different from `employed` in parent scope?
+                var employedEarningFilter2 = Filters.employment(Les_c4.EmployedOrSelfEmployed)
+                        .and(Filters.grossEarningsYearlyAtLeast(1.0))
+                        .and(p -> p.getLabourSupplyHoursWeekly() > 0);
+                var employed2 = new FilteredCollection<>(model::getPersons, employedEarningFilter2)
+                        .oncePerSimTime(engine);
 
-		    // WORKING HOURS PYRAMID GRAPH
-		    if (workingHoursPyramid) {
-		    	Set<JInternalFrame> workingHoursPyramidPlots = new LinkedHashSet<JInternalFrame>();
-			    Weighted_PyramidPlotter populationAgeGenderPlotter = new Weighted_PyramidPlotter("Working hours over time", "Total hours worked", Weighted_PyramidPlotter.DEFAULT_YAXIS, Weighted_PyramidPlotter.DEFAULT_LEFT_CAT, Weighted_PyramidPlotter.DEFAULT_RIGHT_CAT);
-			    // Please note that the Pyramid plotter requires a Weighted_CrossSection[2]
-			    // The exact type (int, double etc) must match the variable in Person  
-			    Weighted_CrossSection.Integer[] populationData = new Weighted_CrossSection.Integer[2];
-			    Weighted_CrossSection.Integer maleAgesCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "labEmpNyear", false);
-			    maleAgesCS.setFilter(new GenderCSfilter(Gender.Male));
-			    populationData[0] = maleAgesCS; 
-			    Weighted_CrossSection.Integer femaleAgesCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "labEmpNyear", false);
-			    femaleAgesCS.setFilter(new GenderCSfilter(Gender.Female)); 
-			    populationData[1] = femaleAgesCS; 
-			    
-			    populationAgeGenderPlotter.setScalingFactor(model.getScalingFactor());
-				populationAgeGenderPlotter.addCollectionSource(populationData); 
-				
-			    updateChartSet.add(populationAgeGenderPlotter);			//Add to set to be updated in buildSchedule method
-			    workingHoursPyramidPlots.add(populationAgeGenderPlotter);
-		    	
-			    tabSet.add(createScrollPaneFromPlots(workingHoursPyramidPlots, "Working Hours Pyramid", 1));
-		    }
-		    
-		    
+                for (var edu: Education.values()) {
+                    if (Education.InEducation.equals(edu)) {
+                        continue;
+                    }
+                    for (var gender : Gender.values()) {
+                        var genderEduFilter = Filters.gender(gender).and(Filters.education(edu));
+                        var employedOfGenderWithEdu = new FilteredCollection<>(employed2, genderEduFilter);
+                        // FIXME: such a strange combination of filters...
+                        var ofGenderWithEdu = new FilteredCollection<>(model::getPersons, genderEduFilter.and(Filters.grossEarningsYearlyAtLeast(0.0)));
+
+                        var employedCs = new WeightedCrossSection<>(employedOfGenderWithEdu, Person::getEquivalisedDisposableIncomeYearly, Person::getWeight);
+                        var allCs = new WeightedCrossSection<>(ofGenderWithEdu, Person::getEquivalisedDisposableIncomeYearly, Person::getWeight);
+                        var employedStats = WeightedStats.supplier(employedCs);
+                        var allStats = WeightedStats.supplier(allCs);
+
+                        plot.addSource("Workers (" + gender.toString() + ", " + edu.toString() + ")",
+                                () -> employedStats.get().mean(), colorArrayList.get(icolor), false);
+                        plot.addSource("All (" + gender.toString() + ", " + edu.toString() + ")",
+                                () -> allStats.get().mean(), colorArrayList.get(icolor), false);
+                        icolor++;
+                    }
+                }
+                plot.setName("EDI by Gender / Education");
+                updateChartSet.add(plot);
+                tabSet.add(plot);
+            }
+
+            if (incomeHistograms) {
+                var plot = new TimeSeriesSimulationPlotter("Disp income by Gender And Education", currency);
+                int icolor = 0;
+
+                // FIXME: why slightly different from `employed` in parent scope?
+                var employedEarningFilter2 = Filters.employment(Les_c4.EmployedOrSelfEmployed)
+                        .and(Filters.grossEarningsYearlyAtLeast(1.0))
+                        .and(p -> p.getLabourSupplyHoursWeekly() > 0);
+                var employed2 = new FilteredCollection<>(model::getPersons, employedEarningFilter2)
+                        .oncePerSimTime(engine);
+
+                for (var edu: Education.values()) {
+                    if (Education.InEducation.equals(edu)) {
+                        continue;
+                    }
+                    for (var gender : Gender.values()) {
+                        var genderEduFilter = Filters.gender(gender).and(Filters.education(edu));
+                        var employedOfGenderWithEdu = new FilteredCollection<>(employed2, genderEduFilter);
+                        // FIXME: such a strange combination of filters...
+                        var ofGenderWithEdu = new FilteredCollection<>(model::getPersons, genderEduFilter.and(Filters.grossEarningsYearlyAtLeast(0.0)));
+
+                        var employedCs = new WeightedCrossSection<>(employedOfGenderWithEdu, Person::getDisposableIncomeMonthlyNoNull, Person::getWeight);
+                        var allCs = new WeightedCrossSection<>(ofGenderWithEdu, Person::getDisposableIncomeMonthlyNoNull, Person::getWeight);
+                        var employedStats = WeightedStats.supplier(employedCs);
+                        var allStats = WeightedStats.supplier(allCs);
+
+                        plot.addSource("Workers (" + gender.toString() + ", " + edu.toString() + ")",
+                                () -> employedStats.get().mean(), colorArrayList.get(icolor), false);
+                        plot.addSource("All (" + gender.toString() + ", " + edu.toString() + ")",
+                                () -> allStats.get().mean(), colorArrayList.get(icolor), false);
+                        icolor++;
+                    }
+                }
+                plot.setName("Disp income by Gender / Education");
+                updateChartSet.add(plot);
+                tabSet.add(plot);
+            }
+
+            // WORKING HOURS PYRAMID GRAPH
+            if (workingHoursPyramid) {
+                var workingHoursPyramidPlots = new LinkedHashSet<JInternalFrame>();
+                var plot = new Weighted_PyramidPlotter("Working hours over time", "Total hours worked",
+                        Weighted_PyramidPlotter.DEFAULT_YAXIS, Weighted_PyramidPlotter.DEFAULT_LEFT_CAT, Weighted_PyramidPlotter.DEFAULT_RIGHT_CAT);
+                var males = new FilteredCollection<>(model::getPersons, Filters.male());
+                var females = new FilteredCollection<>(model::getPersons, Filters.female());
+                var malesCs = new WeightedCrossSection<>(males, Person::getLiwwh, Person::getWeight);
+                var femalesCs = new WeightedCrossSection<>(females, Person::getLiwwh, Person::getWeight);
+
+                plot.setScalingFactor(model.getScalingFactor());
+                plot.setLeft(malesCs);
+                plot.setRight(femalesCs);
+
+                updateChartSet.add(plot);
+                workingHoursPyramidPlots.add(plot);
+
+                tabSet.add(createScrollPaneFromPlots(workingHoursPyramidPlots, "Working Hours Pyramid", 1));
+            }
+
 		    //-------------------------------------------------------------------------------------------------------
 		    //
 	    	//	BUILD A TABBED PANE HOLDING ALL THE CHARTS THAT ONLY UPDATE AT EACH TIME-STEP (not convergence plots)
