@@ -39,6 +39,8 @@ import microsim.FilteredCollection;
 // import JAS-mine packages
 import microsim.annotation.GUIparameter;
 import microsim.caching.OnceUntil;
+import microsim.dev.statistics.CrossSection;
+import microsim.dev.statistics.Stats;
 import microsim.dev.statistics.WeightedCrossSection;
 import microsim.dev.statistics.WeightedStats;
 import microsim.engine.AbstractSimulationObserverManager;
@@ -64,7 +66,6 @@ import microsim.statistics.weighted.functions.Weighted_SumArrayFunction;
 // import LABOURsim packages
 import simpaths.model.Person;
 import simpaths.data.Parameters;
-import simpaths.data.filters.AgeGroupCSfilter;
 import simpaths.data.filters.ChildValidIncomeCSfilter;
 import simpaths.data.filters.ChildValidIncomeRegionalCSfilter;
 import simpaths.data.filters.FemaleAgeGroupCSfilter;
@@ -338,32 +339,17 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			//Renderers - these allow different graphs to use different look for the series displayed
 			XYLineAndShapeRenderer studentAgeRenderer = new XYLineAndShapeRenderer(); //Set up a new renderer to define series colors for this chart
 
-			//Filters - can be shared amongst different Cross Sections
-			AgeGroupCSfilter age0Filter = new AgeGroupCSfilter(0, 0);
-			AgeGroupCSfilter age2_10Filter = new AgeGroupCSfilter(2, 10);
-			AgeGroupCSfilter age11_15Filter = new AgeGroupCSfilter(11, 15);
-			AgeGroupCSfilter age0_18Filter = new AgeGroupCSfilter(0,18);
-			AgeGroupCSfilter age19_25Filter = new AgeGroupCSfilter(19,25);
-
-			AgeGroupCSfilter age15_19Filter = new AgeGroupCSfilter(15,19);
-			AgeGroupCSfilter age20_24Filter = new AgeGroupCSfilter(20,24);
-			AgeGroupCSfilter age25_29Filter = new AgeGroupCSfilter(25,29);
-			AgeGroupCSfilter age30_34Filter = new AgeGroupCSfilter(30,34);
-			AgeGroupCSfilter age35_39Filter = new AgeGroupCSfilter(35,39);
-			AgeGroupCSfilter age40_59Filter = new AgeGroupCSfilter(40, 59);
-			AgeGroupCSfilter age60_79Filter = new AgeGroupCSfilter(60, 79);
-			AgeGroupCSfilter age80_100Filter = new AgeGroupCSfilter(80, 100);
-
 			FemalesWithChildrenByChildAgeCSfilter childAged0_5Filter = new FemalesWithChildrenByChildAgeCSfilter(0, 5);
 			FemalesWithChildrenByChildAgeCSfilter childAged6_18Filter = new FemalesWithChildrenByChildAgeCSfilter(6, 18);
 
-
+            // FIXME: cache the filtered population?
             this.decades = new ArrayList<>();
             this.decades.add(new AgeRange(20, 29));
             this.decades.add(new AgeRange(30, 39));
             this.decades.add(new AgeRange(40, 49));
             this.decades.add(new AgeRange(50, 59));
 
+            // FIXME: cache the filtered population?
             this.healthAgeRanges = new ArrayList<>();
             this.healthAgeRanges.add(new AgeRange(0, 49));
             this.healthAgeRanges.add(new AgeRange(50, 74));
@@ -492,63 +478,40 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			    tabSet.add(populationPlotter);
 			}
 
-			//Population share by age. Display if showing diagnostic charts.
-			if(showAdditionalCharts) {
-				Weighted_CrossSection.Integer population0_18CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getPersonCount", true);
-				population0_18CS.setFilter(age0_18Filter);
-				Weighted_CrossSection.Integer population0_1CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getPersonCount", true);
-				population0_1CS.setFilter(age0Filter);
-				Weighted_CrossSection.Integer population2_10CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getPersonCount", true);
-				population2_10CS.setFilter(age2_10Filter);
-				Weighted_CrossSection.Integer population11_15CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getPersonCount", true);
-				population11_15CS.setFilter(age11_15Filter);
-				Weighted_CrossSection.Integer population19_25CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getPersonCount", true);
-				population19_25CS.setFilter(age19_25Filter);
-				Weighted_CrossSection.Integer population40_59CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getPersonCount", true);
-				population40_59CS.setFilter(age40_59Filter);
-				Weighted_CrossSection.Integer population60_79CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getPersonCount", true);
-				population60_79CS.setFilter(age60_79Filter);
-				Weighted_CrossSection.Integer population80_100CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getPersonCount", true);
-				population80_100CS.setFilter(age80_100Filter);
+            // Population share by age.
+            if(showAdditionalCharts) {
+                var agesPopShare = new ArrayList<AgeRange>(8);
+                agesPopShare.add(new AgeRange(0, 18));
+                agesPopShare.add(new AgeRange(0, 0));
+                agesPopShare.add(new AgeRange(2, 10));
+                agesPopShare.add(new AgeRange(11, 15));
+                agesPopShare.add(new AgeRange(19, 25));
+                agesPopShare.add(new AgeRange(40, 59));
+                agesPopShare.add(new AgeRange(60, 79));
+                agesPopShare.add(new AgeRange(80, 100));
 
+                var popShares = agesPopShare.stream()
+                        .map(ar -> new FilteredCollection<>(model::getPersons, ar))
+                        .map(fc -> new CrossSection<>(fc, Person::getWeight))
+                        .map(cs -> Stats.supplier(cs))
+                        .map(s -> OnceUntil.timeChanges(() -> s.get().sum(), engine))
+                        .toList();
 
-				TimeSeriesSimulationPlotter populationAgePlotter = new TimeSeriesSimulationPlotter("Individuals by age", "");
-
-
-				/*
-				//To allow diferent series to be of different colours or shapes, would have to change the TimeSeriersSimulationPlotter class in the GUI to allow changes to the renderer?
-				XYLineAndShapeRenderer r1 = new XYLineAndShapeRenderer();
-				r1.setSeriesPaint(0, Color.yellow);
-				*/
-
-				populationAgePlotter.addSeries("0-18 yo", new Weighted_SumArrayFunction.Integer(population0_18CS), null, new Color (162, 56, 255), false);
-				populationAgePlotter.addSeries("0 yo", new Weighted_SumArrayFunction.Integer(population0_1CS)  , null, new Color (254, 131, 0), false);
-				populationAgePlotter.addSeries("2-10 yo", new Weighted_SumArrayFunction.Integer(population2_10CS), null, new Color (151, 144, 0), false);
-				populationAgePlotter.addSeries("11-15 yo", new Weighted_SumArrayFunction.Integer(population11_15CS), null, new Color (0, 144, 15), false);
-				populationAgePlotter.addSeries("19-25 yo", new Weighted_SumArrayFunction.Integer(population19_25CS), null, new Color (0, 53, 144), false);
-				populationAgePlotter.addSeries("40-59 yo", new Weighted_SumArrayFunction.Integer(population40_59CS), null, new Color (254, 0, 0), false);
-				populationAgePlotter.addSeries("60-79 yo", new Weighted_SumArrayFunction.Integer(population60_79CS), null, new Color (198, 0, 190), false);
-				populationAgePlotter.addSeries("80-100 yo", new Weighted_SumArrayFunction.Integer(population80_100CS), null, new Color (175, 0, 0), false); 
-
-				//Below the series from population projections for comparison:
-				if (showValidationStatistics) {
-
-					populationAgePlotter.addSeries("0 - 18 official projection", validator, Validator.DoublesVariables.populationProjectionsByAge_0_18, new Color (162, 56, 255), true);
-					populationAgePlotter.addSeries("0 official projection", validator, Validator.DoublesVariables.populationProjectionsByAge_0_0, new Color (254, 131, 0), true);
-					populationAgePlotter.addSeries("2 - 10 official projection", validator, Validator.DoublesVariables.populationProjectionsByAge_2_10, new Color (151, 144, 0), true);
-					populationAgePlotter.addSeries("11 - 15 official projection", validator, Validator.DoublesVariables.populationProjectionsByAge_11_15,  new Color (0, 144, 15), true);
-					populationAgePlotter.addSeries("19 - 25  official projection", validator, Validator.DoublesVariables.populationProjectionsByAge_19_25, new Color (0, 53, 144), true);
-					populationAgePlotter.addSeries("40 - 59 official projection", validator, Validator.DoublesVariables.populationProjectionsByAge_40_59,  new Color (254, 0, 0), true);
-					populationAgePlotter.addSeries("60 - 79 official projection", validator, Validator.DoublesVariables.populationProjectionsByAge_60_79,  new Color (198, 0, 190), true);
-					populationAgePlotter.addSeries("80 - 100 official projection", validator, Validator.DoublesVariables.populationProjectionsByAge_80_100, new Color (175, 0, 0), true);
-				}
-
-
-				populationAgePlotter.setName("Individuals by age");
-				updateChartSet.add(populationAgePlotter);			//Add to set to be updated in buildSchedule method
-				tabSet.add(populationAgePlotter);
-
-			}
+                var plotter = new TimeSeriesSimulationPlotter("Individuals by age", "");
+                for (var i = 0; i < popShares.size(); i++) {
+                    var ar = agesPopShare.get(i);
+                    var ageStr = ar.from() + "-" + ar.to() + " yo";
+                    plotter.addSource(ageStr, popShares.get(i), colorArrayList.get(i), false);
+                    if (showValidationStatistics) {
+                        plotter.addSource(ageStr + " projection",
+                                () -> validator.getPopulationProjectionByAge(ar.from(), ar.to()),
+                                colorArrayList.get(i), true);
+                    }
+                }
+                plotter.setName("Individuals by age");
+                updateChartSet.add(plotter);
+                tabSet.add(plotter);
+            }
 
 			if (activityStatus) {
 				Weighted_CrossSection.Integer employedCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.IntegerVariables.isEmployed); //Get directly from the enum instead of going through a method
@@ -584,67 +547,57 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 				tabSet.add(homeownershipStatusPlotter);
 			}
 
-			//STUDENT ENROLLMENT CHARTS			
-			if(studentsByAge) {
-				//Students by Age Group
-				Weighted_CrossSection.Integer student15_19CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getStudent", true);
-				student15_19CS.setFilter(age15_19Filter);
-				Weighted_CrossSection.Integer student20_24CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getStudent", true);
-				student20_24CS.setFilter(age20_24Filter);
-				Weighted_CrossSection.Integer student25_29CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getStudent", true);
-				student25_29CS.setFilter(age25_29Filter);
-				Weighted_CrossSection.Integer student30_34CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getStudent", true);
-				student30_34CS.setFilter(age30_34Filter);
-				Weighted_CrossSection.Integer student35_39CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getStudent", true);
-				student35_39CS.setFilter(age35_39Filter);
-				Weighted_CrossSection.Integer student40_59CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getStudent", true);
-				student40_59CS.setFilter(age40_59Filter);
-				Weighted_CrossSection.Integer student60_79CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getStudent", true);
-				student60_79CS.setFilter(age60_79Filter);
-				Weighted_CrossSection.Integer student80_100CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getStudent", true);
-				student80_100CS.setFilter(age80_100Filter);
-				
-				//Unfiltered student cross-section (nationally, for all ages)
-				Weighted_CrossSection.Integer studentCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getStudent", true);
+            // Student enrollment charts
+            if (studentsByAge) {
+                var ageRanges = new ArrayList<AgeRange>(8);
+                ageRanges.add(new AgeRange(15, 19));
+                ageRanges.add(new AgeRange(20, 24));
+                ageRanges.add(new AgeRange(25, 29));
+                if (showAdditionalCharts) {
+                    ageRanges.add(new AgeRange(30, 34));
+                    ageRanges.add(new AgeRange(35, 39));
+                    ageRanges.add(new AgeRange(40, 59));
+                    ageRanges.add(new AgeRange(60, 79));
+                    ageRanges.add(new AgeRange(80, 100));
+                }
 
-				TimeSeriesSimulationPlotter studentAgePlotter = new TimeSeriesSimulationPlotter("Proportion of students by age", "");
-				studentAgePlotter.setRenderer(studentAgeRenderer); //Assign new renderer to the graph before adding data series
-			    studentAgePlotter.addSeries("15-19 yo", new Weighted_MeanArrayFunction(student15_19CS), null, new Color (162, 56, 255), false);		//'yo' means "years old"
-			    studentAgePlotter.addSeries("20-24 yo", new Weighted_MeanArrayFunction(student20_24CS), null, new Color (254, 131, 0), false);
-			    studentAgePlotter.addSeries("25-29 yo", new Weighted_MeanArrayFunction(student25_29CS), null, new Color (151, 144, 0), false);
+                var studentShares = ageRanges.stream()
+                        .map(ar -> new FilteredCollection<>(model::getPersons, ar))
+                        .map(fc -> new WeightedCrossSection<>(fc, Person::getStudent, Person::getWeight))
+                        .map(cs -> WeightedStats.supplier(cs))
+                        .map(ws -> OnceUntil.timeChanges(() -> ws.get().mean(), engine))
+                        .toList();
 
-			    if (showAdditionalCharts) {
-					studentAgePlotter.addSeries("30-34 yo", new Weighted_MeanArrayFunction(student30_34CS), null, new Color (0, 144, 15), false);
-					studentAgePlotter.addSeries("35-39 yo", new Weighted_MeanArrayFunction(student35_39CS), null, new Color (0, 53, 144), false);
-					studentAgePlotter.addSeries("40-59 yo", new Weighted_MeanArrayFunction(student40_59CS), null, new Color (254, 0, 0), false);
-					studentAgePlotter.addSeries("60-79 yo", new Weighted_MeanArrayFunction(student60_79CS), null, new Color (198, 0, 190), false);
-					studentAgePlotter.addSeries("80-100 yo", new Weighted_MeanArrayFunction(student80_100CS), null, new Color (175, 0, 0), false);
-					studentAgePlotter.addSeries("all ages", new Weighted_MeanArrayFunction(studentCS), null, new Color (0, 0, 0), false);
-				}
+                var plotter = new TimeSeriesSimulationPlotter("Proportion of students by age", "");
+                plotter.setRenderer(studentAgeRenderer);
+                for (var i = 0; i < studentShares.size(); i++) {
+                    var ar = ageRanges.get(i);
+                    var ageStr = ar.from() + "-" + ar.to() + " yo";
+                    plotter.addSource(ageStr, studentShares.get(i), colorArrayList.get(i), false);
+                    if (showValidationStatistics) {
+                        plotter.addSource("Validation " + ageStr,
+                                () -> Parameters.validationStudents(model.getYear(), ar.from(), ar.to()),
+                                colorArrayList.get(i), true);
+                    }
+                }
 
+                if (showAdditionalCharts) {
+                    // Unfiltered student cross-section (nationally, for all ages)
+                    var studentCs = new WeightedCrossSection<>(model::getPersons, Person::getStudent, Person::getWeight);
+                    var studentWs = WeightedStats.supplier(studentCs);
+                    var studentShareAll = OnceUntil.timeChanges(() -> studentWs.get().mean(), engine);
+                    plotter.addSource("all ages", studentShareAll, new Color(0, 0, 0), false);
+                    if (showValidationStatistics) {
+                        plotter.addSource("Validation all ages",
+                                () -> Parameters.validationStudents(model.getYear()),
+                                new Color(0, 0, 0), true);
+                    }
+                }
 
-			    studentAgePlotter.setName("Students by age");	
-			    updateChartSet.add(studentAgePlotter);			//Add to set to be updated in buildSchedule method
-			    tabSet.add(studentAgePlotter);
-
-			    if (showValidationStatistics) {
-
-					studentAgePlotter.addSeries("Validation 15-19 yo", validator, Validator.DoublesVariables.studentsByAge_15_19, new Color (162, 56, 255), true);
-					studentAgePlotter.addSeries("Validation 20-24 yo", validator, Validator.DoublesVariables.studentsByAge_20_24, new Color (254, 131, 0), true);
-					studentAgePlotter.addSeries("Validation 25-29 yo", validator, Validator.DoublesVariables.studentsByAge_25_29, new Color (151, 144, 0), true);
-
-					if (showAdditionalCharts) {
-						studentAgePlotter.addSeries("Validation 30-34 yo", validator, Validator.DoublesVariables.studentsByAge_30_34, new Color (0, 144, 15), true);
-						studentAgePlotter.addSeries("Validation 35-39 yo", validator, Validator.DoublesVariables.studentsByAge_35_39, new Color (0, 53, 144), true);
-						studentAgePlotter.addSeries("Validation 40-59 yo", validator, Validator.DoublesVariables.studentsByAge_40_59, new Color (254, 0, 0), true);
-						studentAgePlotter.addSeries("Validation 60-79 yo", validator, Validator.DoublesVariables.studentsByAge_60_79, new Color (198, 0, 190), true);
-						studentAgePlotter.addSeries("Validation 80-100 yo", validator, Validator.DoublesVariables.studentsByAge_80_100, new Color (175, 0, 0), true);
-						studentAgePlotter.addSeries("Validation all ages", validator, Validator.DoublesVariables.studentsByAge_All, new Color (0, 0, 0), true);
-					}
-
-				}
-
-			}
+                plotter.setName("Students by age");
+                updateChartSet.add(plotter);
+                tabSet.add(plotter);
+            }
 
 			if(studentsByRegion && showAdditionalCharts) {
 			    //Student chart by Region 

@@ -2310,6 +2310,10 @@ public class Parameters {
         };
     }
 
+    public static double validationStudents(int year) {
+        return nanIfNull(validationStudentsByAge, year, "ageGroup_All");
+    }
+
     public static double validationStudents(int year, int ageFrom, int ageTo) {
         var label = String.join("_", "ageGroup", ageStr(ageFrom, ageTo));
         return nanIfNull(validationStudentsByAge, year, label);
