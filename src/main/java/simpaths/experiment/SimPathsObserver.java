@@ -492,28 +492,43 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
                 tabSet.add(plotter);
             }
 
-			if (activityStatus) {
-				Weighted_CrossSection.Integer employedCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.IntegerVariables.isEmployed); //Get directly from the enum instead of going through a method
-				Weighted_CrossSection.Integer notEmployedCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.IntegerVariables.isNotEmployed);
-				Weighted_CrossSection.Integer studentCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.IntegerVariables.isStudent);
-				Weighted_CrossSection.Integer retiredCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.IntegerVariables.isRetired);
-				Weighted_CrossSection.Integer notEmployedRetiredCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.IntegerVariables.isNotEmployedOrRetired);
+            if (activityStatus) {
+                var statuses = new ArrayList<Function<Person, Number>>(5);
+                statuses.add(Person::getEmployed);
+                statuses.add(Person::getNonwork);
+                statuses.add(Person::getStudent);
+                statuses.add(Person::getRetired);
+                statuses.add(p -> {
+                    var status = p.getLabC4();
+                    return (status == Les_c4.NotEmployed || status == Les_c4.Retired) ? 1 : 0;
+                });
+                var statusShares = statuses.stream()
+                        .map(f -> new WeightedCrossSection<>(model::getPersons, f, Person::getWeight))
+                        .map(wcs -> WeightedStats.supplier(wcs))
+                        .map(ws -> OnceUntil.timeChanges(() -> ws.get().mean(), engine))
+                        .toList();
 
-				TimeSeriesSimulationPlotter activityStatusPlotter = new TimeSeriesSimulationPlotter("Share of individuals by activity status", "");
-				activityStatusPlotter.addSeries("Employed", new Weighted_MeanArrayFunction(employedCS), null, colorArrayList.get(0), false);
-				activityStatusPlotter.addSeries("Not Employed / Retired", new Weighted_MeanArrayFunction(notEmployedRetiredCS), null, colorArrayList.get(1), false);
-				activityStatusPlotter.addSeries("Not Employed", new Weighted_MeanArrayFunction(notEmployedCS), null, colorArrayList.get(4), false);
-				activityStatusPlotter.addSeries("Student", new Weighted_MeanArrayFunction(studentCS), null, colorArrayList.get(2), false);
-				activityStatusPlotter.addSeries("Retired", new Weighted_MeanArrayFunction(retiredCS), null, colorArrayList.get(3), false);
+                var plot = new TimeSeriesSimulationPlotter("Share of individuals by activity status", "");
+                plot.addSource("Employed", statusShares.get(0), colorArrayList.get(0), false);
+                plot.addSource("Not Employed / Retired", statusShares.get(4), colorArrayList.get(1), false);
+                plot.addSource("Not Employed", statusShares.get(1), colorArrayList.get(4), false);
+                plot.addSource("Student", statusShares.get(2), colorArrayList.get(2), false);
+                plot.addSource("Retired", statusShares.get(3), colorArrayList.get(3), false);
 
-				activityStatusPlotter.addSeries("Employed validation", validator, Validator.DoublesVariables.activityStatus_Employed, colorArrayList.get(0), true);
-				activityStatusPlotter.addSeries("Not Employed / Retired validation", validator, Validator.DoublesVariables.activityStatus_NotEmployedRetired, colorArrayList.get(1), true);
-				activityStatusPlotter.addSeries("Student validation", validator, Validator.DoublesVariables.activityStatus_Student, colorArrayList.get(2), true);
+                plot.addSource("Employed validation",
+                        () -> Parameters.validationActivityStatus(model.getYear(), "employed"),
+                        colorArrayList.get(0), true);
+                plot.addSource("Not Employed / Retired validation",
+                        () -> Parameters.validationActivityStatus(model.getYear(), "notemployedretired"),
+                        colorArrayList.get(1), true);
+                plot.addSource("Student validation",
+                        () -> Parameters.validationActivityStatus(model.getYear(), "student"),
+                        colorArrayList.get(2), true);
 
-				activityStatusPlotter.setName("Activity status");
-				updateChartSet.add(activityStatusPlotter);
-				tabSet.add(activityStatusPlotter);
-			}
+                plot.setName("Activity status");
+                updateChartSet.add(plot);
+                tabSet.add(plot);
+            }
 
 			//HOMEOWNERSHIP STATUS
 			if (homeownershipStatus) {
