@@ -111,4 +111,20 @@ public class Filters {
     public static Predicate<Person> hasLongTermDisability() {
         return p -> p.getHealthDsblLongtermFlag() == Indicator.True;
     }
+
+    /// Filter persons who are "flexible in labour supply".
+    ///
+    /// The conditions are the following:
+    /// - of working age
+    /// - not a student nor retired
+    /// - not disabled
+    public static Predicate<Person> flexibleLabourSupply() {
+        var toExclude = Filters
+                .employment(Les_c4.Student)
+                .or(Filters.employment(Les_c4.Retired))
+                .or(Filters.hasLongTermDisability());
+        return Filters
+                .ageRange(Parameters.MIN_AGE_FLEXIBLE_LABOUR_SUPPLY, Parameters.MAX_AGE_FLEXIBLE_LABOUR_SUPPLY)
+                .and(toExclude.negate());
+    }
 }
