@@ -691,42 +691,52 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
                 tabSet.add(createScrollPaneFromPlots(plots, "Education by age", 2));
             }
 
-		    //Low & High Education By Region
-			if(educationByRegion && showAdditionalCharts) {
-			    Set<JInternalFrame> eduLowHighRegionalPlots = new LinkedHashSet<JInternalFrame>();
-	
-			    //Low Education by region
-			    TimeSeriesSimulationPlotter eduLowRegionPlotter = new TimeSeriesSimulationPlotter("Low education level by region", "");
-				int colorCounter = 0;
-			    for(Region region: Parameters.getCountryRegions()) {
-					ValidEducationRegionCSfilter regionFilter = new ValidEducationRegionCSfilter(region);
-					Weighted_CrossSection.Integer regionCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getLowEducation", true);
-					regionCS.setFilter(regionFilter);
-					eduLowRegionPlotter.addSeries(region.getName(), new Weighted_MeanArrayFunction(regionCS), null, colorArrayList.get(colorCounter), false);		//'yo' means "years old"
-					eduLowRegionPlotter.addSeries("Validation "+region.getName(), validator, Validator.DoublesVariables.valueOf("educationLevelLowByRegion_"+region), colorArrayList.get(colorCounter), true);
-					colorCounter++;
-			    }		    			    
-			    updateChartSet.add(eduLowRegionPlotter);			//Add to set to be updated in buildSchedule method
-			    eduLowHighRegionalPlots.add(eduLowRegionPlotter);
-			    
-			    //High Education by region
-			    TimeSeriesSimulationPlotter eduHighRegionPlotter = new TimeSeriesSimulationPlotter("High education level by region", "");
-			    colorCounter = 0; //Reset the color counter
-			    for(Region region: Parameters.getCountryRegions()) {
-					ValidEducationRegionCSfilter regionFilter = new ValidEducationRegionCSfilter(region);
-					Weighted_CrossSection.Integer regionCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getHighEducation", true);
-					regionCS.setFilter(regionFilter);
-					eduHighRegionPlotter.addSeries(region.getName(), new Weighted_MeanArrayFunction(regionCS), null, colorArrayList.get(colorCounter), false);		//'yo' means "years old"
-					eduHighRegionPlotter.addSeries("Validation "+region.getName(), validator, Validator.DoublesVariables.valueOf("educationLevelHighByRegion_"+region), colorArrayList.get(colorCounter), true);
-					colorCounter++;
-			    }		    			    
-			    updateChartSet.add(eduHighRegionPlotter);			//Add to set to be updated in buildSchedule method
-			    eduLowHighRegionalPlots.add(eduHighRegionPlotter);
-			    
-			    tabSet.add(createScrollPaneFromPlots(eduLowHighRegionalPlots, "Education by region (excluding students)", 2));
-			}		    
-		    
-		    
+            // Low & High Education By Region
+            if(educationByRegion && showAdditionalCharts) {
+                var plots = new LinkedHashSet<JInternalFrame>();
+
+                // FIXME: parameterise by EducationLevel
+                var lowPlot = new TimeSeriesSimulationPlotter("Low education level by region", "");
+                var highPlot = new TimeSeriesSimulationPlotter("High education level by region", "");
+
+                int colorCounter = 0;
+                var validEduFilter = Filters.olderOr(18)
+                        .and(Filters.employment(Les_c4.Student).negate())
+                        .and(Filters.education(null).negate());
+                var withValidEdu = new FilteredCollection<>(model::getPersons, validEduFilter)
+                        .oncePerSimTime(engine);
+
+                for(var region : Parameters.getCountryRegions()) {
+                    var inRegion = new FilteredCollection<>(withValidEdu, Filters.region(region))
+                            .oncePerSimTime(engine);
+                    var lowCs = new WeightedCrossSection<>(inRegion, Person::getLowEducation, Person::getWeight);
+                    var highCs = new WeightedCrossSection<>(inRegion, Person::getHighEducation, Person::getWeight);
+
+                    var lowStats = WeightedStats.supplier(lowCs);
+                    var highStats = WeightedStats.supplier(highCs);
+
+                    lowPlot.addSource(region.getName(), () -> lowStats.get().mean(),
+                            colorArrayList.get(colorCounter), false);
+                    lowPlot.addSource("Validation " + region.getName(),
+                            () -> Parameters.validationEduc(model.getYear(), EducationLevel.Low, region),
+                            colorArrayList.get(colorCounter), true);
+
+                    highPlot.addSource(region.getName(), () -> highStats.get().mean(),
+                            colorArrayList.get(colorCounter), false);
+                    highPlot.addSource("Validation " + region.getName(),
+                            () -> Parameters.validationEduc(model.getYear(), EducationLevel.High, region),
+                            colorArrayList.get(colorCounter), true);
+
+                    colorCounter++;
+                }
+                updateChartSet.add(lowPlot);
+                plots.add(lowPlot);
+                updateChartSet.add(highPlot);
+                plots.add(highPlot);
+
+                tabSet.add(createScrollPaneFromPlots(plots, "Education by region (excluding students)", 2));
+            }
+
 		    //HOUSEHOLD COMPOSITION CHART
 		    if(householdComposition) {
 			    //Proportion of households with couple occupancy (i.e. there is both a responsible male and female in the household) by region

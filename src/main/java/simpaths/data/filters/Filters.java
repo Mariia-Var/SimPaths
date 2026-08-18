@@ -40,6 +40,11 @@ public class Filters {
         return p -> p.getDemAge() <= age;
     }
 
+    /// Filter persons older than given age, that age included.
+    public static Predicate<Person> olderOr(int age) {
+        return p -> p.getDemAge() >= age;
+    }
+
     /// Filter given age range (both ends are included).
     public static Predicate<Person> ageRange(int from, int to) {
         return p -> p.getDemAge() >= from && p.getDemAge() <= to;
