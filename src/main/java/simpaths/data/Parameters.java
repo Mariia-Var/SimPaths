@@ -2272,112 +2272,334 @@ public class Parameters {
         return regChildcareC1b;
     }
 
-    ///////////////////////////////////////////GETTERS FOR VALIDATION///////////////////////////////////////////////////
+    // Access validation data
+    private static double nanIfNull(MultiKeyCoefficientMap map, int year, String label) {
+        // FIXME: why year-1?
+        var val = (Number) map.getValue(year - 1, label);
+        if (val == null) {
+            return Double.NaN;
+        }
+        return val.doubleValue();
+    }
+
+    private static String ageStr(int from, int to) {
+        return from + "_" + to;
+    }
+
+    private static String genderStr(Gender gender) {
+        return switch (gender) {
+            case Female -> "female";
+            case Male -> "male";
+        };
+    }
+
+    private static String eduStr(Education education) {
+        return switch (education) {
+            case Low -> "dehc3_low";
+            case Medium -> "dehc3_med";
+            case High -> "dehc3_high";
+            case InEducation -> "dehc3_ineducation";
+        };
+    }
+
+    private static String eduLevelStr(EducationLevel level) {
+        return switch (level) {
+            case Low -> "low";
+            case Medium -> "med";
+            case High -> "high";
+        };
+    }
+
+    public static double validationStudents(int year, int ageFrom, int ageTo) {
+        var label = String.join("_", "ageGroup", ageStr(ageFrom, ageTo));
+        return nanIfNull(validationStudentsByAge, year, label);
+    }
+
+    public static double validationStudents(int year, Region region) {
+        var label = String.join("_", "region", region.name());
+        return nanIfNull(validationStudentsByRegion, year, label);
+    }
+
+    public static double validationEduc(int year, EducationLevel level) {
+        var label = String.join("_", "educ", eduLevelStr(level));
+        return nanIfNull(validationEducationLevel, year, label);
+    }
+
+    public static double validationEduc(int year, EducationLevel level, int ageFrom, int ageTo) {
+        var label = String.join("_", "educ", eduLevelStr(level), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationEducationLevelByAge, year, label);
+    }
+
+    public static double validationEduc(int year, EducationLevel level, Region region) {
+        var label = String.join("_", "educ", eduLevelStr(level), region.name());
+        return nanIfNull(validationEducationLevelByRegion, year, label);
+    }
+
+    public static double validationPartnered(int year) {
+        var label = String.join("_", "partnered", "All");
+        return nanIfNull(validationPartneredShareByRegion, year, label);
+    }
+
+    public static double validationPartnered(int year, Region region) {
+        var label = String.join("_", "partnered", region.name());
+        return nanIfNull(validationPartneredShareByRegion, year, label);
+    }
+
+    public static double validationDisabled(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "disabled", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationDisabledByAge, year, label);
+    }
+
+    public static double validationDisabled(int year, Gender gender) {
+        var label = String.join("_", "dlltsd", genderStr(gender));
+        return nanIfNull(validationDisabledByGender, year, label);
+    }
+
+    public static double validationHealth(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "health", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationHealthByAge, year, label);
+    }
+
+    public static double validationMentalHealth(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "mental_health", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationMentalHealthByAge, year, label);
+    }
+
+    public static double validationHealthMcs(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "health_mcs_score", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationHealthMCSByAge, year, label);
+    }
+
+    public static double validationHealthPcs(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "health_pcs_score", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationHealthPCSByAge, year, label);
+    }
+
+    public static double validationLifeSatisfaction(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "life_satisfaction", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationLifeSatisfactionByAge, year, label);
+    }
+
+    public static double validationPsychDistress(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "psych_distress", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationPsychDistressByAge, year, label);
+    }
+
+    public static double validationPsychDistressLow(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "psych_distress", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationPsychDistressByAgeLow, year, label);
+    }
+
+    public static double validationPsychDistressMed(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "psych_distress", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationPsychDistressByAgeMed, year, label);
+    }
+
+    public static double validationPsychDistressHigh(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "psych_distress", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationPsychDistressByAgeHigh, year, label);
+    }
+
+    public static double validationEmployment(int year, Gender gender) {
+        // this one has a different gender label than others...
+        var label = String.join("_", "employed", gender.name());
+        return nanIfNull(validationEmploymentByGender, year, label);
+    }
+
+    public static double validationEmployment(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "employed", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationEmploymentByAgeAndGender, year, label);
+    }
+
+    // FIXME: enum for maternity state
+    public static double validationEmployment(int year, boolean withChild, boolean childIsInfant) {
+        String chStr;
+        if (withChild) {
+            if (childIsInfant) {
+                chStr = "with_child_0_5";
+            } else {
+                chStr = "with_child_6_18";
+            }
+        } else {
+            chStr = "without_child";
+        }
+        var label = String.join("_", "emp", chStr);
+        return nanIfNull(validationEmploymentByMaternity, year, label);
+    }
+
+    public static double validationEmployment(int year, Gender gender, Region region) {
+        var label = String.join("_", "employed", genderStr(gender), region.name());
+        return nanIfNull(validationEmploymentByGenderAndRegion, year, label);
+    }
+
+    public static double validationLabourSupply(int year, Education education) {
+        // this one has a different education label than others...
+        var label = String.join("_", "labour_supply", education.name());
+        return nanIfNull(validationLabourSupplyByEducation, year, label);
+    }
+
+    // FIXME: enum for status
+    /// `status` can be `"employed"`, `"notemployedretired"`, `"student"`
+    public static double validationActivityStatus(int year, String status) {
+        var label = String.join("_", "as", status);
+        return nanIfNull(validationActivityStatus, year, label);
+    }
+
+    public static double validationHomeOwnership(int year) {
+        var val = (Number) validationHomeownershipBenefitUnits.getValue(year - 1);
+        if (val == null) {
+            return Double.NaN;
+        }
+        return val.doubleValue();
+    }
+
+    public static double validationGrossEarnings(int year, Gender gender, Education education) {
+        var label = String.join("_", "grossearnings", genderStr(gender), eduStr(education));
+        return nanIfNull(validationGrossEarningsByGenderAndEducation, year, label);
+    }
+
+    public static double validationLhw(int year, Gender gender, Education education) {
+        var label = String.join("_", "lhw", genderStr(gender), eduStr(education));
+        return nanIfNull(validationLhwByGenderAndEducation, year, label);
+    }
+
+    public static double validationHourlyWage(int year, Gender gender, Education education) {
+        var label = String.join("_", "hourlywage", genderStr(gender), eduStr(education));
+        return nanIfNull(hourlyWageByGenderAndEducation, year, label);
+    }
+
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationStudentsByAge() {
         return validationStudentsByAge;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationStudentsByRegion() {
         return validationStudentsByRegion;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationEducationLevel() {
         return validationEducationLevel;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationEducationLevelByAge() {
         return validationEducationLevelByAge;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationEducationLevelByRegion() {
         return validationEducationLevelByRegion;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationPartneredShareByRegion() {
         return validationPartneredShareByRegion;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationDisabledByAge() {
         return validationDisabledByAge;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationDisabledByGender() {
         return validationDisabledByGender;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationHealthByAge() {
         return validationHealthByAge;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationMentalHealthByAge() {
         return validationMentalHealthByAge;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationHealthMCSByAge() {
         return validationHealthMCSByAge;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationHealthPCSByAge() {
         return validationHealthPCSByAge;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationLifeSatisfactionByAge() {
         return validationLifeSatisfactionByAge;
     }
 
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationPsychDistressByAge() {
         return validationPsychDistressByAge;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationPsychDistressByAgeLow() {
         return validationPsychDistressByAgeLow;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationPsychDistressByAgeMed() {
         return validationPsychDistressByAgeMed;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationPsychDistressByAgeHigh() {
         return validationPsychDistressByAgeHigh;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationEmploymentByGender() {
         return validationEmploymentByGender;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationEmploymentByAgeAndGender() {
         return validationEmploymentByAgeAndGender;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationEmploymentByMaternity() {
         return validationEmploymentByMaternity;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationEmploymentByGenderAndRegion() {
         return validationEmploymentByGenderAndRegion;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationLabourSupplyByEducation() {
         return validationLabourSupplyByEducation;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationActivityStatus() {
         return validationActivityStatus;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationHomeownershipBenefitUnits() {
         return validationHomeownershipBenefitUnits;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationGrossEarningsByGenderAndEducation() {
         return validationGrossEarningsByGenderAndEducation;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getValidationLhwByGenderAndEducation() {
         return validationLhwByGenderAndEducation;
     }
 
+    @Deprecated(forRemoval = true)
     public static MultiKeyCoefficientMap getHourlyWageByGenderAndEducation() {
         return hourlyWageByGenderAndEducation;
     }

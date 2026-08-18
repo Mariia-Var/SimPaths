@@ -308,6 +308,8 @@ public class Validator implements IDoubleSource {
         hourlyWage_Male_InEducation,
         }
 
+    @Deprecated(forRemoval = true)
+    @SuppressWarnings("removal")
     @Override
     public double getDoubleValue(Enum<?> variableID) {
 
