@@ -319,15 +319,8 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
     }
 
 
-	/**
-	 *
-	 * XXX
-	 *
-	 */
 	@Override
 	public void buildObjects() {
-		
-		//TODO: Change construction of objects like Weighted_CrossSection.Integer from using Java reflection to using getIntValue methods in Person class in order to improve speed?
         var engine = this.getEngine();
 
 		if(showCharts) {
