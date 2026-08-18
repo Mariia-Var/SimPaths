@@ -70,8 +70,6 @@ import simpaths.data.filters.ChildValidIncomeCSfilter;
 import simpaths.data.filters.ChildValidIncomeRegionalCSfilter;
 import simpaths.data.filters.FemaleAgeGroupCSfilter;
 import simpaths.data.filters.FemaleRegionAgeCSfilter;
-import simpaths.data.filters.FemalesWithChildrenByChildAgeCSfilter;
-import simpaths.data.filters.FemalesWithoutChildrenAgeGroupCSfilter;
 import simpaths.data.filters.Filters;
 import simpaths.data.filters.FlexibleInLabourSupplyByAgeAndGenderFilter;
 import simpaths.data.filters.FlexibleInLabourSupplyByEducationFilter;
@@ -331,9 +329,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 
 			//Renderers - these allow different graphs to use different look for the series displayed
 			XYLineAndShapeRenderer studentAgeRenderer = new XYLineAndShapeRenderer(); //Set up a new renderer to define series colors for this chart
-
-			FemalesWithChildrenByChildAgeCSfilter childAged0_5Filter = new FemalesWithChildrenByChildAgeCSfilter(0, 5);
-			FemalesWithChildrenByChildAgeCSfilter childAged6_18Filter = new FemalesWithChildrenByChildAgeCSfilter(6, 18);
 
             // FIXME: cache the filtered population?
             this.decades = new ArrayList<>();
@@ -869,31 +864,41 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
                 ageGenderPlots("Employment rate", this.decades, Person::getEmployed, AgeRange::employmentValidation);
             }
 
-		    //One graph for employment age by maternity status, conditional on age of children
-		    if (femaleEmploymentByMaternity) {
-				Set<JInternalFrame> emplAgeMaternityPlots = new LinkedHashSet<JInternalFrame>();
-						FemalesWithoutChildrenAgeGroupCSfilter withoutChildrenFilter = new FemalesWithoutChildrenAgeGroupCSfilter(20, 65);
+            // One graph for employment age by maternity status, conditional on age of children
+            if (femaleEmploymentByMaternity) {
+                var emplAgeMaternityPlots = new LinkedHashSet<JInternalFrame>();
 
-						Weighted_CrossSection.Integer withChildrenAged0_5CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
-						withChildrenAged0_5CS.setFilter(childAged0_5Filter);
-						Weighted_CrossSection.Integer withChildrenAged6_18CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
-						withChildrenAged6_18CS.setFilter(childAged6_18Filter);
-						Weighted_CrossSection.Integer withoutChildrenCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
-						withoutChildrenCS.setFilter(withoutChildrenFilter);
+                var femalesInAgeRange = new FilteredCollection<>(model::getPersons,
+                        Filters.female().and(Filters.ageRange(20, 65))).oncePerSimTime(engine);
+                // FIXME: include 18 or not?
+                var with0_5 = new FilteredCollection<>(femalesInAgeRange, Filters.hasChildInAgeRange(0, 5));
+                var with6_18 = new FilteredCollection<>(femalesInAgeRange, Filters.hasChildInAgeRange(6, 18));
+                var without = new FilteredCollection<>(femalesInAgeRange, Filters.hasChildInAgeRange(0, 17).negate());
+                var empRates = List.of(with0_5, with6_18, without).stream()
+                        .map(fc -> new WeightedCrossSection<>(fc, Person::getEmployed, Person::getWeight))
+                        .map(wcs -> WeightedStats.supplier(wcs))
+                        .map(ws -> OnceUntil.timeChanges(() -> ws.get().mean(), engine))
+                        .toList();
 
-						TimeSeriesSimulationPlotter emplChildPlotter = new TimeSeriesSimulationPlotter("Female employment rate, by age of children \n Women aged 20 - 65", "");
-						emplChildPlotter.addSeries("with children aged 0 - 5 yo", new Weighted_MeanArrayFunction(withChildrenAged0_5CS), null, colorArrayList.get(0), false);
-						emplChildPlotter.addSeries("with children aged 6 - 18 yo", new Weighted_MeanArrayFunction(withChildrenAged6_18CS), null, colorArrayList.get(1), false);
-						emplChildPlotter.addSeries("without children under 18 yo", new Weighted_MeanArrayFunction(withoutChildrenCS), null, colorArrayList.get(2), false);
-						emplChildPlotter.addSeries("Validation with children aged 0 - 5 yo", validator, Validator.DoublesVariables.employmentFemaleChild_0_5, colorArrayList.get(0), true);
-						emplChildPlotter.addSeries("Validation with children aged 6 - 18 yo", validator, Validator.DoublesVariables.employmentFemaleChild_6_18, colorArrayList.get(1), true);
-						emplChildPlotter.addSeries("Validation without children under 18 yo", validator, Validator.DoublesVariables.employmentFemaleNoChild, colorArrayList.get(2), true);
+                var plotter = new TimeSeriesSimulationPlotter("Female employment rate, by age of children \n Women aged 20 - 65", "");
+                plotter.addSource("with children aged 0 - 5 yo", empRates.get(0), colorArrayList.get(0), false);
+                plotter.addSource("with children aged 6 - 18 yo", empRates.get(1), colorArrayList.get(1), false);
+                plotter.addSource("without children under 18 yo", empRates.get(2), colorArrayList.get(2), false);
+                plotter.addSource("Validation with children aged 0 - 5 yo",
+                        () -> Parameters.validationEmployment(model.getYear(), true, true),
+                        colorArrayList.get(0), true);
+                plotter.addSource("Validation with children aged 6 - 18 yo",
+                        () -> Parameters.validationEmployment(model.getYear(), true, false),
+                        colorArrayList.get(1), true);
+                plotter.addSource("Validation without children under 18 yo",
+                        () -> Parameters.validationEmployment(model.getYear(), false, false),
+                        colorArrayList.get(2), true);
 
-						updateChartSet.add(emplChildPlotter);			//Add to set to be updated in buildSchedule method
-						emplAgeMaternityPlots.add(emplChildPlotter);
-				tabSet.add(createScrollPaneFromPlots(emplAgeMaternityPlots, "Employment (female): age/maternity", 2));
-			}
-		    
+                updateChartSet.add(plotter);
+                emplAgeMaternityPlots.add(plotter);
+                tabSet.add(createScrollPaneFromPlots(emplAgeMaternityPlots, "Employment (female): age/maternity", 2));
+            }
+
 		    //Employment by region
 		    if(employmentByRegion) {
 			    Set<JInternalFrame> emplGenderRegionPlots = new LinkedHashSet<JInternalFrame>();
