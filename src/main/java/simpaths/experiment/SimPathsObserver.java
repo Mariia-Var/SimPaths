@@ -119,6 +119,10 @@ record AgeRange(int from, int to) implements Predicate<Person> {
         return Parameters.validationEduc(year, level, this.from, this.to);
     }
 
+    public double healthValidation(int year, Gender gender) {
+        return Parameters.validationHealth(year, gender, this.from, this.to);
+    }
+
     @Override
     public boolean test(Person arg0) {
         return Filters.ageRange(this.from, this.to).test(arg0);
@@ -237,8 +241,7 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 	private boolean floatingConvergencePlots = false;		//Allow convergence plots to float freely in GUI, otherwise contain plots in a frame 
 
     private ArrayList<AgeRange> decades;
-
-	private LinkedHashSet<AgeGroupCSfilter> disabledHealthAgeGroupFilterSet;
+    private ArrayList<AgeRange> healthAgeRanges;
 
 	private ScatterplotSimulationPlotterRefreshable convergenceElasticitiesPlotter;
 
@@ -349,10 +352,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			AgeGroupCSfilter age60_79Filter = new AgeGroupCSfilter(60, 79);
 			AgeGroupCSfilter age80_100Filter = new AgeGroupCSfilter(80, 100);
 
-			AgeGroupCSfilter age0_49Filter = new AgeGroupCSfilter(0, 49);
-			AgeGroupCSfilter age50_74Filter = new AgeGroupCSfilter(50, 74);
-			AgeGroupCSfilter age75_100Filter = new AgeGroupCSfilter(75, 100);
-
 			FemalesWithChildrenByChildAgeCSfilter childAged0_5Filter = new FemalesWithChildrenByChildAgeCSfilter(0, 5);
 			FemalesWithChildrenByChildAgeCSfilter childAged6_18Filter = new FemalesWithChildrenByChildAgeCSfilter(6, 18);
 
@@ -363,10 +362,10 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
             this.decades.add(new AgeRange(40, 49));
             this.decades.add(new AgeRange(50, 59));
 
-			disabledHealthAgeGroupFilterSet = new LinkedHashSet<>();
-			disabledHealthAgeGroupFilterSet.add(age0_49Filter);
-			disabledHealthAgeGroupFilterSet.add(age50_74Filter);
-			disabledHealthAgeGroupFilterSet.add(age75_100Filter);
+            this.healthAgeRanges = new ArrayList<>();
+            this.healthAgeRanges.add(new AgeRange(0, 49));
+            this.healthAgeRanges.add(new AgeRange(50, 74));
+            this.healthAgeRanges.add(new AgeRange(75, 100));
 
 			updateChartSet = new LinkedHashSet<JInternalFrame>();	//Set of all charts needed to be scheduled for updating (NOT the convergence plot!)
 			tabSet = new LinkedHashSet<JComponent>();		//Set of all JInternalFrames each having a tab.  Each tab frame will potentially contain more than one chart each.
@@ -829,29 +828,32 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 
 				tabSet.add(createScrollPaneFromPlots(disabledAgePlots, "Disability: gender", 2));
 
-				Set<JInternalFrame> healthAgePlots = new LinkedHashSet<>();
-				for (AgeGroupCSfilter ageFilter : disabledHealthAgeGroupFilterSet) {
-					int ageFrom = ageFilter.getAgeFrom();
-					int ageTo = ageFilter.getAgeTo();
+                var healthAgePlots = new LinkedHashSet<JInternalFrame>();
+                for (var ar : this.healthAgeRanges) {
+                    var inAgeRange = new FilteredCollection<>(model::getPersons, ar).oncePerSimTime(engine);
+                    var males = new FilteredCollection<>(inAgeRange, Filters.male());
+                    var females = new FilteredCollection<>(inAgeRange, Filters.female());
 
-					MaleAgeGroupCSfilter maleAgeFilter = new MaleAgeGroupCSfilter(ageFrom, ageTo);
-					FemaleAgeGroupCSfilter femaleAgeFilter = new FemaleAgeGroupCSfilter(ageFrom, ageTo);
-					Weighted_CrossSection.Double maleCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getHealthSelfRatedValue", true);
-					maleCS.setFilter(maleAgeFilter);
-					Weighted_CrossSection.Double femaleCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getHealthSelfRatedValue", true);
-					femaleCS.setFilter(femaleAgeFilter);
+                    var maleCs = new WeightedCrossSection<>(males, Person::getHealthSelfRatedValue, Person::getWeight);
+                    var femaleCs = new WeightedCrossSection<>(females, Person::getHealthSelfRatedValue, Person::getWeight);
 
-					TimeSeriesSimulationPlotter healthAgePlotter = new TimeSeriesSimulationPlotter("Health score by age: " + ageFilter.getAgeFrom() + " - " + ageFilter.getAgeTo(), "");
-					healthAgePlotter.addSeries("males", new Weighted_MeanArrayFunction(maleCS), null, colorArrayList.get(0), false);
-					healthAgePlotter.addSeries("females", new Weighted_MeanArrayFunction(femaleCS), null, colorArrayList.get(1), false);
-					healthAgePlotter.addSeries("Validation males", validator, Validator.DoublesVariables.valueOf("healthMale_" + ageFrom + "_" + ageTo), colorArrayList.get(0), true);
-					healthAgePlotter.addSeries("Validation females", validator, Validator.DoublesVariables.valueOf("healthFemale_" + ageFrom + "_" + ageTo), colorArrayList.get(1), true);
+                    // FIXME: should this be cached? What about validation values?
+                    var meanMale = OnceUntil.timeChanges(() -> new WeightedStats(maleCs.get()).mean(), engine);
+                    var meanFemale = OnceUntil.timeChanges(() -> new WeightedStats(femaleCs.get()).mean(), engine);
 
-					updateChartSet.add(healthAgePlotter);
-					healthAgePlots.add(healthAgePlotter);
-				}
+                    Supplier<Double> validMale = () -> ar.healthValidation(model.getYear(), Gender.Male);
+                    Supplier<Double> validFemale = () -> ar.healthValidation(model.getYear(), Gender.Female);
 
-				tabSet.add(createScrollPaneFromPlots(healthAgePlots, "Health: age/gender", 2));
+                    var plotter = new TimeSeriesSimulationPlotter("Health score by age: " + ar.from() + " - " + ar.to(), "");
+                    plotter.addSource("males", meanMale, colorArrayList.get(0), false);
+                    plotter.addSource("females", meanFemale, colorArrayList.get(1), false);
+                    plotter.addSource("Validation males", validMale, colorArrayList.get(0), true);
+                    plotter.addSource("Validation females", validFemale, colorArrayList.get(1), true);
+
+                    updateChartSet.add(plotter);
+                    healthAgePlots.add(plotter);
+                }
+                tabSet.add(createScrollPaneFromPlots(healthAgePlots, "Health: age/gender", 2));
 
                 // mental health plots
                 ageGenderPlots("Psychological distress score", Person::getHealthWbScore0to36, AgeRange::mentalHealthValidation);
