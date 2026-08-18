@@ -455,11 +455,11 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 
 				TimeSeriesSimulationPlotter populationPlotter = new TimeSeriesSimulationPlotter("Population Statistics", "");
 				if (showAdditionalCharts) {
-					populationPlotter.addSeries("(Scaled) Number of Households, occupants below 80 yo", model, "getWeightedNumberOfHouseholds80minus", true);
-				}
-
-				populationPlotter.addSeries("(Scaled) Population Size", model, "getWeightedNumberOfPersons", true);
-
+                    populationPlotter.addSource("(Scaled) Number of Households, occupants below 80 yo",
+                            () -> model.getWeightedNumberOfHouseholds80minus());
+                }
+                populationPlotter.addSource("(Scaled) Population Size",
+                        () -> model.getWeightedNumberOfPersons());
 
 				populationPlotter.setName("Population statistics");
 			    updateChartSet.add(populationPlotter);			//Add to set to be updated in buildSchedule method
