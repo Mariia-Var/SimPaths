@@ -25,6 +25,7 @@ import simpaths.model.SimPathsModel;
 import simpaths.model.Validator;
 import simpaths.model.enums.Country;
 import simpaths.model.enums.Education;
+import simpaths.model.enums.EducationLevel;
 import simpaths.model.enums.Gender;
 import simpaths.model.enums.HistogramTypeEnum;
 import simpaths.model.enums.Les_c4;
@@ -91,90 +92,31 @@ import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 
 record AgeRange(int from, int to) implements Predicate<Person> {
     public double employmentValidation(int year, Gender gender) {
-        var stem = switch (gender) {
-            case Female -> "female";
-            case Male -> "male";
-        };
-        var label = "employed_" + stem + "_" + this.from + "_" + this.to;
-        var val = (Number) Parameters.getValidationEmploymentByAgeAndGender().getValue(year - 1, label);
-        if (val == null) {
-            return Double.NaN;
-        }
-        return val.doubleValue();
+        return Parameters.validationEmployment(year, gender, this.from, this.to);
     }
 
     public double mentalHealthValidation(int year, Gender gender) {
-        var stem = switch (gender) {
-            case Female -> "female";
-            case Male -> "male";
-        };
-        var label = "mental_health_" + stem + "_" + this.from + "_" + this.to;
-        var val = (Number) Parameters.getValidationMentalHealthByAge().getValue(year - 1, label);
-        if (val == null) {
-            return Double.NaN;
-        }
-        return val.doubleValue();
+        return Parameters.validationMentalHealth(year, gender, this.from, this.to);
     }
 
     public double psychDistressValidation(int year, Gender gender) {
-        var stem = switch (gender) {
-            case Female -> "female";
-            case Male -> "male";
-        };
-        var label = "psych_distress_" + stem + "_" + this.from + "_" + this.to;
-        var val = (Number) Parameters.getValidationPsychDistressByAge().getValue(year - 1, label);
-        if (val == null) {
-            return Double.NaN;
-        }
-        return val.doubleValue();
+        return Parameters.validationPsychDistress(year, gender, this.from, this.to);
     }
 
     public double lifeSatValidation(int year, Gender gender) {
-        var stem = switch (gender) {
-            case Female -> "female";
-            case Male -> "male";
-        };
-        var label = "life_satisfaction_" + stem + "_" + this.from + "_" + this.to;
-        var val = (Number) Parameters.getValidationLifeSatisfactionByAge().getValue(year - 1, label);
-        if (val == null) {
-            return Double.NaN;
-        }
-        return val.doubleValue();
+        return Parameters.validationLifeSatisfaction(year, gender, this.from, this.to);
     }
 
     public double mcsValidation(int year, Gender gender) {
-        var stem = switch (gender) {
-            case Female -> "female";
-            case Male -> "male";
-        };
-        var label = "health_mcs_score_" + stem + "_" + this.from + "_" + this.to;
-        var val = (Number) Parameters.getValidationHealthMCSByAge().getValue(year - 1, label);
-        if (val == null) {
-            return Double.NaN;
-        }
-        return val.doubleValue();
+        return Parameters.validationHealthMcs(year, gender, this.from, this.to);
     }
 
     public double pcsValidation(int year, Gender gender) {
-        var stem = switch (gender) {
-            case Female -> "female";
-            case Male -> "male";
-        };
-        var label = "health_pcs_score_" + stem + "_" + this.from + "_" + this.to;
-        var val = (Number) Parameters.getValidationHealthPCSByAge().getValue(year - 1, label);
-        if (val == null) {
-            return Double.NaN;
-        }
-        return val.doubleValue();
+        return Parameters.validationHealthPcs(year, gender, this.from, this.to);
     }
 
-    public double eduValidation(int year, String level) {
-        var label = "educ_" + level + "_" + this.from + "_" + this.to;
-        var val = (Number) Parameters.getValidationEducationLevelByAge().getValue(year - 1, label);
-        if (val == null) {
-            return Double.NaN;
-        }
-        return val.doubleValue();
+    public double eduValidation(int year, EducationLevel level) {
+        return Parameters.validationEduc(year, level, this.from, this.to);
     }
 
     @Override
@@ -773,9 +715,9 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
                     plotter.addSource("high", meanHigh, colorArrayList.get(2), false);
 
                     if (showValidationStatistics) {
-                        Supplier<Double> validLow = () -> ar.eduValidation(this.model.getYear(), "low");
-                        Supplier<Double> validMid = () -> ar.eduValidation(this.model.getYear(), "med");
-                        Supplier<Double> validHigh = () -> ar.eduValidation(this.model.getYear(), "high");
+                        Supplier<Double> validLow = () -> ar.eduValidation(this.model.getYear(), EducationLevel.Low);
+                        Supplier<Double> validMid = () -> ar.eduValidation(this.model.getYear(), EducationLevel.Medium);
+                        Supplier<Double> validHigh = () -> ar.eduValidation(this.model.getYear(), EducationLevel.High);
                         plotter.addSource("Validation Low", validLow, colorArrayList.get(0), true);
                         plotter.addSource("Validation Medium", validMid, colorArrayList.get(1), true);
                         plotter.addSource("Validation High", validMid, colorArrayList.get(2), true);
