@@ -435,17 +435,17 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 				if (populationPyramid) {
 					Set<JInternalFrame> populationPyramidPlots = new LinkedHashSet<JInternalFrame>();
 					Weighted_PyramidPlotter populationAgeGenderPlotter = new Weighted_PyramidPlotter();
-					// Please note that the Pyramid plotter requires a Weighted_CrossSection.Double[2]
-					Weighted_CrossSection.Integer[] populationData = new Weighted_CrossSection.Integer[2];
-					Weighted_CrossSection.Integer maleAgesCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "demAge", false);
-					maleAgesCS.setFilter(new GenderCSfilter(Gender.Male));
-					populationData[0] = maleAgesCS;
-					Weighted_CrossSection.Integer femaleAgesCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "demAge", false);
-					femaleAgesCS.setFilter(new GenderCSfilter(Gender.Female));
-					populationData[1] = femaleAgesCS;
+                    var males = new FilteredCollection<>(model::getPersons, Filters.male());
+                    var females = new FilteredCollection<>(model::getPersons, Filters.female());
+
+                    var malesCs = new WeightedCrossSection<>(males, Person::getDemAge, Person::getWeight)
+                            .oncePerSimTime(engine);
+                    var femalesCs = new WeightedCrossSection<>(females, Person::getDemAge, Person::getWeight)
+                            .oncePerSimTime(engine);
 
 					populationAgeGenderPlotter.setScalingFactor(model.getScalingFactor());
-					populationAgeGenderPlotter.addCollectionSource(populationData);
+                    populationAgeGenderPlotter.setLeft(malesCs);
+                    populationAgeGenderPlotter.setRight(femalesCs);
 
 					updateChartSet.add(populationAgeGenderPlotter);			//Add to set to be updated in buildSchedule method
 					populationPyramidPlots.add(populationAgeGenderPlotter);
