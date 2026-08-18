@@ -830,32 +830,7 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 
 				tabSet.add(createScrollPaneFromPlots(disabledAgePlots, "Disability: gender", 2));
 
-                var healthAgePlots = new LinkedHashSet<JInternalFrame>();
-                for (var ar : this.healthAgeRanges) {
-                    var inAgeRange = new FilteredCollection<>(model::getPersons, ar).oncePerSimTime(engine);
-                    var males = new FilteredCollection<>(inAgeRange, Filters.male());
-                    var females = new FilteredCollection<>(inAgeRange, Filters.female());
-
-                    var maleCs = new WeightedCrossSection<>(males, Person::getHealthSelfRatedValue, Person::getWeight);
-                    var femaleCs = new WeightedCrossSection<>(females, Person::getHealthSelfRatedValue, Person::getWeight);
-
-                    // FIXME: should this be cached? What about validation values?
-                    var meanMale = OnceUntil.timeChanges(() -> new WeightedStats(maleCs.get()).mean(), engine);
-                    var meanFemale = OnceUntil.timeChanges(() -> new WeightedStats(femaleCs.get()).mean(), engine);
-
-                    Supplier<Double> validMale = () -> ar.healthValidation(model.getYear(), Gender.Male);
-                    Supplier<Double> validFemale = () -> ar.healthValidation(model.getYear(), Gender.Female);
-
-                    var plotter = new TimeSeriesSimulationPlotter("Health score by age: " + ar.from() + " - " + ar.to(), "");
-                    plotter.addSource("males", meanMale, colorArrayList.get(0), false);
-                    plotter.addSource("females", meanFemale, colorArrayList.get(1), false);
-                    plotter.addSource("Validation males", validMale, colorArrayList.get(0), true);
-                    plotter.addSource("Validation females", validFemale, colorArrayList.get(1), true);
-
-                    updateChartSet.add(plotter);
-                    healthAgePlots.add(plotter);
-                }
-                tabSet.add(createScrollPaneFromPlots(healthAgePlots, "Health: age/gender", 2));
+                ageGenderPlots("Health score", this.healthAgeRanges, Person::getHealthSelfRatedValue, AgeRange::healthValidation);
 
                 // mental health plots
                 ageGenderPlots("Psychological distress score", this.decades, Person::getHealthWbScore0to36, AgeRange::mentalHealthValidation);
