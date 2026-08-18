@@ -6,6 +6,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -278,6 +279,7 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 	}
 
     private void ageGenderPlots(String label,
+            List<AgeRange> ageRanges,
             Function<? super Person, ? extends Number> getObservable,
             AgeGenderValidation validation) {
         var engine = this.getEngine();
@@ -288,7 +290,7 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
         colors.add(new Color(162, 56, 255));
         colors.add(new Color(254, 131, 0));
 
-        for (var ar : this.decades) {
+        for (var ar : ageRanges) {
             var inRange = new FilteredCollection<>(this.model::getPersons, ar).oncePerSimTime(engine);
             var males = new FilteredCollection<>(inRange, Filters.male());
             var females = new FilteredCollection<>(inRange, Filters.female());
@@ -856,9 +858,8 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
                 tabSet.add(createScrollPaneFromPlots(healthAgePlots, "Health: age/gender", 2));
 
                 // mental health plots
-                ageGenderPlots("Psychological distress score", Person::getHealthWbScore0to36, AgeRange::mentalHealthValidation);
-                ageGenderPlots("Share in psychological distress (case-based)",
-                        Person::isPsychologicallyDistressed, AgeRange::psychDistressValidation);
+                ageGenderPlots("Psychological distress score", this.decades, Person::getHealthWbScore0to36, AgeRange::mentalHealthValidation);
+                ageGenderPlots("Share in psychological distress (case-based)", this.decades, Person::isPsychologicallyDistressed, AgeRange::psychDistressValidation);
 
                 // Psychological distress (case-based) by education
                 var psychologicalDistressCasesAgeEducationPlots = new LinkedHashSet<JInternalFrame>();
@@ -914,9 +915,9 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
                 }
                 tabSet.add(createScrollPaneFromPlots(psychologicalDistressCasesEducationPlots, "Share in psychological distress (case-based): gender/education", 2));
 
-                ageGenderPlots("Life satisfaction score", Person::getDemLifeSatScore0to10, AgeRange::lifeSatValidation);
-                ageGenderPlots("Mental health MCS score", Person::getHealthMentalMcs, AgeRange::mcsValidation);
-                ageGenderPlots("Physical health PCS score", Person::getHealthPhysicalPcs, AgeRange::pcsValidation);
+                ageGenderPlots("Life satisfaction score", this.decades, Person::getDemLifeSatScore0to10, AgeRange::lifeSatValidation);
+                ageGenderPlots("Mental health MCS score", this.decades, Person::getHealthMentalMcs, AgeRange::mcsValidation);
+                ageGenderPlots("Physical health PCS score", this.decades, Person::getHealthPhysicalPcs, AgeRange::pcsValidation);
 		    }
 		    
 		    
@@ -944,7 +945,7 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 
             // Male/Female employment rates by age groups
             if(employmentByAge) {
-                ageGenderPlots("Employment rate", Person::getEmployed, AgeRange::employmentValidation);
+                ageGenderPlots("Employment rate", this.decades, Person::getEmployed, AgeRange::employmentValidation);
             }
 
 		    //One graph for employment age by maternity status, conditional on age of children
