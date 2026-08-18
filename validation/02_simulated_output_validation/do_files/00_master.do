@@ -141,14 +141,10 @@ do "${dir_do_files}/03_create_UKHLS_validation_targets.do"
 *******************************************************************************/
 
 /*
-This section defines which alignment configuration(s) to validate. An
-"alignment" is a distinct SimPaths model calibration -- e.g. with/without
-fertility alignment, with/without employment alignment -- each run separately.
-Each alignment name below must exactly match an existing folder name, both
-the input folder simulated_outputs/[alignment]/ and the output folder
-graphs/[alignment]/ (created automatically if missing). Listing more than one
-alignment in `alignments' loops the full prep + plot pipeline once per
-alignment, reading from and writing to that alignment's own folders.
+This section defines which model outputs to validate. It permits multiple model 
+set-ups to be validated by looping over the name of the folders containing 
+the output csv file(s). The workflow automatically generates folders with the 
+same names as the output data folders containing the relevant validation graphs. 
 */
 
 * Folder name(s) to validate 
