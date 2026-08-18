@@ -2462,6 +2462,11 @@ public class Parameters {
         return nanIfNull(validationGrossEarningsByGenderAndEducation, year, label);
     }
 
+    public static double validationLhw(int year, Gender gender) {
+        var label = String.join("_", "lhw", genderStr(gender));
+        return nanIfNull(validationLhwByGenderAndEducation, year, label);
+    }
+
     public static double validationLhw(int year, Gender gender, Education education) {
         var label = String.join("_", "lhw", genderStr(gender), eduStr(education));
         return nanIfNull(validationLhwByGenderAndEducation, year, label);

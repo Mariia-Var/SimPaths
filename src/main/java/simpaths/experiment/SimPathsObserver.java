@@ -66,12 +66,9 @@ import simpaths.data.filters.BenefitUnitFilters;
 import simpaths.data.filters.ChildValidIncomeCSfilter;
 import simpaths.data.filters.ChildValidIncomeRegionalCSfilter;
 import simpaths.data.filters.Filters;
-import simpaths.data.filters.FlexibleInLabourSupplyByEducationFilter;
 import simpaths.data.filters.GenderCSfilter;
 import simpaths.data.filters.GenderEducationCSfilter;
 import simpaths.data.filters.GenderEducationWorkingCSfilter;
-import simpaths.data.filters.GenderWorkingCSfilter;
-import simpaths.data.filters.RegionEducationWorkingCSfilter;
 import simpaths.data.filters.ValidHouseholdIncomeCSfilter;
 import simpaths.data.filters.ValidHouseholdIncomeRegionalCSfilter;
 import simpaths.data.filters.ValidPersonEarningsCSfilter;
@@ -973,129 +970,126 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
                 tabSet.add(createScrollPaneFromPlots(emplGenderRegionPlots, "Employment: gender/region", 2));
             }
 
-		    //LABOUR SUPPLY CHART
-		    if(labourSupply) {
-				TimeSeriesSimulationPlotter supplyPlotter = new TimeSeriesSimulationPlotter("Labour supply by education", "Yearly hours worked");		//'yo' means "years old"
-				int colorCounter = 0;
-				for(Education edu: Education.values()) {
-					if (Education.InEducation.equals(edu)) {
-						continue;
-					}
-					FlexibleInLabourSupplyByEducationFilter eduFilter = new FlexibleInLabourSupplyByEducationFilter(edu);
-					Weighted_CrossSection.Double supplyCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getLabourSupplyHoursYearly", true);
-					supplyCS.setFilter(eduFilter);
-					supplyPlotter.addSeries(edu.toString(), new Weighted_MeanArrayFunction(supplyCS), null, colorArrayList.get(colorCounter), false);
-					supplyPlotter.addSeries("Validation " + edu.toString(), validator, Validator.DoublesVariables.valueOf("labour_supply_"+edu), colorArrayList.get(colorCounter), true);
-					colorCounter++;
-				}
-				supplyPlotter.setName("Labour supply");
-			    updateChartSet.add(supplyPlotter);			//Add to set to be updated in buildSchedule method
-				tabSet.add(supplyPlotter);
-		    }
+            // labour supply chart
+            if (labourSupply) {
+                var plot = new TimeSeriesSimulationPlotter("Labour supply by education", "Yearly hours worked");
+                int colorCounter = 0;
+                var flexibleLabour = new FilteredCollection<>(model::getPersons, Filters.flexibleLabourSupply())
+                        .oncePerSimTime(engine);
+                for(var edu : Education.values()) {
+                    if (Education.InEducation.equals(edu)) {
+                        continue;
+                    }
+                    var withEdu = new FilteredCollection<>(flexibleLabour, Filters.education(edu));
+                    var supplyCs = new WeightedCrossSection<>(withEdu, Person::getLabourSupplyHoursYearly, Person::getWeight);
+                    var supplyStats = WeightedStats.supplier(supplyCs);
+                    plot.addSource(edu.toString(), () -> supplyStats.get().mean(), colorArrayList.get(colorCounter), false);
+                    plot.addSource("Validation " + edu.toString(),
+                            () -> Parameters.validationLabourSupply(model.getYear(), edu),
+                            colorArrayList.get(colorCounter), true);
+                    colorCounter++;
+                }
+                plot.setName("Labour supply");
+                updateChartSet.add(plot);
+                tabSet.add(plot);
+            }
 
-			//INCOME CHARTS - GROSS WAGES BY REGION AND EDUCATION LEVEL
-		    if(grossEarningsByRegionAndEducation) {
-		    	IndividualBarSimulationPlotter earningsPlotter;
-		    	if (model.getCountry().equals(Country.UK)) {
-					earningsPlotter = new IndividualBarSimulationPlotter("Yearly Gross Earnings by Education and Region (excludes non-workers)", "£");
-				}
-		    	else {
-					earningsPlotter = new IndividualBarSimulationPlotter("Yearly Gross Earnings by Education and Region (excludes non-workers)", "Euro");
-				}
+            var employedEarningFilter = Filters.employment(Les_c4.EmployedOrSelfEmployed)
+                    .and(Filters.grossEarningsYearlyAtLeast(0.0));
+            var employed = new FilteredCollection<>(model::getPersons, employedEarningFilter)
+                    .oncePerSimTime(engine);
 
-					for(Region region: Parameters.getCountryRegions()) {
-			    		for(Education edu: Education.values()) {
-							if (Education.InEducation.equals(edu)) {
-								continue;
-							}
-							RegionEducationWorkingCSfilter regionEduWorkingFilter = new RegionEducationWorkingCSfilter(region, edu);
-							Weighted_CrossSection.Double wagesCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getGrossEarningsYearly", true);
-							wagesCS.setFilter(regionEduWorkingFilter);
-							earningsPlotter.addSources("(" + region.getName() + ", " + edu.toString() + ")", new Weighted_MeanArrayFunction(wagesCS), colorOfEducation(edu));
-						}
-					}
-				earningsPlotter.setName("Gross Earnings");
-			    updateChartSet.add(earningsPlotter);			//Add to set to be updated in buildSchedule method
-				tabSet.add(earningsPlotter);
-		    }
+            // income charts - gross wages by region and education level
+            if (grossEarningsByRegionAndEducation) {
+                var currency = model.getCountry().equals(Country.UK) ? "£" : "€";
+                var plot = new IndividualBarSimulationPlotter("Yearly Gross Earnings by Education and Region (excludes non-workers)", currency);
 
-			//INCOME CHARTS B: GROSS EARNINGS BY EDUCATION
-			if (grossEarningsByRegionAndEducation) {
-				TimeSeriesSimulationPlotter grossEarningsByGenderAndEducationPlotter;
-				int colorCounter = 0;
-				if (model.getCountry().equals(Country.UK)) {
-					grossEarningsByGenderAndEducationPlotter = new TimeSeriesSimulationPlotter("Yearly Gross Earnings by Gender And Education", "£");
-				}
-				else {
-					grossEarningsByGenderAndEducationPlotter = new TimeSeriesSimulationPlotter("Yearly Gross Earnings by Gender And Education", "Euro");
-				}
-					for(Education edu: Education.values()) {
-						if (Education.InEducation.equals(edu)) {
-							continue;
-						}
-						for (Gender gender : Gender.values()) {
-							GenderEducationWorkingCSfilter genderEducationWorkingFilter = new GenderEducationWorkingCSfilter(gender, edu);
-							Weighted_CrossSection.Double wagesCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getGrossEarningsYearly", true); // Note: these are nominal values for each simulated year
-							wagesCS.setFilter(genderEducationWorkingFilter);
-							grossEarningsByGenderAndEducationPlotter.addSeries("(" + gender.toString() + ", " + edu.toString() + ")", new Weighted_MeanArrayFunction(wagesCS), null, colorArrayList.get(colorCounter), false);
-							grossEarningsByGenderAndEducationPlotter.addSeries("Validation (" + gender + ", " + edu + ")", validator, Validator.DoublesVariables.valueOf("grossEarnings_"+ gender +"_"+ edu), colorArrayList.get(colorCounter), true);
-							colorCounter++;
-						}
-					}
-				grossEarningsByGenderAndEducationPlotter.setName("Gross Earnings by Gender / Education");
-				updateChartSet.add(grossEarningsByGenderAndEducationPlotter);
-				tabSet.add(grossEarningsByGenderAndEducationPlotter);
-			}
+                for (var region: Parameters.getCountryRegions()) {
+                    for (var edu: Education.values()) {
+                        if (Education.InEducation.equals(edu)) {
+                            continue;
+                        }
+                        var inRegionWithEdu = new FilteredCollection<>(employed, Filters.region(region).and(Filters.education(edu)));
+                        var cs = new WeightedCrossSection<>(inRegionWithEdu, Person::getGrossEarningsYearly, Person::getWeight);
+                        var stats = WeightedStats.supplier(cs);
+                        plot.addSource("(" + region.getName() + ", " + edu.toString() + ")",
+                                () -> stats.get().mean(), colorOfEducation(edu));
+                    }
+                }
+                plot.setName("Gross Earnings");
+                updateChartSet.add(plot);
+                tabSet.add(plot);
+            }
 
-			if (grossEarningsByRegionAndEducation) {
-				TimeSeriesSimulationPlotter hourlyWagesByGenderAndEducationPlotter;
-				int colorCounter = 0;
-				if (model.getCountry().equals(Country.UK)) {
-					hourlyWagesByGenderAndEducationPlotter = new TimeSeriesSimulationPlotter("Hourly Wages by Gender And Education", "£");
-				}
-				else {
-					hourlyWagesByGenderAndEducationPlotter = new TimeSeriesSimulationPlotter("Hourly Wages by Gender And Education", "Euro");
-				}
-					for(Education edu: Education.values()) {
-						if (Education.InEducation.equals(edu)) {
-							continue;
-						}
-						for (Gender gender : Gender.values()) {
-							GenderEducationWorkingCSfilter genderEducationWorkingFilter = new GenderEducationWorkingCSfilter(gender, edu);
-							Weighted_CrossSection.Double wagesCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getHourlyWageRate1", true); // Note: these are nominal values for each simulated year
-							wagesCS.setFilter(genderEducationWorkingFilter);
-							hourlyWagesByGenderAndEducationPlotter.addSeries("(" + gender.toString() + ", " + edu.toString() + ")", new Weighted_MeanArrayFunction(wagesCS), null, colorArrayList.get(colorCounter), false);
-							hourlyWagesByGenderAndEducationPlotter.addSeries("Validation (" + gender + ", " + edu + ")", validator, Validator.DoublesVariables.valueOf("hourlyWage_"+ gender +"_"+ edu), colorArrayList.get(colorCounter), true);
-							colorCounter++;
-						}
-					}
-				hourlyWagesByGenderAndEducationPlotter.setName("Hourly Wages by Gender / Education");
-				updateChartSet.add(hourlyWagesByGenderAndEducationPlotter);
-				tabSet.add(hourlyWagesByGenderAndEducationPlotter);
-			}
+            // income charts b: gross earnings by education
+            if (grossEarningsByRegionAndEducation) {
+                var currency = model.getCountry().equals(Country.UK) ? "£" : "€";
+                var plotEarnings = new TimeSeriesSimulationPlotter("Yearly Gross Earnings by Gender And Education", currency);
+                var plotWages = new TimeSeriesSimulationPlotter("Hourly Wages by Gender And Education", currency);
+                int colorCounter = 0;
 
-			if (grossEarningsByRegionAndEducation) {
-				TimeSeriesSimulationPlotter hoursOfWorkByGenderPlotter;
-				int colorCounter = 0;
-				hoursOfWorkByGenderPlotter = new TimeSeriesSimulationPlotter("Hours of Work Weekly by Gender", "Hours");
-				for (Gender gender : Gender.values()) {
-					GenderWorkingCSfilter genderWorkingFilter = new GenderWorkingCSfilter(gender);
-					Weighted_CrossSection.Double hoursCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getDoubleLabourSupplyHoursWeekly", true); // Note: these are nominal values for each simulated year
-					hoursCS.setFilter(genderWorkingFilter);
-					hoursOfWorkByGenderPlotter.addSeries(gender.toString(), new Weighted_MeanArrayFunction(hoursCS), null, colorArrayList.get(colorCounter), false);
-					hoursOfWorkByGenderPlotter.addSeries("Validation " + gender, validator, Validator.DoublesVariables.valueOf("lhw_"+ gender), colorArrayList.get(colorCounter), true);
-					colorCounter++;
-					}
-				hoursOfWorkByGenderPlotter.setName("Hours of Work by Gender");
-				updateChartSet.add(hoursOfWorkByGenderPlotter);
-				tabSet.add(hoursOfWorkByGenderPlotter);
-			}
-		    
+                // FIXME: why slightly different from previous?
+                var employedEarningFilter2 = Filters.employment(Les_c4.EmployedOrSelfEmployed)
+                        .and(Filters.grossEarningsYearlyAtLeast(1.0))
+                        .and(p -> p.getLabourSupplyHoursWeekly() > 0);
+                var employed2 = new FilteredCollection<>(model::getPersons, employedEarningFilter2)
+                        .oncePerSimTime(engine);
+
+                for(Education edu: Education.values()) {
+                    if (Education.InEducation.equals(edu)) {
+                        continue;
+                    }
+                    for (Gender gender : Gender.values()) {
+                        var ofGenderWithEdu = new FilteredCollection<>(employed2, Filters.gender(gender).and(Filters.education(edu)))
+                                .oncePerSimTime(engine);
+                        // Note: these are nominal values for each simulated year
+                        var earningsCs = new WeightedCrossSection<>(ofGenderWithEdu, Person::getGrossEarningsYearly, Person::getWeight);
+                        var wagesCs = new WeightedCrossSection<>(ofGenderWithEdu, Person::getHourlyWageRate1, Person::getWeight);
+                        var earningsStats = WeightedStats.supplier(earningsCs);
+                        var wagesStats = WeightedStats.supplier(wagesCs);
+
+                        var pStr = "(" + gender.toString() + ", " + edu.toString() + ")";
+                        plotEarnings.addSource(pStr, () -> earningsStats.get().mean(), colorArrayList.get(colorCounter), false);
+                        plotWages.addSource(pStr, () -> wagesStats.get().mean(), colorArrayList.get(colorCounter), false);
+                        plotEarnings.addSource("Validation " + pStr,
+                                () -> Parameters.validationGrossEarnings(model.getYear(), gender, edu),
+                                colorArrayList.get(colorCounter), true);
+                        plotWages.addSource("Validation " + pStr,
+                                () -> Parameters.validationHourlyWage(model.getYear(), gender, edu),
+                                colorArrayList.get(colorCounter), true);
+                        colorCounter++;
+                    }
+                }
+                plotEarnings.setName("Gross Earnings by Gender / Education");
+                plotWages.setName("Hourly Wages by Gender / Education");
+                updateChartSet.add(plotEarnings);
+                tabSet.add(plotEarnings);
+                updateChartSet.add(plotWages);
+                tabSet.add(plotWages);
+            }
+
+            if (grossEarningsByRegionAndEducation) {
+                var plot = new TimeSeriesSimulationPlotter("Hours of Work Weekly by Gender", "Hours");
+                int icolor = 0;
+                for (var gender : Gender.values()) {
+                    var ofGender = new FilteredCollection<>(employed, Filters.gender(gender));
+                    // Note: these are nominal values for each simulated year
+                    var hoursCs = new WeightedCrossSection<>(ofGender, Person::getDoubleLabourSupplyHoursWeekly, Person::getWeight);
+                    var hoursStats = WeightedStats.supplier(hoursCs);
+                    plot.addSource(gender.toString(), () -> hoursStats.get().mean(), colorArrayList.get(icolor), false);
+                    plot.addSource("Validation " + gender,
+                            () -> Parameters.validationLhw(model.getYear(), gender),
+                            colorArrayList.get(icolor), true);
+                    icolor++;
+                    }
+                plot.setName("Hours of Work by Gender");
+                updateChartSet.add(plot);
+                tabSet.add(plot);
+            }
+
 			//Statistics dependent charts
 		    if(collector.isCalculateGiniCoefficients()) {	//As these charts need statistics to be calculated within the simulation, turn off these charts if the statistics are not calculated
-		    	
-                // FIXME: check what should be plotted here out of the AccumulatorStats
-                // and if `lastValue` there is no need to use AccumulatorStats...
+                // FIXME: no need to use AccumulatorStats just to get a `lastValue`...
 
 				//INCOME CHARTS - GINI
 			    Set<JInternalFrame> giniIncomeRegionPlots = new LinkedHashSet<JInternalFrame>();			    
