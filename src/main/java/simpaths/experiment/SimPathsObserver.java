@@ -56,9 +56,6 @@ import microsim.gui.plot.ScatterplotSimulationPlotterRefreshable;
 import microsim.gui.plot.Weighted_PyramidPlotter;
 import microsim.gui.plot.TimeSeriesSimulationPlotter;
 import microsim.gui.plot.Weighted_HistogramSimulationPlotter;
-import microsim.statistics.IDoubleSource;
-import microsim.statistics.ILongSource;
-import microsim.statistics.functions.MultiTraceFunction;
 import microsim.statistics.weighted.Weighted_CrossSection;
 import microsim.statistics.weighted.functions.Weighted_MeanArrayFunction;
 import microsim.statistics.weighted.functions.Weighted_SumArrayFunction;
@@ -80,7 +77,6 @@ import simpaths.data.filters.GenderWorkingCSfilter;
 import simpaths.data.filters.MaleAgeGroupCSfilter;
 import simpaths.data.filters.MaleRegionAgeCSfilter;
 import simpaths.data.filters.RegionCSfilter;
-import simpaths.data.filters.RegionEducationCSfilter;
 import simpaths.data.filters.RegionEducationWorkingCSfilter;
 import simpaths.data.filters.ValidEducationAgeGroupCSfilter;
 import simpaths.data.filters.ValidEducationRegionCSfilter;
@@ -140,7 +136,7 @@ interface AgeGenderValidation {
  * CLASS TO MANAGE OBSERVER OF SIMULATED OUTPUT
  *
  */
-public class SimPathsObserver extends AbstractSimulationObserverManager implements EventListener, ILongSource {
+public class SimPathsObserver extends AbstractSimulationObserverManager implements EventListener {
 
 	@GUIparameter(description="Toggle to turn all charts on/off")
 	private Boolean showCharts = true;
@@ -245,8 +241,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 
 	private ScatterplotSimulationPlotterRefreshable convergenceElasticitiesPlotter;
 
-	private Weighted_CrossSection.Double wagesCS;
-	
 	Set<JInternalFrame> updateChartSet;
 
 	Set<JComponent> tabSet;
@@ -257,7 +251,7 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 	
 	Map<Education, ScatterplotSimulationPlotterRefreshable> potentialEarningsPlots;
 	
-	MultiKeyMap<Object, Weighted_MeanArrayFunction> meanPotentialEarningsMultiMap;
+	MultiKeyMap<Object, Supplier<Double>> meanPotentialEarningsMultiMap;
 	
 	private long countIterations = 0;
 
@@ -350,15 +344,12 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			meanPotentialEarningsMultiMap = MultiKeyMap.multiKeyMap(new LinkedMap<>());
 			for(Region region: Parameters.getCountryRegions()) {
 				for(Education edu: Education.values()) {
-					RegionEducationCSfilter regionEduFilter = new RegionEducationCSfilter(region, edu);
-					wagesCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getHourlyWageRate1", true);
-					wagesCS.setFilter(regionEduFilter);
-					wagesCS.setCheckingTime(false);					//Need to set to false to enable updating during convergence process whilst the simulation time is still the same
-					
-					Weighted_MeanArrayFunction meanPotentialEarnings = new Weighted_MeanArrayFunction(wagesCS);
-					meanPotentialEarnings.setCheckingTime(false);	//Need to set to false to enable updating during convergence process whilst the simulation time is still the same
-					
-					meanPotentialEarningsMultiMap.put(region,  edu, meanPotentialEarnings);
+                    // do not cache this one to be able to update during convergence.
+                    var filtered = new FilteredCollection<>(model::getPersons,
+                            Filters.education(edu).and(Filters.region(region)));
+                    var wagesCs = new WeightedCrossSection<>(filtered, Person::getHourlyWageRate1, Person::getWeight);
+                    var wstats = WeightedStats.supplier(wagesCs);
+                    meanPotentialEarningsMultiMap.put(region, edu, () -> wstats.get().mean());
 				}
 			}
 						
@@ -1326,9 +1317,6 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 	public void updateLabourMarketPlots(Region region) {
 
 		//Potential Earnings
-		for(Education edu: Education.values()) {
-			meanPotentialEarningsMultiMap.get(region, edu).updateSource();	//Only updates when both the underlying cross section AND the mean array function has setCheckingTime(false).
-		}
 		for(ScatterplotSimulationPlotterRefreshable plot: potentialEarningsPlots.values()) {
 			plot.update();
 		}
@@ -1352,14 +1340,14 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			plot.reset();
 		}
 		countIterations = 0;
-		
-		for(Education edu: Education.values()) {
-			//Potential Earnings
-			potentialEarningsPlots.get(edu).addSeries(region.getName(), (ILongSource)new MultiTraceFunction.Long(this, LongVariables.CountIterations), ((IDoubleSource)meanPotentialEarningsMultiMap.get(region, edu)));
-			
-		}
 
-	}
+        for(var edu: Education.values()) {
+            // Potential Earnings
+            potentialEarningsPlots.get(edu).addSource(region.getName(),
+                    () -> this.countIterations,
+                    meanPotentialEarningsMultiMap.get(region, edu));
+        }
+    }
 
 	
 	//--------------------------------------------------------------------------
@@ -1381,32 +1369,7 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 		}
 		
 	}
-	
 
-	//--------------------------------------------------------------------------
-	//	ILongSource implementation 
-	//--------------------------------------------------------------------------
-	
-	
-	public enum LongVariables {
-		CountIterations,
-	}
-
-	@Override
-	public long getLongValue(Enum<?> var) {
-		switch ((LongVariables) var) {
-		
-		case CountIterations:
-			return countIterations;
-	
-		default:
-			throw new IllegalArgumentException("ERROR - " + var + " not found in SimPathsObserver#getLongValue()");
-			
-		}
-	
-	}
-
-	
 	//--------------------------------------------------------------------------
 	// Access methods
 	//--------------------------------------------------------------------------
