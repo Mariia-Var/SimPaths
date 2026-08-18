@@ -58,28 +58,20 @@ import microsim.gui.plot.TimeSeriesSimulationPlotter;
 import microsim.gui.plot.Weighted_HistogramSimulationPlotter;
 import microsim.statistics.weighted.Weighted_CrossSection;
 import microsim.statistics.weighted.functions.Weighted_MeanArrayFunction;
-import microsim.statistics.weighted.functions.Weighted_SumArrayFunction;
 
 // import LABOURsim packages
 import simpaths.model.Person;
 import simpaths.data.Parameters;
+import simpaths.data.filters.BenefitUnitFilters;
 import simpaths.data.filters.ChildValidIncomeCSfilter;
 import simpaths.data.filters.ChildValidIncomeRegionalCSfilter;
-import simpaths.data.filters.FemaleAgeGroupCSfilter;
-import simpaths.data.filters.FemaleRegionAgeCSfilter;
 import simpaths.data.filters.Filters;
-import simpaths.data.filters.FlexibleInLabourSupplyByAgeAndGenderFilter;
 import simpaths.data.filters.FlexibleInLabourSupplyByEducationFilter;
 import simpaths.data.filters.GenderCSfilter;
 import simpaths.data.filters.GenderEducationCSfilter;
 import simpaths.data.filters.GenderEducationWorkingCSfilter;
 import simpaths.data.filters.GenderWorkingCSfilter;
-import simpaths.data.filters.MaleAgeGroupCSfilter;
-import simpaths.data.filters.MaleRegionAgeCSfilter;
-import simpaths.data.filters.RegionCSfilter;
 import simpaths.data.filters.RegionEducationWorkingCSfilter;
-import simpaths.data.filters.ValidEducationAgeGroupCSfilter;
-import simpaths.data.filters.ValidEducationRegionCSfilter;
 import simpaths.data.filters.ValidHouseholdIncomeCSfilter;
 import simpaths.data.filters.ValidHouseholdIncomeRegionalCSfilter;
 import simpaths.data.filters.ValidPersonEarningsCSfilter;
@@ -737,69 +729,81 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
                 tabSet.add(createScrollPaneFromPlots(plots, "Education by region (excluding students)", 2));
             }
 
-		    //HOUSEHOLD COMPOSITION CHART
-		    if(householdComposition) {
-			    //Proportion of households with couple occupancy (i.e. there is both a responsible male and female in the household) by region
-			    TimeSeriesSimulationPlotter houseCompositionRegionPlotter = new TimeSeriesSimulationPlotter("Share of couples", "");
-				int colorCounter = 0;
-			    for(Region region: Parameters.getCountryRegions()) {
-					RegionCSfilter regionFilter = new RegionCSfilter(region);
-					Weighted_CrossSection.Integer regionCS = new Weighted_CrossSection.Integer(model.getBenefitUnits(), BenefitUnit.class, "getCoupleDummy", true);
-					regionCS.setFilter(regionFilter);
-					houseCompositionRegionPlotter.addSeries(region.getName(), new Weighted_MeanArrayFunction(regionCS), null, colorArrayList.get(colorCounter), false);		//'yo' means "years old"
-					houseCompositionRegionPlotter.addSeries("Validation "+region.getName(), validator, Validator.DoublesVariables.valueOf("partneredShare_"+region), colorArrayList.get(colorCounter), true);
-					colorCounter++;
-			    }		    
-			    Weighted_CrossSection.Integer coupleCS = new Weighted_CrossSection.Integer(model.getBenefitUnits(), BenefitUnit.class, "getCoupleDummy", true);
-			    houseCompositionRegionPlotter.addSeries("national", new Weighted_MeanArrayFunction(coupleCS), null, colorArrayList.get(colorCounter), false);		//'yo' means "years old"
-				houseCompositionRegionPlotter.addSeries("Validation national", validator, Validator.DoublesVariables.valueOf("partneredShare_All"), colorArrayList.get(colorCounter), true);
-			    houseCompositionRegionPlotter.setName("Cohabitation status");
-			    updateChartSet.add(houseCompositionRegionPlotter);			//Add to set to be updated in buildSchedule method
-			    tabSet.add(houseCompositionRegionPlotter);
-		    }
+            // household composition chart
+            if (householdComposition) {
+                // Proportion of households with couple occupancy (i.e. there is both a
+                // responsible male and female in the household) by region
+                var plot = new TimeSeriesSimulationPlotter("Share of couples", "");
+                int icolor = 0;
+                for(var region: Parameters.getCountryRegions()) {
+                    var inRegion = new FilteredCollection<>(model::getBenefitUnits, BenefitUnitFilters.region(region));
+                    var cs = new WeightedCrossSection<>(inRegion, BenefitUnit::getCoupleDummy, BenefitUnit::getWeight);
+                    var stats = WeightedStats.supplier(cs);
+                    var mean = OnceUntil.timeChanges(() -> stats.get().mean(), engine);
+                    plot.addSource(region.getName(), mean, colorArrayList.get(icolor), false);
+                    plot.addSource("Validation " + region.getName(),
+                            () -> Parameters.validationPartnered(model.getYear(), region),
+                            colorArrayList.get(icolor), true);
+                    icolor++;
+                }
+                var cs = new WeightedCrossSection<>(model::getBenefitUnits,
+                        BenefitUnit::getCoupleDummy, BenefitUnit::getWeight);
+                var stats = WeightedStats.supplier(cs);
+                var mean = OnceUntil.timeChanges(() -> stats.get().mean(), engine);
+                plot.addSource("national", mean, colorArrayList.get(icolor), false);
+                plot.addSource("Validation national",
+                        () -> Parameters.validationPartnered(model.getYear()),
+                        colorArrayList.get(icolor), true);
 
-			//Number of males and females who want to cohabit
-			if (householdComposition) {
-				TimeSeriesSimulationPlotter cohabitationDesireByGender = new TimeSeriesSimulationPlotter("Individuals looking for partner, by gender", "");
-				Weighted_CrossSection.Integer toBePartneredMales = new Weighted_CrossSection.Integer(model.getPersons(), Person.IntegerVariables.isToBePartnered);
-				Weighted_CrossSection.Integer toBePartneredFemales = new Weighted_CrossSection.Integer(model.getPersons(), Person.IntegerVariables.isToBePartnered);
-				toBePartneredMales.setFilter(new GenderCSfilter(Gender.Male));
-				toBePartneredFemales.setFilter(new GenderCSfilter(Gender.Female));
-				cohabitationDesireByGender.addSeries("Males", new Weighted_SumArrayFunction.Integer(toBePartneredMales), null, colorArrayList.get(0), false);
-				cohabitationDesireByGender.addSeries("Females", new Weighted_SumArrayFunction.Integer(toBePartneredFemales), null, colorArrayList.get(1), false);
-				cohabitationDesireByGender.setName("Individuals looking for partner");
-				updateChartSet.add(cohabitationDesireByGender);
-				tabSet.add(cohabitationDesireByGender);
-			}
-		    
-			MaleAgeGroupCSfilter males18_64Filter = new MaleAgeGroupCSfilter(18, 64);
-			FemaleAgeGroupCSfilter females18_64Filter = new FemaleAgeGroupCSfilter(18, 64);
+                plot.setName("Cohabitation status");
+                updateChartSet.add(plot);
+                tabSet.add(plot);
+            }
 
-		    //HEALTH CHARTS
-			
-		    //Male/Female health by age groups
-		    if(healthByAge) {
-				Set<JInternalFrame> disabledAgePlots = new LinkedHashSet<>();
+            // Number of males and females who want to cohabit
+            if (householdComposition) {
+                var plot = new TimeSeriesSimulationPlotter("Individuals looking for partner, by gender", "");
+                var males = new FilteredCollection<>(model::getPersons, Filters.male());
+                var females = new FilteredCollection<>(model::getPersons, Filters.female());
+                var malesCs = new WeightedCrossSection<>(males, p -> p.isToBePartnered() ? 1 : 0, Person::getWeight);
+                var femalesCs = new WeightedCrossSection<>(females, p -> p.isToBePartnered() ? 1 : 0, Person::getWeight);
+                var malesStats = WeightedStats.supplier(malesCs);
+                var femalesStats = WeightedStats.supplier(femalesCs);
 
-				MaleAgeGroupCSfilter maleAgeFilterDisabled = new MaleAgeGroupCSfilter(16, 100);
-				FemaleAgeGroupCSfilter femaleAgeFilterDisabled = new FemaleAgeGroupCSfilter(16, 100);
-				Weighted_CrossSection.Integer maleCSDisabled = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getBadHealth", true);
-				maleCSDisabled.setFilter(maleAgeFilterDisabled);
-				Weighted_CrossSection.Integer femaleCSDisabled = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getBadHealth", true);
-				femaleCSDisabled.setFilter(femaleAgeFilterDisabled);
+                plot.addSource("Males", () -> malesStats.get().sum(), colorArrayList.get(0), false);
+                plot.addSource("Females", () -> femalesStats.get().sum(), colorArrayList.get(1), false);
+                plot.setName("Individuals looking for partner");
+                updateChartSet.add(plot);
+                tabSet.add(plot);
+            }
 
-				TimeSeriesSimulationPlotter disabledAgePlotter = new TimeSeriesSimulationPlotter("Disability rate", "");
-				disabledAgePlotter.addSeries("males", new Weighted_MeanArrayFunction(maleCSDisabled), null, colorArrayList.get(0), false);
-				disabledAgePlotter.addSeries("females", new Weighted_MeanArrayFunction(femaleCSDisabled), null, colorArrayList.get(1), false);
-				disabledAgePlotter.addSeries("Validation males", validator, Validator.DoublesVariables.valueOf("disabledMale"), colorArrayList.get(0), true);
-				disabledAgePlotter.addSeries("Validation females", validator, Validator.DoublesVariables.valueOf("disabledFemale"), colorArrayList.get(1), true);
+            // health charts
 
-				updateChartSet.add(disabledAgePlotter);
-				disabledAgePlots.add(disabledAgePlotter);
-				//		}
+            // Male/Female health by age groups
+            if (healthByAge) {
+                var disabledAgePlots = new LinkedHashSet<JInternalFrame>();
+                var inAgeRange = new FilteredCollection<>(model::getPersons, Filters.ageRange(16, 100))
+                        .oncePerSimTime(engine);
+                var malesDisabled = new FilteredCollection<>(inAgeRange, Filters.male());
+                var femalesDisabled = new FilteredCollection<>(inAgeRange, Filters.female());
+                var malesCs = new WeightedCrossSection<>(malesDisabled, Person::getBadHealth, Person::getWeight);
+                var femalesCs = new WeightedCrossSection<>(femalesDisabled, Person::getBadHealth, Person::getWeight);
+                var malesStats = WeightedStats.supplier(malesCs);
+                var femalesStats = WeightedStats.supplier(femalesCs);
 
+                var plot = new TimeSeriesSimulationPlotter("Disability rate", "");
+                plot.addSource("males", () -> malesStats.get().mean(), colorArrayList.get(0), false);
+                plot.addSource("females", () -> femalesStats.get().mean(), colorArrayList.get(1), false);
+                plot.addSource("Validation males",
+                        () -> Parameters.validationDisabled(model.getYear(), Gender.Male),
+                        colorArrayList.get(0), true);
+                plot.addSource("Validation females",
+                        () -> Parameters.validationDisabled(model.getYear(), Gender.Female),
+                        colorArrayList.get(1), true);
 
-				tabSet.add(createScrollPaneFromPlots(disabledAgePlots, "Disability: gender", 2));
+                updateChartSet.add(plot);
+                disabledAgePlots.add(plot);
+                tabSet.add(createScrollPaneFromPlots(disabledAgePlots, "Disability: gender", 2));
 
                 ageGenderPlots("Health score", this.healthAgeRanges, Person::getHealthSelfRatedValue, AgeRange::healthValidation);
 
@@ -864,30 +868,33 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
                 ageGenderPlots("Life satisfaction score", this.decades, Person::getDemLifeSatScore0to10, AgeRange::lifeSatValidation);
                 ageGenderPlots("Mental health MCS score", this.decades, Person::getHealthMentalMcs, AgeRange::mcsValidation);
                 ageGenderPlots("Physical health PCS score", this.decades, Person::getHealthPhysicalPcs, AgeRange::pcsValidation);
-		    }
-		    
-		    
-		    //EMPLOYMENT CHARTS
-		    if(employmentOfAdults) {
-//				MaleAgeGroupCSfilter males18_64Filter = new MaleAgeGroupCSfilter(18, 64);
-				FlexibleInLabourSupplyByAgeAndGenderFilter maleAgeFilter = new FlexibleInLabourSupplyByAgeAndGenderFilter(18, 64, Gender.Male);
-				Weighted_CrossSection.Integer males18_64CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
-				males18_64CS.setFilter(males18_64Filter);
-				
-				FlexibleInLabourSupplyByAgeAndGenderFilter femaleAgeFilter = new FlexibleInLabourSupplyByAgeAndGenderFilter(18, 64, Gender.Female);
-				Weighted_CrossSection.Integer females18_64CS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
-				females18_64CS.setFilter(females18_64Filter);
+            }
 
-				TimeSeriesSimulationPlotter emplPlotter = new TimeSeriesSimulationPlotter("Employment rate (18 - 64)", "");
-			    emplPlotter.addSeries("males", new Weighted_MeanArrayFunction(males18_64CS), null, colorArrayList.get(0), false);
-			    emplPlotter.addSeries("females", new Weighted_MeanArrayFunction(females18_64CS), null, colorArrayList.get(1), false);
-			    emplPlotter.addSeries("Validation males", validator, Validator.DoublesVariables.employmentMale, colorArrayList.get(0), true);
-				emplPlotter.addSeries("Validation females", validator, Validator.DoublesVariables.employmentFemale, colorArrayList.get(1), true);
+            // employment charts
+            if (employmentOfAdults) {
+                var inAgeRange = new FilteredCollection<>(model::getPersons, Filters.ageRange(18, 64))
+                        .oncePerSimTime(engine);
+                var males = new FilteredCollection<>(inAgeRange, Filters.male());
+                var females = new FilteredCollection<>(inAgeRange, Filters.female());
+                var malesCs = new WeightedCrossSection<>(males, Person::getEmployed, Person::getWeight);
+                var femalesCs = new WeightedCrossSection<>(females, Person::getEmployed, Person::getWeight);
+                var malesStats = WeightedStats.supplier(malesCs);
+                var femalesStats = WeightedStats.supplier(femalesCs);
 
-			    emplPlotter.setName("Employment");
-				updateChartSet.add(emplPlotter);			//Add to set to be updated in buildSchedule method
-				tabSet.add(emplPlotter);
-		    }
+                var plot = new TimeSeriesSimulationPlotter("Employment rate (18 - 64)", "");
+                plot.addSource("males", () -> malesStats.get().mean(), colorArrayList.get(0), false);
+                plot.addSource("females", () -> femalesStats.get().mean(), colorArrayList.get(1), false);
+                plot.addSource("Validation males",
+                        () -> Parameters.validationEmployment(model.getYear(), Gender.Male),
+                        colorArrayList.get(0), true);
+                plot.addSource("Validation females",
+                        () -> Parameters.validationEmployment(model.getYear(), Gender.Female),
+                        colorArrayList.get(1), true);
+
+                plot.setName("Employment");
+                updateChartSet.add(plot);
+                tabSet.add(plot);
+            }
 
             // Male/Female employment rates by age groups
             if(employmentByAge) {
@@ -929,35 +936,43 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
                 tabSet.add(createScrollPaneFromPlots(emplAgeMaternityPlots, "Employment (female): age/maternity", 2));
             }
 
-		    //Employment by region
-		    if(employmentByRegion) {
-			    Set<JInternalFrame> emplGenderRegionPlots = new LinkedHashSet<JInternalFrame>();
-			    TimeSeriesSimulationPlotter emplMaleRegionPlotter = new TimeSeriesSimulationPlotter("Male employment rate by region\n Age 18 - 64", "");
-			    TimeSeriesSimulationPlotter emplFemaleRegionPlotter = new TimeSeriesSimulationPlotter("Female employment rate by region\n Age 18 - 64", "");
-			    int colorCounter = 0;
-			    for(Region region: Parameters.getCountryRegions()) {
-//					MaleRegionCSfilter maleRegionFilter = new MaleRegionCSfilter(region);
-					MaleRegionAgeCSfilter maleRegionFilter = new MaleRegionAgeCSfilter(region, 18, 64);
-					Weighted_CrossSection.Integer maleRegionCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
-					maleRegionCS.setFilter(maleRegionFilter);
-					emplMaleRegionPlotter.addSeries(region.getName(), new Weighted_MeanArrayFunction(maleRegionCS), null, colorArrayList.get(colorCounter), false);
-					emplMaleRegionPlotter.addSeries("Validation " + region.getName(), validator, Validator.DoublesVariables.valueOf("employed_male_"+region), colorArrayList.get(colorCounter), true);
-					
-//					FemaleRegionCSfilter femaleRegionFilter = new FemaleRegionCSfilter(region);
-					FemaleRegionAgeCSfilter femaleRegionFilter = new FemaleRegionAgeCSfilter(region, 18, 64);
-					Weighted_CrossSection.Integer femaleRegionCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
-					femaleRegionCS.setFilter(femaleRegionFilter);
-					emplFemaleRegionPlotter.addSeries(region.getName(), new Weighted_MeanArrayFunction(femaleRegionCS), null, colorArrayList.get(colorCounter), false);
-					emplFemaleRegionPlotter.addSeries("Validation " + region.getName(), validator, Validator.DoublesVariables.valueOf("employed_female_"+region), colorArrayList.get(colorCounter), true);
-					colorCounter++;
-			    }		    		    
-				updateChartSet.add(emplMaleRegionPlotter);			//Add to set to be updated in buildSchedule method		    
-				updateChartSet.add(emplFemaleRegionPlotter);			//Add to set to be updated in buildSchedule method
-				emplGenderRegionPlots.add(emplFemaleRegionPlotter);
-				emplGenderRegionPlots.add(emplMaleRegionPlotter);
-				tabSet.add(createScrollPaneFromPlots(emplGenderRegionPlots, "Employment: gender/region", 2));
-		    }
-		    
+            // Employment by region
+            if (employmentByRegion) {
+                var inAgeRange = new FilteredCollection<>(model::getPersons, Filters.ageRange(18, 64))
+                        .oncePerSimTime(engine);
+                var emplGenderRegionPlots = new LinkedHashSet<JInternalFrame>();
+                var malePlot = new TimeSeriesSimulationPlotter("Male employment rate by region\n Age 18 - 64", "");
+                var femalePlot = new TimeSeriesSimulationPlotter("Female employment rate by region\n Age 18 - 64", "");
+                int colorCounter = 0;
+                for (var region : Parameters.getCountryRegions()) {
+                    var inRegion = new FilteredCollection<>(inAgeRange, Filters.region(region))
+                            .oncePerSimTime(engine);
+                    var malesInRegion = new FilteredCollection<>(inRegion, Filters.male());
+                    var femalesInRegion = new FilteredCollection<>(inRegion, Filters.female());
+                    var malesCs = new WeightedCrossSection<>(malesInRegion, Person::getEmployed, Person::getWeight);
+                    var femalesCs = new WeightedCrossSection<>(femalesInRegion, Person::getEmployed, Person::getWeight);
+                    var malesStats = WeightedStats.supplier(malesCs);
+                    var femalesStats = WeightedStats.supplier(femalesCs);
+
+                    malePlot.addSource(region.getName(), () -> malesStats.get().mean(),
+                            colorArrayList.get(colorCounter), false);
+                    malePlot.addSource("Validation " + region.getName(),
+                            () -> Parameters.validationEmployment(model.getYear(), Gender.Male, region),
+                            colorArrayList.get(colorCounter), true);
+
+                    femalePlot.addSource(region.getName(), () -> femalesStats.get().mean(),
+                            colorArrayList.get(colorCounter), false);
+                    femalePlot.addSource("Validation " + region.getName(),
+                            () -> Parameters.validationEmployment(model.getYear(), Gender.Female, region),
+                            colorArrayList.get(colorCounter), true);
+                }
+                updateChartSet.add(malePlot);
+                updateChartSet.add(femalePlot);
+                emplGenderRegionPlots.add(malePlot);
+                emplGenderRegionPlots.add(femalePlot);
+                tabSet.add(createScrollPaneFromPlots(emplGenderRegionPlots, "Employment: gender/region", 2));
+            }
+
 		    //LABOUR SUPPLY CHART
 		    if(labourSupply) {
 				TimeSeriesSimulationPlotter supplyPlotter = new TimeSeriesSimulationPlotter("Labour supply by education", "Yearly hours worked");		//'yo' means "years old"
