@@ -530,16 +530,19 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
                 tabSet.add(plot);
             }
 
-			//HOMEOWNERSHIP STATUS
-			if (homeownershipStatus) {
-				Weighted_CrossSection.Double homeownersBUsCS = new Weighted_CrossSection.Double(model.getBenefitUnits(), BenefitUnit.Regressors.Homeownership_D);
-				TimeSeriesSimulationPlotter homeownershipStatusPlotter = new TimeSeriesSimulationPlotter("Share of benefit units owning homes", "");
-				homeownershipStatusPlotter.addSeries("Homeowners", new Weighted_MeanArrayFunction(homeownersBUsCS), null, colorArrayList.get(0), false);
-				homeownershipStatusPlotter.addSeries("Homeowners validation", validator, Validator.DoublesVariables.homeownership_BenefitUnit, colorArrayList.get(0), true);
-				homeownershipStatusPlotter.setName("Homeownership status");
-				updateChartSet.add(homeownershipStatusPlotter);
-				tabSet.add(homeownershipStatusPlotter);
-			}
+            // home ownership status
+            if (homeownershipStatus) {
+                var homeOwnerCs = new WeightedCrossSection<>(model::getBenefitUnits,
+                        bu -> bu.isHousingOwned() ? 1 : 0, BenefitUnit::getWeight);
+                var homeOwnerStats = WeightedStats.supplier(homeOwnerCs);
+                var plot = new TimeSeriesSimulationPlotter("Share of benefit units owning homes", "");
+                plot.addSource("Homeowners", () -> homeOwnerStats.get().mean(), colorArrayList.get(0), false);
+                plot.addSource("Homeowners validation",
+                        () -> Parameters.validationHomeOwnership(model.getYear()), colorArrayList.get(0), true);
+                plot.setName("Homeownership status");
+                updateChartSet.add(plot);
+                tabSet.add(plot);
+            }
 
             // Student enrollment charts
             if (studentsByAge) {
@@ -593,58 +596,69 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
                 tabSet.add(plotter);
             }
 
-			if(studentsByRegion && showAdditionalCharts) {
-			    //Student chart by Region 
-			    TimeSeriesSimulationPlotter studentRegionPlotter = new TimeSeriesSimulationPlotter("Proportion of students by region", "");
-			    int colorCounter = 0;
-			    for(Region region: Parameters.getCountryRegions()) {
-					RegionCSfilter regionFilter = new RegionCSfilter(region);
-					Weighted_CrossSection.Integer regionCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getStudent", true);
-					regionCS.setFilter(regionFilter);
-			    	studentRegionPlotter.addSeries(region.getName(), new Weighted_MeanArrayFunction(regionCS), null, colorArrayList.get(colorCounter), false);		//'yo' means "years old"
-					if (showValidationStatistics) {
-						studentRegionPlotter.addSeries("Validation "+region.getName(), validator, Validator.DoublesVariables.valueOf("studentsByRegion_"+region), colorArrayList.get(colorCounter), true);
-					}
-					colorCounter++;
-			    }		    
-			    studentRegionPlotter.setName("Students by region");
-			    updateChartSet.add(studentRegionPlotter);			//Add to set to be updated in buildSchedule method
-			    tabSet.add(studentRegionPlotter);
+            if (studentsByRegion && showAdditionalCharts) {
+                // Student chart by Region
+                var plot = new TimeSeriesSimulationPlotter("Proportion of students by region", "");
+                int colorCounter = 0;
+                for(var region : Parameters.getCountryRegions()) {
+                    var inRegion = new FilteredCollection<>(model::getPersons, Filters.region(region));
+                    var regionCs = new WeightedCrossSection<>(inRegion, Person::getStudent, Person::getWeight);
+                    var stats = WeightedStats.supplier(regionCs);
+                    plot.addSource(region.getName(), () -> stats.get().mean(), colorArrayList.get(colorCounter), false);
+                    if (showValidationStatistics) {
+                        plot.addSource("Validation " + region.getName(),
+                                () -> Parameters.validationStudents(model.getYear(), region),
+                                colorArrayList.get(colorCounter), true);
+                    }
+                    colorCounter++;
+                }
+                plot.setName("Students by region");
+                updateChartSet.add(plot);
+                tabSet.add(plot);
+            }
 
+            // EDUCATION LEVEL CHARTS
 
-			}
-			
-			//EDUCATION LEVEL CHARTS
-		    
-		    //Education levels for all adults (18 years old and over)
-			if(educationOfAdults) {
-				ValidEducationAgeGroupCSfilter over17yoFilter = new ValidEducationAgeGroupCSfilter(18,100);		//So we exclude children
-				Weighted_CrossSection.Integer lowEducationAdultCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getLowEducation", true);
-				lowEducationAdultCS.setFilter(over17yoFilter);
-				Weighted_CrossSection.Integer midEducationAdultCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getMidEducation", true);
-				midEducationAdultCS.setFilter(over17yoFilter);
-				Weighted_CrossSection.Integer highEducationAdultCS = new Weighted_CrossSection.Integer(model.getPersons(), Person.class, "getHighEducation", true);
-				highEducationAdultCS.setFilter(over17yoFilter);
-			    
-				TimeSeriesSimulationPlotter eduPlotter = new TimeSeriesSimulationPlotter("Education level of over-17 yo's \n(excluding students)", "");		//'yo' means "years old"
-			    eduPlotter.addSeries("Low", new Weighted_MeanArrayFunction(lowEducationAdultCS), null, colorArrayList.get(0), false);
-			    eduPlotter.addSeries("Medium", new Weighted_MeanArrayFunction(midEducationAdultCS), null, colorArrayList.get(1), false);
-			    eduPlotter.addSeries("High", new Weighted_MeanArrayFunction(highEducationAdultCS), null, colorArrayList.get(2), false);
-			    eduPlotter.setName("Education");
-			    updateChartSet.add(eduPlotter);			//Add to set to be updated in buildSchedule method
-			    tabSet.add(eduPlotter);
+            // Education levels for all adults (18 years old and over)
+            if (educationOfAdults) {
+                // FIXME: parameterise with EducationLevel
+                var filter = Filters.ageRange(18, 100).and(Filters.employment(Les_c4.Student).negate());
+                var filtered = new FilteredCollection<>(model::getPersons, filter).oncePerSimTime(engine);
 
-			    if (showValidationStatistics) {
-			    	eduPlotter.addSeries("Validation Low", validator, Validator.DoublesVariables.educationLevelLow, colorArrayList.get(0), true);
-					eduPlotter.addSeries("Validation Medium", validator, Validator.DoublesVariables.educationLevelMedium, colorArrayList.get(1), true);
-					eduPlotter.addSeries("Validation High", validator, Validator.DoublesVariables.educationLevelHigh, colorArrayList.get(2), true);
-				}
-			}
-			
+                var lowEduCs = new WeightedCrossSection<>(filtered, Person::getLowEducation, Person::getWeight);
+                var midEduCs = new WeightedCrossSection<>(filtered, Person::getMidEducation, Person::getWeight);
+                var highEduCs = new WeightedCrossSection<>(filtered, Person::getHighEducation, Person::getWeight);
+
+                var meanLow = OnceUntil.timeChanges(() -> new WeightedStats(lowEduCs.get()).mean(), engine);
+                var meanMid = OnceUntil.timeChanges(() -> new WeightedStats(midEduCs.get()).mean(), engine);
+                var meanHigh = OnceUntil.timeChanges(() -> new WeightedStats(highEduCs.get()).mean(), engine);
+
+                var plot = new TimeSeriesSimulationPlotter("Education level of over-17 yo's \n(excluding students)", "");
+                plot.addSource("Low", meanLow, colorArrayList.get(0), false);
+                plot.addSource("Medium", meanMid, colorArrayList.get(1), false);
+                plot.addSource("High", meanHigh, colorArrayList.get(2), false);
+                plot.setName("Education");
+                updateChartSet.add(plot);
+                tabSet.add(plot);
+
+                if (showValidationStatistics) {
+                    plot.addSource("Validation Low",
+                            () -> Parameters.validationEduc(model.getYear(), EducationLevel.Low),
+                            colorArrayList.get(0), true);
+                    plot.addSource("Validation Medium",
+                            () -> Parameters.validationEduc(model.getYear(), EducationLevel.Medium),
+                            colorArrayList.get(1), true);
+                    plot.addSource("Validation High",
+                            () -> Parameters.validationEduc(model.getYear(), EducationLevel.High),
+                            colorArrayList.get(2), true);
+                }
+            }
+
             // Education levels by age groups
             if (educationByAge && showAdditionalCharts) {
                 var plots = new LinkedHashSet<JInternalFrame>();
                 for (var ar : this.decades) {
+                    // FIXME: parameterise with EducationLevel
                     var filter = ar.and(Filters.employment(Les_c4.Student).negate());
                     var filtered = new FilteredCollection<>(model::getPersons, filter).oncePerSimTime(engine);
 
@@ -668,7 +682,7 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
                         Supplier<Double> validHigh = () -> ar.eduValidation(this.model.getYear(), EducationLevel.High);
                         plotter.addSource("Validation Low", validLow, colorArrayList.get(0), true);
                         plotter.addSource("Validation Medium", validMid, colorArrayList.get(1), true);
-                        plotter.addSource("Validation High", validMid, colorArrayList.get(2), true);
+                        plotter.addSource("Validation High", validHigh, colorArrayList.get(2), true);
                     }
 
                     updateChartSet.add(plotter);
