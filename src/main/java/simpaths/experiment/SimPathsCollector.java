@@ -25,7 +25,6 @@ import microsim.FilteredCollection;
 // import JAS-mine packages
 import microsim.annotation.GUIparameter;
 import microsim.data.DataExport;
-import microsim.dev.statistics.AccumulatorStats;
 import microsim.dev.statistics.CrossSection;
 import microsim.dev.statistics.Stats;
 import microsim.engine.AbstractSimulationCollectorManager;
@@ -116,9 +115,9 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
     private double ageBandAggregatesTime = Double.NaN;
 
-    private GiniPersonalGrossEarnings giniPersonalGrossEarnings;
+    protected GiniPersonalGrossEarnings giniPersonalGrossEarnings;
 
-    private GiniEquivalisedHouseholdDisposableIncome giniEquivalisedHouseholdDisposableIncome;
+    protected GiniEquivalisedHouseholdDisposableIncome giniEquivalisedHouseholdDisposableIncome;
 
     private Ydses_c5 yHhQuintilesMonthC5;
 
@@ -143,16 +142,6 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
     private DataExport exportHealthStatistics;
 
     private DataExport exportWellbeingByGender;
-
-    protected AccumulatorStats fGiniPersonalGrossEarningsNational;
-
-    protected Map<Region, AccumulatorStats> fGiniPersonalGrossEarningsRegionalMap;
-
-    protected AccumulatorStats fGiniEquivalisedHouseholdDisposableIncomeNational;
-
-    protected Map<Region, AccumulatorStats> fGiniEquivalisedHouseholdDisposableIncomeRegionalMap;
-
-
 
     /**
      *
@@ -315,22 +304,8 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
             OutputReadme.write(this, model);
 
         if (calculateGiniCoefficients) {
-            var engine = model.getEngine();
             giniPersonalGrossEarnings = new GiniPersonalGrossEarnings();
-            fGiniPersonalGrossEarningsNational = new AccumulatorStats(giniPersonalGrossEarnings::national, engine::hookStepEnd);
-            fGiniPersonalGrossEarningsRegionalMap = new LinkedHashMap<>();
-            for(Region region: Parameters.getCountryRegions()) {
-                var fGiniPersonalGrossEarningsRegion = new AccumulatorStats(() -> giniPersonalGrossEarnings.inRegion(region), engine::hookStepEnd);
-                fGiniPersonalGrossEarningsRegionalMap.put(region, fGiniPersonalGrossEarningsRegion);
-            }
-
             giniEquivalisedHouseholdDisposableIncome = new GiniEquivalisedHouseholdDisposableIncome();
-            fGiniEquivalisedHouseholdDisposableIncomeNational = new AccumulatorStats(giniEquivalisedHouseholdDisposableIncome::national, engine::hookStepEnd);
-            fGiniEquivalisedHouseholdDisposableIncomeRegionalMap = new LinkedHashMap<>();
-            for(Region region: Parameters.getCountryRegions()) {
-                var fGiniEquivalisedHouseholdDisposableIncomeRegion = new AccumulatorStats(() -> giniEquivalisedHouseholdDisposableIncome.inRegion(region), engine::hookStepEnd);
-                fGiniEquivalisedHouseholdDisposableIncomeRegionalMap.put(region, fGiniEquivalisedHouseholdDisposableIncomeRegion);
-            }
         }
 
         yHhQuintilesMonthC5 = new Ydses_c5();
@@ -492,7 +467,7 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
     }
 
 
-    private class GiniPersonalGrossEarnings {
+    public class GiniPersonalGrossEarnings {
         //I calculate that the Gini coefficient for household-weights w_i and variables x_i:
         //	G = [ sum_i sum_j w_i * w_j * abs( x_i - x_j) ] / [ 2 * (sum_i w_i) * (sum_j w_j * x_j) ]
         //Note in this particular case, the x_i are the personal (individual) gross income (potential earnings * labour supply)
@@ -504,7 +479,7 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
         private double giniWeightedPersonalGrossEarningsNational;
 
         //Update gini coefficient of personal gross earnings
-        public void update() {
+        private void update() {
 
             //Note that weighted means individual person weighted measures
             double weightedAbsDiffPersonalGrossEarningsNational = 0.;	//Sum of absolute difference between two person's weighted gross earnings (personal weight * potential earnings * labour supply)
@@ -591,7 +566,7 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
     }
 
 
-    private class GiniEquivalisedHouseholdDisposableIncome {
+    public class GiniEquivalisedHouseholdDisposableIncome {
 
         //I calculate that the Gini coefficient for household-weights w_i and variables x_i:
         //	G = [ sum_i sum_j w_i * w_j * abs( x_i - x_j) ] / [ 2 * (sum_i w_i) * (sum_j w_j * x_j) ]
@@ -604,7 +579,7 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
         private double giniWeightedEquivalisedHouseholdDisposableIncomeNational;
 
         //Update gini coefficient of household disposable income
-        public void update() {
+        private void update() {
 
             //Note that weighted means household weighted measures
             double weightedAbsDiffEquivalisedIncomeNational = 0.;	//Sum of absolute difference between two household's weighted equivalised income (household weight * equivalised weight * household disposable income)
