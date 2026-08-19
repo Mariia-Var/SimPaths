@@ -1679,6 +1679,56 @@ keep if demAge >= 16
 keep if valid_careProvideFlag == 1	
  
 * Compute mean 
+collapse (mean) valid_careHrsProvide [aw = dwt], by(year)
+
+save "$dir_data/temp_valid_stats.dta", replace
+
+* Prepare simulated data 
+use run year idBu sim_careHrsProvidedWeek sim_careProvideFlag demAge using ///
+	"$dir_data/simulation_sample.dta", clear
+	
+keep if demAge >= 16
+keep if sim_careProvideFlag == 1		
+	
+* Compute mean	
+collapse (mean) sim_careHrsProvidedWeek, by(year run)
+
+collapse (mean) sim_careHrsProvidedWeek ///
+		 (sd) sim_careHrsProvidedWeek_sd = sim_careHrsProvidedWeek, by(year)
+
+
+gen sim_careHrsProvide_h = sim_careHrsProvidedWeek + ///
+	1.96*sim_careHrsProvidedWeek_sd
+gen sim_careHrsProvide_l = sim_careHrsProvidedWeek - ///
+	1.96*sim_careHrsProvidedWeek_sd
+
+
+* Combine datasets 
+merge 1:1 year using "$dir_data/temp_valid_stats.dta"
+
+* Plot figure 
+make_care_plot, ///
+	var("careHrsProvide") ///
+	title("Hours of Care Provided") ///
+	subtitle("Amoung providers, Ages 16+") ///
+	saving("validation_${country}_care_hours_provided_ts_16plus_both") ///
+	note(`""Notes: Shaded area = mean +/- 1.96*SD across $max_n_runs simulation runs.""') 
+
+graph drop _all
+	
+
+********************************************************************************
+* 1.9.1: Mean values over time - Quantile means of hours of care provided
+********************************************************************************
+
+* Prepare validation data 
+use year idBu dwt valid_careProvideFlag valid_careHrsProvidedWeek demAge ///
+	using "$dir_data/ukhls_validation_sample.dta", clear
+	
+keep if demAge >= 16
+keep if valid_careProvideFlag == 1	
+ 
+* Compute mean 
 collapse 	(p25) valid_p25 = valid_careHrsProvidedWeek ///
 			(p50) valid_p50 = valid_careHrsProvidedWeek	///
 			(p75) valid_p75 = valid_careHrsProvidedWeek [aw = dwt], by(year)
@@ -1748,7 +1798,7 @@ graph drop _all
 
 
 ********************************************************************************
-* 1.9.1: Mean values over time - Quantile means of hours of care provided, by 
+* 1.9.2: Mean values over time - Quantile means of hours of care provided, by 
 *			gender
 ********************************************************************************
 
@@ -1758,7 +1808,7 @@ graph drop _all
 * 			receive formal care 
 ********************************************************************************
 
-* Load validaiton data
+* Load validation data
 use year idBu dwt valid_careFormalX valid_careHrsFormal demAge using ///
 	"$dir_data/ukhls_validation_sample.dta", clear
 
