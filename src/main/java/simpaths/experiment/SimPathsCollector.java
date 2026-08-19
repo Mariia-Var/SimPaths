@@ -33,7 +33,6 @@ import microsim.engine.SimulationEngine;
 import microsim.engine.SimulationManager;
 import microsim.event.EventListener;
 import microsim.event.SingleTargetEvent;
-import microsim.statistics.IDoubleSource;
 // import LABOURsim packages
 import simpaths.data.Parameters;
 import simpaths.data.statistics.AlignmentStatistics;
@@ -320,18 +319,18 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
         if (calculateGiniCoefficients) {
             var engine = model.getEngine();
             giniPersonalGrossEarnings = new GiniPersonalGrossEarnings();
-            fGiniPersonalGrossEarningsNational = new AccumulatorStats(giniPersonalGrossEarnings::getGiniPersonalGrossEarningsNational, engine::hookStepEnd);
+            fGiniPersonalGrossEarningsNational = new AccumulatorStats(giniPersonalGrossEarnings::national, engine::hookStepEnd);
             fGiniPersonalGrossEarningsRegionalMap = new LinkedHashMap<>();
             for(Region region: Parameters.getCountryRegions()) {
-                var fGiniPersonalGrossEarningsRegion = new AccumulatorStats(() -> giniPersonalGrossEarnings.getDoubleValue(region), engine::hookStepEnd);
+                var fGiniPersonalGrossEarningsRegion = new AccumulatorStats(() -> giniPersonalGrossEarnings.inRegion(region), engine::hookStepEnd);
                 fGiniPersonalGrossEarningsRegionalMap.put(region, fGiniPersonalGrossEarningsRegion);
             }
 
             giniEquivalisedHouseholdDisposableIncome = new GiniEquivalisedHouseholdDisposableIncome();
-            fGiniEquivalisedHouseholdDisposableIncomeNational = new AccumulatorStats(giniEquivalisedHouseholdDisposableIncome::getGiniEquivalisedHouseholdDisposableIncomeNational, engine::hookStepEnd);
+            fGiniEquivalisedHouseholdDisposableIncomeNational = new AccumulatorStats(giniEquivalisedHouseholdDisposableIncome::national, engine::hookStepEnd);
             fGiniEquivalisedHouseholdDisposableIncomeRegionalMap = new LinkedHashMap<>();
             for(Region region: Parameters.getCountryRegions()) {
-                var fGiniEquivalisedHouseholdDisposableIncomeRegion = new AccumulatorStats(() -> giniEquivalisedHouseholdDisposableIncome.getDoubleValue(region), engine::hookStepEnd);
+                var fGiniEquivalisedHouseholdDisposableIncomeRegion = new AccumulatorStats(() -> giniEquivalisedHouseholdDisposableIncome.inRegion(region), engine::hookStepEnd);
                 fGiniEquivalisedHouseholdDisposableIncomeRegionalMap.put(region, fGiniEquivalisedHouseholdDisposableIncomeRegion);
             }
         }
@@ -495,7 +494,7 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
     }
 
 
-    private class GiniPersonalGrossEarnings implements IDoubleSource {
+    private class GiniPersonalGrossEarnings {
         //I calculate that the Gini coefficient for household-weights w_i and variables x_i:
         //	G = [ sum_i sum_j w_i * w_j * abs( x_i - x_j) ] / [ 2 * (sum_i w_i) * (sum_j w_j * x_j) ]
         //Note in this particular case, the x_i are the personal (individual) gross income (potential earnings * labour supply)
@@ -581,23 +580,20 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
         }
 
-        //Getter methods to pass values to functions
-
-        //For national level
-        public double getGiniPersonalGrossEarningsNational() {
+        /// Gini coefficient at the national level.
+        public double national() {
             return giniWeightedPersonalGrossEarningsNational;
         }
 
-        //For regional level
-        @Override
-        public double getDoubleValue(Enum<?> region) {
+        /// Gini coefficient in the specified [Region].
+        public double inRegion(Region region) {
             return giniWeightedPersonalGrossEarningsRegionalMap.get(region);
         }
 
     }
 
 
-    private class GiniEquivalisedHouseholdDisposableIncome implements IDoubleSource {
+    private class GiniEquivalisedHouseholdDisposableIncome {
 
         //I calculate that the Gini coefficient for household-weights w_i and variables x_i:
         //	G = [ sum_i sum_j w_i * w_j * abs( x_i - x_j) ] / [ 2 * (sum_i w_i) * (sum_j w_j * x_j) ]
@@ -684,16 +680,13 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
         }
 
-        //Getter methods to pass values to functions
-
-        //For national level
-        public double getGiniEquivalisedHouseholdDisposableIncomeNational() {
+        /// Gini coefficient at the national level.
+        public double national() {
             return giniWeightedEquivalisedHouseholdDisposableIncomeNational;
         }
 
-        //For regional level
-        @Override
-        public double getDoubleValue(Enum<?> region) {
+        /// Gini coefficient in the specified [Region].
+        public double inRegion(Region region) {
             return giniWeightedEquivalisedHouseholdDisposableIncomeRegionalMap.get(region);
         }
 
