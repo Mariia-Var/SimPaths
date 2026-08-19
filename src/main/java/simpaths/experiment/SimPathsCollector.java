@@ -93,7 +93,10 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
     @GUIparameter(description="Number of time-steps in between database dumps")
     private Double dataDumpTimePeriod = 1.;
 
-    private int ordering = Parameters.COLLECTOR_ORDERING;	//XXX: Move to Parameters?	//Schedule at the same time as the model and observer events, but with an order higher than model but less than observer, so will be fired after the model and before the observe have updated.
+    // Schedule at the same time as the model and observer events, but with an order
+    // higher than model but less than observer, so will be fired after the model
+    // and before the observe have updated.
+    private int ordering = Parameters.COLLECTOR_ORDERING;
 
     private SimPathsModel model;
 
@@ -181,11 +184,6 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
     }
 
 
-    /**
-     *
-     * XXX
-     *
-     */
     @Override
     public void onEvent(Enum<?> type) {
         switch ((Processes) type) {
