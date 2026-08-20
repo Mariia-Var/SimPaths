@@ -3132,8 +3132,16 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         return unionMatchingMethod;
     }
 
+    public void setUnionMatchingMethod(String value) {
+        this.unionMatchingMethod = (value == null || value.isBlank())
+                ? UnionMatchingMethod.ParametricNoRegion
+                : UnionMatchingMethod.valueOf(value);
+    }
+
     public void setUnionMatchingMethod(UnionMatchingMethod unionMatchingMethod) {
-        this.unionMatchingMethod = unionMatchingMethod;
+        this.unionMatchingMethod = unionMatchingMethod == null
+                ? UnionMatchingMethod.ParametricNoRegion
+                : unionMatchingMethod;
     }
 
     public boolean isAlignFertility() {
