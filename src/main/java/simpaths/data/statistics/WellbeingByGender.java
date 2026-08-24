@@ -125,6 +125,28 @@ public class WellbeingByGender {
         this.demSex = demSex;
     }
 
+    /**
+     *
+     * ENTITY ID FOR A GENDER GROUP
+     *
+     * Three rows are written per simulated year, one per gender group. The entity key is
+     * part of the database primary key alongside simulation time and run, so the groups
+     * need distinct ids to be persisted as separate records rather than overwriting
+     * one another.
+     *
+     * @param gender_s the gender group being reported
+     * @return the id identifying that group
+     *
+     */
+    private static long genderKeyId(String gender_s) {
+
+        if ("Male".equals(gender_s))
+            return 2L;
+        if ("Female".equals(gender_s))
+            return 3L;
+        return 1L;      // Total
+    }
+
     public void setHealthWbScore0to36Avg(double healthWbScore0to36Avg) {
         this.healthWbScore0to36Avg = healthWbScore0to36Avg;
     }
@@ -244,8 +266,9 @@ public class WellbeingByGender {
             ageGenderCSfilter = new AgeGenderCSfilter(25, 64, Gender.valueOf(gender_s));
         }
 
-        // set gender
+        // set gender, and key this record so the three gender groups stay distinct
         setGender(gender_s);
+        key = new PanelEntityKey(genderKeyId(gender_s));
 
         // dhm score
         CrossSection.Double personsDhm = new CrossSection.Double(model.getPersons(), Person.DoublesVariables.Dhm); // Get cross section of simulated individuals and their mental health using the IDoubleSource interface implemented by Person class.
