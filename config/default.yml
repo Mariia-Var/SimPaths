@@ -43,7 +43,7 @@ model_args:
   # --- Income security (S-Index) ---
   # The S-Index is an economic (in)security index computed from a rolling window of
   # equivalised consumption, discounted and weighted by a risk-aversion parameter.
-  # SIndex_p50 is reported in Statistics.csv each year.
+  # SIndex_p50 is reported in WealthIncomeStatistics.csv each year.
 #    sIndexTimeWindow: 5      # length of rolling window in years (default 5)
 #    sIndexAlpha: 2           # coefficient of relative risk aversion (higher = more sensitivity to drops)
 #    sIndexDelta: 0.98        # annual discount factor applied to past consumption observations

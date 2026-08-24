@@ -99,9 +99,13 @@ public class AgeBandAggregates {
         }
         for (int ii=0; ii<=2; ii++) {
 
-            if (popula[ii]>=0) {
-
+            // guard both denominators: an empty age band, or a band with no workers, would
+            // otherwise divide by zero and put NaN into the output
+            if (workFT[ii] + workPT[ii] > 0.0)
                 labInc[ii] /= (workFT[ii] + workPT[ii]);
+
+            if (popula[ii]>0) {
+
                 prMarr[ii] /= popula[ii];
                 avkids[ii] /= popula[ii];
                 health[ii] /= popula[ii];

@@ -878,13 +878,13 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
         return wealthIncomeStats;
     }
 
-    public void setStats(WealthIncomeStatistics wealthIncomeStats) {
+    public void setWealthIncomeStats(WealthIncomeStatistics wealthIncomeStats) {
         this.wealthIncomeStats = wealthIncomeStats;
     }
 
-    public DemographicStatistics getStats2() { return demographicStats; }
+    public DemographicStatistics getDemographicStats() { return demographicStats; }
 
-    public void setStats2(DemographicStatistics demographicStats) { this.demographicStats = demographicStats; }
+    public void setDemographicStats(DemographicStatistics demographicStats) { this.demographicStats = demographicStats; }
 
     public boolean isExportToDatabase() {
         return exportToDatabase;
