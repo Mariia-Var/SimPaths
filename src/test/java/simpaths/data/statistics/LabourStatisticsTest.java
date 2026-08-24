@@ -15,8 +15,8 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DisplayName("Calculating employment statistics")
-class EmploymentStatisticsTest {
+@DisplayName("Calculating labour statistics")
+class LabourStatisticsTest {
 
     private static List<Person> testPopulation;
 

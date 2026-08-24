@@ -3164,6 +3164,12 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
     public boolean isAlignInSchool() { return alignInSchool;    }
 
+    public boolean isAlignPopulation() { return alignPopulation; }
+
+    public boolean isAlignEducation() { return alignEducation; }
+
+    public boolean isEnableIntertemporalOptimisations() { return enableIntertemporalOptimisations; }
+
     public double getInSchoolAdjustment() {
         if (!alignInSchool) {
             return 0.0;

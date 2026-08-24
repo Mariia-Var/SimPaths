@@ -15,7 +15,7 @@ import simpaths.model.enums.Les_c4;
 import simpaths.model.Person;
 
 @Entity
-public class EmploymentStatistics {
+public class LabourStatistics {
 
     @Id
     private PanelEntityKey key = new PanelEntityKey(1L);
@@ -31,6 +31,25 @@ public class EmploymentStatistics {
 
     @Column(name = "PropUnemployed")
     private double labUnempShare;
+
+    //average labour status by age band
+    @Column(name = "work_fulltime_18_29")
+    private double labWorkFullTime18to29Share;
+
+    @Column(name = "work_fulltime_30_54")
+    private double labWorkFullTime30to54Share;
+
+    @Column(name = "work_fulltime_55_74")
+    private double labWorkFullTime55to74Share;
+
+    @Column(name = "work_parttime_18_29")
+    private double labWorkPartTime18to29Share;
+
+    @Column(name = "work_parttime_30_54")
+    private double labWorkPartTime30to54Share;
+
+    @Column(name = "work_parttime_55_74")
+    private double labWorkPartTime55to74Share;
 
 
     public double getEmpToNotEmp() {
@@ -65,7 +84,55 @@ public class EmploymentStatistics {
         labUnempShare = propUnemployed;
     }
 
-    public void update(SimPathsModel model) {
+    public double getWorkFulltime18to29() {
+        return labWorkFullTime18to29Share;
+    }
+
+    public void setWorkFulltime18to29(double labWorkFullTime18to29Share) {
+        this.labWorkFullTime18to29Share = labWorkFullTime18to29Share;
+    }
+
+    public double getWorkFulltime30to54() {
+        return labWorkFullTime30to54Share;
+    }
+
+    public void setWorkFulltime30to54(double labWorkFullTime30to54Share) {
+        this.labWorkFullTime30to54Share = labWorkFullTime30to54Share;
+    }
+
+    public double getWorkFulltime55to74() {
+        return labWorkFullTime55to74Share;
+    }
+
+    public void setWorkFulltime55to74(double labWorkFullTime55to74Share) {
+        this.labWorkFullTime55to74Share = labWorkFullTime55to74Share;
+    }
+
+    public double getWorkParttime18to29() {
+        return labWorkPartTime18to29Share;
+    }
+
+    public void setWorkParttime18to29(double labWorkPartTime18to29Share) {
+        this.labWorkPartTime18to29Share = labWorkPartTime18to29Share;
+    }
+
+    public double getWorkParttime30to54() {
+        return labWorkPartTime30to54Share;
+    }
+
+    public void setWorkParttime30to54(double labWorkPartTime30to54Share) {
+        this.labWorkPartTime30to54Share = labWorkPartTime30to54Share;
+    }
+
+    public double getWorkParttime55to74() {
+        return labWorkPartTime55to74Share;
+    }
+
+    public void setWorkParttime55to74(double labWorkPartTime55to74Share) {
+        this.labWorkPartTime55to74Share = labWorkPartTime55to74Share;
+    }
+
+    public void update(SimPathsModel model, AgeBandAggregates agg) {
 
         EmploymentHistoryFilter employmentHistoryEmployed = new EmploymentHistoryFilter(Les_c4.EmployedOrSelfEmployed);
         EmploymentHistoryFilter employmentHistoryUnemployed = new EmploymentHistoryFilter(Les_c4.NotEmployed);
@@ -104,6 +171,13 @@ public class EmploymentStatistics {
         isUnemployed.applyFunction();
         setPropUnemployed(isUnemployed.getDoubleValue(IDoubleSource.Variables.Default));
 
+        // labour status by age band
+        setWorkFulltime18to29(agg.workFT[0]);
+        setWorkFulltime30to54(agg.workFT[1]);
+        setWorkFulltime55to74(agg.workFT[2]);
 
+        setWorkParttime18to29(agg.workPT[0]);
+        setWorkParttime30to54(agg.workPT[1]);
+        setWorkParttime55to74(agg.workPT[2]);
     }
 }
