@@ -1919,14 +1919,14 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
     }
 
     public void updateIncomeQuintile() {
-        if (collector.getStats() != null) {
-            if (getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P20()) {
+        if (collector.getWealthIncomeStats() != null) {
+            if (getI_yNonBenHhGrossAsinh() <= collector.getWealthIncomeStats().getYHhQuintilesC5P20()) {
                 yHhQuintilesMonthC5 = Ydses_c5.Q1;
-            } else if (getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P40()) {
+            } else if (getI_yNonBenHhGrossAsinh() <= collector.getWealthIncomeStats().getYHhQuintilesC5P40()) {
                 yHhQuintilesMonthC5 = Ydses_c5.Q2;
-            } else if (getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P60()) {
+            } else if (getI_yNonBenHhGrossAsinh() <= collector.getWealthIncomeStats().getYHhQuintilesC5P60()) {
                 yHhQuintilesMonthC5 = Ydses_c5.Q3;
-            } else if (getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P80()) {
+            } else if (getI_yNonBenHhGrossAsinh() <= collector.getWealthIncomeStats().getYHhQuintilesC5P80()) {
                 yHhQuintilesMonthC5 = Ydses_c5.Q4;
             } else {
                 yHhQuintilesMonthC5 = Ydses_c5.Q5;
