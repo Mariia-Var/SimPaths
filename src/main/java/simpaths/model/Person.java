@@ -771,6 +771,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     public enum Processes {
         Aging,
         Cohabitation,
+        ConsiderLeavingHome,
         ConsiderMortality,
         ConsiderRetirement,
         Fertility,
@@ -823,6 +824,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             }
             case PartnershipDissolution -> {
                 partnershipDissolution();
+            }
+            case ConsiderLeavingHome -> {
+                considerLeavingHome();
             }
             case ConsiderMortality -> {
                 considerMortality();
@@ -1001,9 +1005,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         demAgeSq = demAge * demAge;
         if (demAge == Parameters.AGE_TO_BECOME_RESPONSIBLE) {
             setupNewBenefitUnit(true);
-            considerLeavingHome();
-        } else if (demAge > Parameters.AGE_TO_BECOME_RESPONSIBLE && Indicator.True.equals(demAdultChildFlag)) {
-            considerLeavingHome();
         }
         updateAgeGroup();   //Update ageGroup as person ages
      }
@@ -1029,23 +1030,35 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     //This process should be applied to those at the age to become responsible / leave home OR above if they have the adultChildFlag set to True (i.e. people can move out, but not move back in).
     private void considerLeavingHome() {
 
-        //For those who are moving out, evaluate whether they should have stayed with parents and if yes, set the adultchildflag to true
+        //Age eligibility: only those within the age range to leave the parental home are considered
+        if (demAge < Parameters.MIN_AGE_LEAVE_PH || demAge > Parameters.MAX_AGE_ADULT_CHILD) {
+            return;
+        }
+
+        //Above the age to leave home, only those still living with their parents are considered (people can move out, but not move back in)
+        if (demAge > Parameters.MIN_AGE_LEAVE_PH && !Indicator.True.equals(demAdultChildFlag)) {
+            return;
+        }
+
+        //Those in continuous education are not allowed to leave home, to match the filtering condition of the estimated equation
+        if (Indicator.True.equals(eduSpellFlag)) {
+            demAdultChildFlag = Indicator.True;
+            return;
+        }
+
+        //For those who are moving out, evaluate whether they should have stayed with parents and
+        // if no, set the adultchildflag to true
+        // if yes, set the adultchildflag to false and set up New Household
 
         double prob = Parameters.getRegLeaveHomeP1a().getProbability(this, Person.DoublesVariables.class);
         boolean toLeaveHome = (statInnovations.getDoubleDraw(21) < prob);
-        if (Les_c4.Student.equals(labC4)) {
+        if (!toLeaveHome) { //If at the age to leave home but regression outcome is negative, person has adultchildflag set to true (although they still set up a new benefitUnit in the simulation, it's treated differently in the labour supply)
 
-            demAdultChildFlag = Indicator.True; //Students not allowed to leave home to match filtering conditon
+            demAdultChildFlag = Indicator.True;
         } else {
 
-            if (!toLeaveHome) { //If at the age to leave home but regression outcome is negative, person has adultchildflag set to true (although they still set up a new benefitUnit in the simulation, it's treated differently in the labour supply)
-
-                demAdultChildFlag = Indicator.True;
-            } else {
-
-                demAdultChildFlag = Indicator.False;
-                setupNewHousehold(); //If person leaves home, they set up a new household
-            }
+            demAdultChildFlag = Indicator.False;
+            setupNewHousehold(); //If person leaves home, they set up a new household
         }
     }
 

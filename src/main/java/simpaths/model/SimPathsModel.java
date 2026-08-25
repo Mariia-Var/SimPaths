@@ -532,6 +532,9 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         // Align the level of education if required
         addEventToAllYears(Processes.EducationLevelAlignment);
 
+        // Check whether adult children leave the parental home - runs after education so that those in continuous education are excluded
+        yearlySchedule.addCollectionEvent(persons, Person.Processes.ConsiderLeavingHome);
+
         // Homeownership status
         yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.Homeownership);
 
