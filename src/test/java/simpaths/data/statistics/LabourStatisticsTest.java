@@ -1,15 +1,12 @@
 package simpaths.data.statistics;
 
-import microsim.statistics.CrossSection;
-import microsim.statistics.IDoubleSource;
-import microsim.statistics.functions.MeanArrayFunction;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import simpaths.data.filters.EmploymentHistoryFilter;
 import simpaths.model.Person;
 import simpaths.model.enums.Les_c4;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -25,6 +22,7 @@ class LabourStatisticsTest {
             Les_c4 les_c4
     ) {
         Person testPerson = new Person(true);
+        testPerson.setDemAge(30);
         testPerson.setLabC4L1(les_c4_lag1);
         testPerson.setLabC4(les_c4);
 
@@ -60,34 +58,18 @@ class LabourStatisticsTest {
     @Test
     @DisplayName("Proportion becoming unemployed")
     public void proportionEmpToNotEmp() {
-
-
-        // Entering unemployment prevalence
-        EmploymentHistoryFilter employmentHistoryEmployed = new EmploymentHistoryFilter(Les_c4.EmployedOrSelfEmployed);
-        CrossSection.Integer personsEmpToNotEmp = new CrossSection.Integer(testPopulation, Person.class, "getNonwork", true);
-        personsEmpToNotEmp.setFilter(employmentHistoryEmployed);
-
-
-        MeanArrayFunction isEmpToNotEmp = new MeanArrayFunction(personsEmpToNotEmp);
-        isEmpToNotEmp.applyFunction();
-        assertEquals(0.25, isEmpToNotEmp.getDoubleValue(IDoubleSource.Variables.Default));
-
+        var stats = new LabourStatistics();
+        var agg = AgeBandAggregates.computeWithSupplier(ArrayList::new);
+        stats.updateWithSupplier(() -> testPopulation, agg);
+        assertEquals(0.25, stats.getEmpToNotEmp());
     }
 
     @Test
     @DisplayName("Proportion becoming employed")
     public void proportionNotEmpToEmp() {
-
-        // Entering employment prevalence
-        EmploymentHistoryFilter employmentHistoryUnemployed = new EmploymentHistoryFilter(Les_c4.NotEmployed);
-        CrossSection.Integer personsNotEmpToEmp = new CrossSection.Integer(testPopulation, Person.class, "getEmployed", true);
-        personsNotEmpToEmp.setFilter(employmentHistoryUnemployed);
-
-        MeanArrayFunction isNotEmpToEmp = new MeanArrayFunction(personsNotEmpToEmp);
-        isNotEmpToEmp.applyFunction();
-        assertEquals(0.5, isNotEmpToEmp.getDoubleValue(IDoubleSource.Variables.Default));
-
-
+        var stats = new LabourStatistics();
+        var agg = AgeBandAggregates.computeWithSupplier(ArrayList::new);
+        stats.updateWithSupplier(() -> testPopulation, agg);
+        assertEquals(0.5, stats.getNotEmpToEmp());
     }
-
 }

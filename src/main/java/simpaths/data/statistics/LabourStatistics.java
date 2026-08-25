@@ -1,15 +1,16 @@
 package simpaths.data.statistics;
 
+import java.util.Collection;
+import java.util.function.Supplier;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Id;
 import jakarta.persistence.Entity;
-
+import microsim.FilteredCollection;
 import microsim.data.db.PanelEntityKey;
-import microsim.statistics.CrossSection;
-import microsim.statistics.IDoubleSource;
-import microsim.statistics.functions.MeanArrayFunction;
-import simpaths.data.filters.AgeGroupCSfilter;
-import simpaths.data.filters.EmploymentHistoryFilter;
+import microsim.dev.statistics.CrossSection;
+import microsim.dev.statistics.Stats;
+import simpaths.data.filters.Filters;
 import simpaths.model.SimPathsModel;
 import simpaths.model.enums.Les_c4;
 import simpaths.model.Person;
@@ -132,44 +133,34 @@ public class LabourStatistics {
         this.labWorkPartTime55to74Share = labWorkPartTime55to74Share;
     }
 
-    public void update(SimPathsModel model, AgeBandAggregates agg) {
-
-        EmploymentHistoryFilter employmentHistoryEmployed = new EmploymentHistoryFilter(Les_c4.EmployedOrSelfEmployed);
-        EmploymentHistoryFilter employmentHistoryUnemployed = new EmploymentHistoryFilter(Les_c4.NotEmployed);
-
+    /// Update the statistics with an arbitrary [Supplier].
+    /// This is intended for testing.
+    void updateWithSupplier(Supplier<Collection<Person>> supplier, AgeBandAggregates agg) {
+        var histEmployed = new FilteredCollection<>(supplier,
+                Filters.employmentHistory(Les_c4.EmployedOrSelfEmployed));
+        var histNotEmployed = new FilteredCollection<>(supplier,
+                Filters.employmentHistory(Les_c4.NotEmployed));
 
         // Entering employment transition rate
-        CrossSection.Integer personsNotEmpToEmp = new CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
-        personsNotEmpToEmp.setFilter(employmentHistoryUnemployed);
+        var personsNotEmpToEmp = new CrossSection<>(histNotEmployed, Person::getEmployed);
         // Entering not employed transition rate
-        CrossSection.Integer personsEmpToNotEmp = new CrossSection.Integer(model.getPersons(), Person.class, "getNonwork", true);
-        personsEmpToNotEmp.setFilter(employmentHistoryEmployed);
+        var personsEmpToNotEmp = new CrossSection<>(histEmployed, Person::getNonwork);
 
+        var isNotEmpToEmp = new Stats(personsNotEmpToEmp.get());
+        this.setNotEmpToEmp(isNotEmpToEmp.mean());
 
-        MeanArrayFunction isNotEmpToEmp = new MeanArrayFunction(personsNotEmpToEmp);
-        isNotEmpToEmp.applyFunction();
-        setNotEmpToEmp(isNotEmpToEmp.getDoubleValue(IDoubleSource.Variables.Default));
+        var isEmpToNotEmp = new Stats(personsEmpToNotEmp.get());
+        this.setEmpToNotEmp(isEmpToNotEmp.mean());
 
-        MeanArrayFunction isEmpToNotEmp = new MeanArrayFunction(personsEmpToNotEmp);
-        isEmpToNotEmp.applyFunction();
-        setEmpToNotEmp(isEmpToNotEmp.getDoubleValue(IDoubleSource.Variables.Default));
+        // Employment and non-employment, working age adults 16-64
+        var from16to64 = new FilteredCollection<>(supplier, Filters.ageRange(16, 64)).once();
+        var personsEmployed = new CrossSection<>(from16to64, Person::getEmployed);
+        var personsNotEmployed = new CrossSection<>(from16to64, Person::getNonwork);
 
-        // Employment and unemployment, working age adults 16-64
-        AgeGroupCSfilter ageGroupCSfilter = new AgeGroupCSfilter(16, 64);
-
-        CrossSection.Integer personsEmployed = new CrossSection.Integer(model.getPersons(), Person.class, "getEmployed", true);
-        CrossSection.Integer personsUnemployed = new CrossSection.Integer(model.getPersons(), Person.class, "getNonwork", true);
-
-        personsEmployed.setFilter(ageGroupCSfilter);
-        personsUnemployed.setFilter(ageGroupCSfilter);
-
-        MeanArrayFunction isEmployed = new MeanArrayFunction(personsEmployed);
-        isEmployed.applyFunction();
-        setPropEmployed(isEmployed.getDoubleValue(IDoubleSource.Variables.Default));
-
-        MeanArrayFunction isUnemployed = new MeanArrayFunction(personsUnemployed);
-        isUnemployed.applyFunction();
-        setPropUnemployed(isUnemployed.getDoubleValue(IDoubleSource.Variables.Default));
+        var isEmployed = new Stats(personsEmployed.get());
+        var isNotEmployed = new Stats(personsNotEmployed.get());
+        setPropEmployed(isEmployed.mean());
+        setPropUnemployed(isNotEmployed.mean());
 
         // labour status by age band
         setWorkFulltime18to29(agg.workFT[0]);
@@ -179,5 +170,9 @@ public class LabourStatistics {
         setWorkParttime18to29(agg.workPT[0]);
         setWorkParttime30to54(agg.workPT[1]);
         setWorkParttime55to74(agg.workPT[2]);
+    }
+
+    public void update(SimPathsModel model, AgeBandAggregates agg) {
+        this.updateWithSupplier(model::getPersons, agg);
     }
 }

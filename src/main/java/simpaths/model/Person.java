@@ -7,7 +7,6 @@ import microsim.engine.SimulationEngine;
 import microsim.event.EventListener;
 import microsim.statistics.IDoubleSource;
 import microsim.statistics.IIntSource;
-import microsim.statistics.Series;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.logging.log4j.LogManager;
@@ -17,7 +16,7 @@ import simpaths.data.ManagerRegressions;
 import simpaths.data.MultiValEvent;
 import simpaths.data.Parameters;
 import simpaths.data.RegressionName;
-import simpaths.data.filters.FertileFilter;
+import simpaths.data.filters.Filters;
 import simpaths.model.annotations.Lag;
 import simpaths.model.annotations.NullInitialised;
 import simpaths.model.annotations.UpdateManager;
@@ -162,9 +161,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 //	individual in the simulated population, in each simulated period.
     @Column(name="labWageHrly") private Double labWageFullTimeHrly;		//Is hourly rate.  Initialised with value: ils_earns / (4.34 * lhw), where lhw is the weekly hours a person worked in EUROMOD input data
     @Lag(field="labWageFullTimeHrly") @Column(name="labWageFullTimeHrlyL1") private Double labWageFullTimeHrlyL1; // Lag(1) of potentialHourlyEarnings
-    @Transient private Series.Double yDispEquivYear;
     @NullInitialised private Double xEquivYear;
-    @Transient private Series.Double xEquivYearL1;
     private Integer demPartnerNYear; //Number of years in partnership
     @Transient private Integer demPartnerNYearL1; //Lag(1) of number of years in partnership
     private Double yNonBenPersGrossMonth; // asinh of personal non-benefit income per month
@@ -300,8 +297,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         labHrsWorkWeek = getLabourSupplyWeekly().getHours(this);
         idHh = mother.getBenefitUnit().getHousehold().getId();
 //		setDeviationFromMeanRetirementAge();			//This would normally be done within initialisation, but the line above has been commented out for reasons given...
-        yDispEquivYear = new Series.Double(this, DoublesVariables.EquivalisedIncomeYearly);
-        xEquivYearL1 = new Series.Double(this, DoublesVariables.EquivalisedConsumptionYearly);
         xEquivYear = 0.;
         yLifeTime = 0.;
         demBornInSimFlag = true;
@@ -519,8 +514,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         yWageDesired = Objects.requireNonNullElseGet(originalPerson.yWageDesired, () -> sampleDifferentials[1]);
 
         demAdultChildFlag = originalPerson.demAdultChildFlag;
-        yDispEquivYear = new Series.Double(this, DoublesVariables.EquivalisedIncomeYearly);
-        xEquivYearL1 = new Series.Double(this, DoublesVariables.EquivalisedConsumptionYearly);
         xEquivYear = originalPerson.xEquivYear;
         demEthnC6 = originalPerson.demEthnC6;
         yBenReceivedFlag = originalPerson.yBenReceivedFlag;
@@ -923,7 +916,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     public void fertility(double probitAdjustment) {
 
         demGiveBirthFlag = false;
-        var filter = new FertileFilter<Person>();
+        var filter = Filters.fertile();
 
         if (filter.test(this)) {
 
@@ -2422,7 +2415,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             return (isToBePartnered())? 1 : 0;
 
         case isPsychologicallyDistressed:
-            return (healthPsyDstrss0to12 >= PSYCHOLOGICAL_DISTRESS_GHQ12_CASES_CUTOFF)? 1 : 0;
+            return this.isPsychologicallyDistressed();
 
         case isNeedSocialCare:
             return (Indicator.True.equals(careNeedFlag)) ? 1 : 0;
@@ -6916,6 +6909,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         this.healthPsyDstrss0to12 = dhm_ghq;
     }
 
+    public int isPsychologicallyDistressed() {
+        return (healthPsyDstrss0to12 >= PSYCHOLOGICAL_DISTRESS_GHQ12_CASES_CUTOFF) ? 1 : 0;
+    }
+
     public Ethnicity getDemEthnC6() {
         return demEthnC6;
     }
@@ -7204,28 +7201,12 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         this.idHh = idHh;
     }
 
-    public Series.Double getYDispEquivYear() {
-        return yDispEquivYear;
-    }
-
-    public void setYDispEquivYear(Series.Double yDispEquivYear) {
-        this.yDispEquivYear = yDispEquivYear;
-    }
-
     public Double getXEquivYear() {
         return xEquivYear;
     }
 
     public void setXEquivYear(Double xEquivYear) {
         this.xEquivYear = xEquivYear;
-    }
-
-    public Series.Double getXEquivYearL1() {
-        return xEquivYearL1;
-    }
-
-    public void setXEquivYearL1(Series.Double xEquivYearL1) {
-        this.xEquivYearL1 = xEquivYearL1;
     }
 
     public Integer getLabHrsWorkNewL1() {

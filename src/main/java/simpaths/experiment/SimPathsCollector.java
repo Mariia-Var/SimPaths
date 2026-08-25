@@ -8,31 +8,30 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import simpaths.data.filters.FlexibleInLabourSupplyFilter;
-import simpaths.data.statistics.LabourStatistics;
+import simpaths.data.filters.Filters;
 import simpaths.data.statistics.AgeBandAggregates;
+import simpaths.data.statistics.LabourStatistics;
 import simpaths.data.statistics.HealthStatistics;
 import simpaths.data.statistics.WellbeingByGender;
 import simpaths.model.BenefitUnit;
 import simpaths.model.SimPathsModel;
 import simpaths.model.enums.Quintiles;
-import microsim.statistics.Series;
-import microsim.statistics.functions.*;
 // import plug-in packages
 import org.apache.commons.math3.util.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import microsim.FilteredCollection;
 // import JAS-mine packages
 import microsim.annotation.GUIparameter;
 import microsim.data.DataExport;
+import microsim.dev.statistics.CrossSection;
+import microsim.dev.statistics.Stats;
 import microsim.engine.AbstractSimulationCollectorManager;
 import microsim.engine.SimulationEngine;
 import microsim.engine.SimulationManager;
 import microsim.event.EventListener;
 import microsim.event.SingleTargetEvent;
-import microsim.statistics.CrossSection;
-import microsim.statistics.IDoubleSource;
 // import LABOURsim packages
 import simpaths.data.Parameters;
 import simpaths.data.statistics.AlignmentStatistics;
@@ -40,8 +39,6 @@ import simpaths.data.statistics.WealthIncomeStatistics;
 import simpaths.data.statistics.DemographicStatistics;
 import simpaths.model.Person;
 import simpaths.model.enums.Region;
-
-import static simpaths.model.Person.DoublesVariables.GrossLabourIncomeMonthly;
 
 
 /**
@@ -95,7 +92,10 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
     @GUIparameter(description="Number of time-steps in between database dumps")
     private Double dataDumpTimePeriod = 1.;
 
-    private int ordering = Parameters.COLLECTOR_ORDERING;	//XXX: Move to Parameters?	//Schedule at the same time as the model and observer events, but with an order higher than model but less than observer, so will be fired after the model and before the observe have updated.
+    // Schedule at the same time as the model and observer events, but with an order
+    // higher than model but less than observer, so will be fired after the model
+    // and before the observe have updated.
+    private int ordering = Parameters.COLLECTOR_ORDERING;
 
     private SimPathsModel model;
 
@@ -115,9 +115,9 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
     private double ageBandAggregatesTime = Double.NaN;
 
-    private GiniPersonalGrossEarnings giniPersonalGrossEarnings;
+    protected GiniPersonalGrossEarnings giniPersonalGrossEarnings;
 
-    private GiniEquivalisedHouseholdDisposableIncome giniEquivalisedHouseholdDisposableIncome;
+    protected GiniEquivalisedHouseholdDisposableIncome giniEquivalisedHouseholdDisposableIncome;
 
     private Ydses_c5 yHhQuintilesMonthC5;
 
@@ -142,16 +142,6 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
     private DataExport exportHealthStatistics;
 
     private DataExport exportWellbeingByGender;
-
-    protected MultiTraceFunction.Double fGiniPersonalGrossEarningsNational;
-
-    protected Map<Region, MultiTraceFunction.Double> fGiniPersonalGrossEarningsRegionalMap;
-
-    protected MultiTraceFunction.Double fGiniEquivalisedHouseholdDisposableIncomeNational;
-
-    protected Map<Region, MultiTraceFunction.Double> fGiniEquivalisedHouseholdDisposableIncomeRegionalMap;
-
-
 
     /**
      *
@@ -183,11 +173,6 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
     }
 
 
-    /**
-     *
-     * XXX
-     *
-     */
     @Override
     public void onEvent(Enum<?> type) {
         switch ((Processes) type) {
@@ -319,22 +304,8 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
             OutputReadme.write(this, model);
 
         if (calculateGiniCoefficients) {
-
             giniPersonalGrossEarnings = new GiniPersonalGrossEarnings();
-            fGiniPersonalGrossEarningsNational = new MultiTraceFunction.Double(giniPersonalGrossEarnings, "getGiniPersonalGrossEarningsNational", true);
-            fGiniPersonalGrossEarningsRegionalMap = new LinkedHashMap<Region, MultiTraceFunction.Double>();
-            for(Region region: Parameters.getCountryRegions()) {
-                MultiTraceFunction.Double fGiniPersonalGrossEarningsRegion = new MultiTraceFunction.Double(giniPersonalGrossEarnings, region);
-                fGiniPersonalGrossEarningsRegionalMap.put(region, fGiniPersonalGrossEarningsRegion);
-            }
-
             giniEquivalisedHouseholdDisposableIncome = new GiniEquivalisedHouseholdDisposableIncome();
-            fGiniEquivalisedHouseholdDisposableIncomeNational = new MultiTraceFunction.Double(giniEquivalisedHouseholdDisposableIncome, "getGiniEquivalisedHouseholdDisposableIncomeNational", true);
-            fGiniEquivalisedHouseholdDisposableIncomeRegionalMap = new LinkedHashMap<Region, MultiTraceFunction.Double>();
-            for(Region region: Parameters.getCountryRegions()) {
-                MultiTraceFunction.Double fGiniEquivalisedHouseholdDisposableIncomeRegion = new MultiTraceFunction.Double(giniEquivalisedHouseholdDisposableIncome, region);
-                fGiniEquivalisedHouseholdDisposableIncomeRegionalMap.put(region, fGiniEquivalisedHouseholdDisposableIncomeRegion);
-            }
         }
 
         yHhQuintilesMonthC5 = new Ydses_c5();
@@ -426,21 +397,16 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
     private class GrossLabourIncome {
 
         final SimPathsModel model = (SimPathsModel) getManager();
-        private CrossSection.Double personsGrossLabourIncomesCS;
-        private PercentileArrayFunction percentileFunctionGrossLabourIncomes;
 
         public void update() {
-            personsGrossLabourIncomesCS = new CrossSection.Double(model.getPersons(), GrossLabourIncomeMonthly); // Retrieve Gross Labour Income monthly value using native access through IDoubleSource
-            FlexibleInLabourSupplyFilter flexibleInLabourSupplyFilter = new FlexibleInLabourSupplyFilter();
-            personsGrossLabourIncomesCS.setFilter(flexibleInLabourSupplyFilter); // Filter only those who could work for calculation of quintiles of gross labour income
+            var filtered = new FilteredCollection<>(model::getPersons, Filters.flexibleLabourSupply());
+            var income_cs = new CrossSection<>(filtered, Person::getCovidYLabGross);
+            var income_stats = new Stats(income_cs.get()).descrStats();
 
-            percentileFunctionGrossLabourIncomes = new PercentileArrayFunction(personsGrossLabourIncomesCS);
-            percentileFunctionGrossLabourIncomes.updateSource();
-
-            wealthIncomeStats.setYLabP20(percentileFunctionGrossLabourIncomes.getDoubleValue(PercentileArrayFunction.Variables.P20));
-            wealthIncomeStats.setYLabP40(percentileFunctionGrossLabourIncomes.getDoubleValue(PercentileArrayFunction.Variables.P40));
-            wealthIncomeStats.setYLabP60(percentileFunctionGrossLabourIncomes.getDoubleValue(PercentileArrayFunction.Variables.P60));
-            wealthIncomeStats.setYLabP80(percentileFunctionGrossLabourIncomes.getDoubleValue(PercentileArrayFunction.Variables.P80));
+            wealthIncomeStats.setYLabP20(income_stats.getPercentile(20.0));
+            wealthIncomeStats.setYLabP40(income_stats.getPercentile(40.0));
+            wealthIncomeStats.setYLabP60(income_stats.getPercentile(60.0));
+            wealthIncomeStats.setYLabP80(income_stats.getPercentile(80.0));
 
             for (Person person : model.getPersons()) {
                 double covidModuleGrossLabourIncomeBaseline = person.getCovidYLabGross();
@@ -465,45 +431,21 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
      *This method calculates quintiles of household gross income
      *
      */
-    private class Ydses_c5 implements IDoubleSource {
+    private class Ydses_c5 {
 
         final SimPathsModel model = (SimPathsModel) getManager();
-
-        private CrossSection.Double householdsGrossIncomesCS;
-
-        private PercentileArrayFunction percentileFunctionHouseholdsGrossIncomes;
-
-        private double p50HouseholdsGrossIncome;
-
-        private double p20HouseholdsGrossIncome;
-
-        private double p40HouseholdsGrossIncome;
-
-        private double p60HouseholdsGrossIncome;
-
-        private double p80HouseholdsGrossIncome;
 
         private boolean initialDistributionCalculated;
 
         public void update() {
-
             //Ydses_c5
-            householdsGrossIncomesCS = new CrossSection.Double(model.getBenefitUnits(), BenefitUnit.class, "getI_yNonBenHhGrossAsinhNoNull", true); //Populate CS
+            var hh_income_cs = new CrossSection<>(model::getBenefitUnits, BenefitUnit::getI_yNonBenHhGrossAsinhNoNull);
+            var hh_income_stats = new Stats(hh_income_cs.get()).descrStats();
 
-            percentileFunctionHouseholdsGrossIncomes = new PercentileArrayFunction(householdsGrossIncomesCS); //Get p50
-            percentileFunctionHouseholdsGrossIncomes.updateSource();
-            p50HouseholdsGrossIncome = percentileFunctionHouseholdsGrossIncomes.getDoubleValue(PercentileArrayFunction.Variables.P50); //Retrieve P50 value
-            p20HouseholdsGrossIncome = percentileFunctionHouseholdsGrossIncomes.getDoubleValue(PercentileArrayFunction.Variables.P20);
-            p40HouseholdsGrossIncome = percentileFunctionHouseholdsGrossIncomes.getDoubleValue(PercentileArrayFunction.Variables.P40);
-            p60HouseholdsGrossIncome = percentileFunctionHouseholdsGrossIncomes.getDoubleValue(PercentileArrayFunction.Variables.P60);
-            p80HouseholdsGrossIncome = percentileFunctionHouseholdsGrossIncomes.getDoubleValue(PercentileArrayFunction.Variables.P80);
-//			System.out.println("P50 value from the percentile function: " + p50HouseholdsGrossIncome + " P20: " + p20HouseholdsGrossIncome + " P40: " + p40HouseholdsGrossIncome +
-//								" P60: " + p60HouseholdsGrossIncome + " P80: " + p80HouseholdsGrossIncome);
-
-            wealthIncomeStats.setYHhQuintilesC5P20(p20HouseholdsGrossIncome);
-            wealthIncomeStats.setYHhQuintilesC5P40(p40HouseholdsGrossIncome);
-            wealthIncomeStats.setYHhQuintilesC5P60(p60HouseholdsGrossIncome);
-            wealthIncomeStats.setYHhQuintilesC5P80(p80HouseholdsGrossIncome);
+            wealthIncomeStats.setYHhQuintilesC5P20(hh_income_stats.getPercentile(20.0));
+            wealthIncomeStats.setYHhQuintilesC5P40(hh_income_stats.getPercentile(40.0));
+            wealthIncomeStats.setYHhQuintilesC5P60(hh_income_stats.getPercentile(60.0));
+            wealthIncomeStats.setYHhQuintilesC5P80(hh_income_stats.getPercentile(80.0));
 
             if (initialDistributionCalculated) {
                 for (BenefitUnit benefitUnit : model.getBenefitUnits()) {
@@ -511,42 +453,21 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
                 }
             }
             initialDistributionCalculated = true;
-
         }
-
-
-        @Override
-        public double getDoubleValue(Enum<?> variableID) {
-            // TODO Auto-generated method stub
-            return 0;
-        }
-
     }
 
-    private class EDI implements IDoubleSource {
+    private class EDI {
         final SimPathsModel model = (SimPathsModel) getManager();
-        private CrossSection.Double householdsEDICS;
-        private PercentileArrayFunction percentileFunctionHouseholdsEDI;
-        private double p50HouseholdsEDI;
 
         public void update() {
-            householdsEDICS = new CrossSection.Double(model.getBenefitUnits(), BenefitUnit.class, "getEquivalisedDisposableIncomeYearly", true);
-            percentileFunctionHouseholdsEDI = new PercentileArrayFunction(householdsEDICS);
-            percentileFunctionHouseholdsEDI.updateSource();
-            p50HouseholdsEDI = percentileFunctionHouseholdsEDI.getDoubleValue(PercentileArrayFunction.Variables.P50);
-            wealthIncomeStats.setEdi_p50(p50HouseholdsEDI);
-//			System.out.println("Median EDI (collector) "+p50HouseholdsEDI);
-        }
-
-        @Override
-        public double getDoubleValue(Enum<?> variableID) {
-            // TODO Auto-generated method stub
-            return 0;
+            var hh_edi_cs = new CrossSection<>(model::getBenefitUnits, BenefitUnit::getEquivalisedDisposableIncomeYearly);
+            var hh_edi_stats = new Stats(hh_edi_cs.get()).descrStats();
+            wealthIncomeStats.setEdi_p50(hh_edi_stats.getPercentile(50.0));
         }
     }
 
 
-    private class GiniPersonalGrossEarnings implements IDoubleSource {
+    public class GiniPersonalGrossEarnings {
         //I calculate that the Gini coefficient for household-weights w_i and variables x_i:
         //	G = [ sum_i sum_j w_i * w_j * abs( x_i - x_j) ] / [ 2 * (sum_i w_i) * (sum_j w_j * x_j) ]
         //Note in this particular case, the x_i are the personal (individual) gross income (potential earnings * labour supply)
@@ -558,7 +479,7 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
         private double giniWeightedPersonalGrossEarningsNational;
 
         //Update gini coefficient of personal gross earnings
-        public void update() {
+        private void update() {
 
             //Note that weighted means individual person weighted measures
             double weightedAbsDiffPersonalGrossEarningsNational = 0.;	//Sum of absolute difference between two person's weighted gross earnings (personal weight * potential earnings * labour supply)
@@ -632,23 +553,20 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
         }
 
-        //Getter methods to pass values to functions
-
-        //For national level
-        public double getGiniPersonalGrossEarningsNational() {
+        /// Gini coefficient at the national level.
+        public double national() {
             return giniWeightedPersonalGrossEarningsNational;
         }
 
-        //For regional level
-        @Override
-        public double getDoubleValue(Enum<?> region) {
+        /// Gini coefficient in the specified [Region].
+        public double inRegion(Region region) {
             return giniWeightedPersonalGrossEarningsRegionalMap.get(region);
         }
 
     }
 
 
-    private class GiniEquivalisedHouseholdDisposableIncome implements IDoubleSource {
+    public class GiniEquivalisedHouseholdDisposableIncome {
 
         //I calculate that the Gini coefficient for household-weights w_i and variables x_i:
         //	G = [ sum_i sum_j w_i * w_j * abs( x_i - x_j) ] / [ 2 * (sum_i w_i) * (sum_j w_j * x_j) ]
@@ -661,7 +579,7 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
         private double giniWeightedEquivalisedHouseholdDisposableIncomeNational;
 
         //Update gini coefficient of household disposable income
-        public void update() {
+        private void update() {
 
             //Note that weighted means household weighted measures
             double weightedAbsDiffEquivalisedIncomeNational = 0.;	//Sum of absolute difference between two household's weighted equivalised income (household weight * equivalised weight * household disposable income)
@@ -735,16 +653,13 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
         }
 
-        //Getter methods to pass values to functions
-
-        //For national level
-        public double getGiniEquivalisedHouseholdDisposableIncomeNational() {
+        /// Gini coefficient at the national level.
+        public double national() {
             return giniWeightedEquivalisedHouseholdDisposableIncomeNational;
         }
 
-        //For regional level
-        @Override
-        public double getDoubleValue(Enum<?> region) {
+        /// Gini coefficient in the specified [Region].
+        public double inRegion(Region region) {
             return giniWeightedEquivalisedHouseholdDisposableIncomeRegionalMap.get(region);
         }
 

@@ -3,6 +3,9 @@ package simpaths.experiment;
 
 // import Java packages
 import java.awt.Dimension;
+
+import org.apache.commons.beanutils.ConvertUtils;
+import org.apache.commons.beanutils.Converter;
 import org.apache.commons.cli.*;
 import org.apache.commons.cli.help.HelpFormatter;
 
@@ -33,6 +36,7 @@ import microsim.gui.shell.MicrosimShell;
 
 // import SimPaths packages
 import simpaths.model.enums.Country;
+import simpaths.model.enums.UnionMatchingMethod;
 import simpaths.data.*;
 import simpaths.model.taxes.database.TaxDonorDataParser;
 
@@ -93,6 +97,19 @@ public class SimPathsStart implements ExperimentBuilder {
 
 		// start the JAS-mine simulation engine
 		System.out.println("Starting simulation...");
+        ConvertUtils.register(new Converter() {
+            @Override
+            public <T> T convert(Class<T> type, Object value) {
+                if (value == null || value.toString().isBlank()) {
+                    return type.cast(UnionMatchingMethod.ParametricNoRegion);
+                }
+                try {
+                    return type.cast(UnionMatchingMethod.valueOf(value.toString()));
+                } catch (IllegalArgumentException e) {
+                    return type.cast(UnionMatchingMethod.ParametricNoRegion);
+                }
+            }
+        }, UnionMatchingMethod.class);
 		final SimulationEngine engine = SimulationEngine.getInstance();
 		MicrosimShell gui = null;
 		if (showGui) {

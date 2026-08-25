@@ -3,7 +3,7 @@ package simpaths.model;
 import microsim.engine.SimulationEngine;
 import simpaths.data.IEvaluation;
 import simpaths.data.Parameters;
-import simpaths.data.filters.FertileFilter;
+import simpaths.data.filters.Filters;
 
 import java.util.Set;
 
@@ -23,7 +23,6 @@ public class FertilityAlignment implements IEvaluation {
     private double targetFertilityRate;
     private Set<Person> persons;
     private SimPathsModel model;
-    private FertileFilter<Person> fertileFilter;
     private long numFertile;
 
 
@@ -32,9 +31,9 @@ public class FertilityAlignment implements IEvaluation {
         this.model = (SimPathsModel) SimulationEngine.getInstance().getManager(SimPathsModel.class.getCanonicalName());
         this.persons = persons;
         targetFertilityRate = Parameters.getFertilityRateByYear(model.getYear());
-        fertileFilter = new FertileFilter<Person>();
+        // FIXME: should cache fertile persons to only filter once
         numFertile = persons.stream()
-                .filter(fertileFilter)
+                .filter(Filters.fertile())
                 .count();
     }
 
@@ -53,7 +52,7 @@ public class FertilityAlignment implements IEvaluation {
         if (numFertile == 0) return targetFertilityRate;
 
         double expectedBirths = persons.parallelStream()
-                .filter(fertileFilter)
+                .filter(Filters.fertile())
                 .mapToDouble(person -> {
                     double score = Parameters.getRegFertilityF1()
                             .getScore(person, Person.DoublesVariables.class);

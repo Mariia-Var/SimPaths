@@ -1,5 +1,8 @@
 package simpaths.data.statistics;
 
+import java.util.Collection;
+import java.util.function.Supplier;
+
 import simpaths.data.Parameters;
 import simpaths.model.Person;
 import simpaths.model.SimPathsModel;
@@ -35,15 +38,10 @@ public class AgeBandAggregates {
 
     private AgeBandAggregates() {}
 
-    /**
-     *
-     * TRAVERSE THE POPULATION AND EVALUATE ALL AGE-BAND AGGREGATES
-     * @param model the simulation manager holding the population
-     * @return the evaluated aggregates
-     *
-     */
-    public static AgeBandAggregates compute(SimPathsModel model) {
-
+    /// Compute the age-band aggregates with an arbitrary [Supplier].
+    /// This is intended for testing.
+    public static AgeBandAggregates computeWithSupplier(Supplier<Collection<Person>> supplier) {
+        var persons = supplier.get();
         AgeBandAggregates agg = new AgeBandAggregates();
 
         double[] prMarr = agg.prMarr;
@@ -59,7 +57,7 @@ public class AgeBandAggregates {
         double[] grossDisInc = agg.grossDisInc;
         double[] wealth = agg.wealth;
         double[] popula = agg.popula;
-        for (Person person : model.getPersons()) {
+        for (var person : persons) {
             // loop over entire population
 
             int ii = -1;
@@ -121,5 +119,13 @@ public class AgeBandAggregates {
         }
 
         return agg;
+    }
+
+    /// Traverse the population and evaluate all age-band aggregates.
+    ///
+    /// @param model the simulation manager holding the population
+    /// @return the evaluated aggregates
+    public static AgeBandAggregates compute(SimPathsModel model) {
+        return AgeBandAggregates.computeWithSupplier(model::getPersons);
     }
 }
