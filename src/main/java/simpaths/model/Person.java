@@ -1046,9 +1046,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             return;
         }
 
-        //For those who are moving out, evaluate whether they should have stayed with parents and
-        // if no, set the adultchildflag to true
-        // if yes, set the adultchildflag to false and set up New Household
+        // Evaluate whether the person should leave the parental home:
+        //  - if not, set demAdultChildFlag to true (remains living with parents)
+        //  - if yes, set demAdultChildFlag to false and set up a new household
 
         double prob = Parameters.getRegLeaveHomeP1a().getProbability(this, Person.DoublesVariables.class);
         boolean toLeaveHome = (statInnovations.getDoubleDraw(21) < prob);
