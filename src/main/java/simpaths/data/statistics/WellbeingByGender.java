@@ -3,13 +3,11 @@ package simpaths.data.statistics;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import microsim.FilteredCollection;
 import microsim.data.db.PanelEntityKey;
-import microsim.statistics.CrossSection;
-import microsim.statistics.IDoubleSource;
-import microsim.statistics.functions.MeanArrayFunction;
-import microsim.statistics.functions.PercentileArrayFunction;
-import microsim.statistics.functions.SumArrayFunction;
-import simpaths.data.filters.AgeGenderCSfilter;
+import microsim.dev.statistics.CrossSection;
+import microsim.dev.statistics.Stats;
+import simpaths.data.filters.Filters;
 import simpaths.model.Person;
 import simpaths.model.SimPathsModel;
 import simpaths.model.enums.Gender;
@@ -255,114 +253,67 @@ public class WellbeingByGender {
     }
 
     public void update(SimPathsModel model, String gender_s) {
-
-
-        AgeGenderCSfilter ageGenderCSfilter;
-
-        if (gender_s.equals("Total")) {
-            ageGenderCSfilter = new AgeGenderCSfilter(25, 64);
-        } else {
-            ageGenderCSfilter = new AgeGenderCSfilter(25, 64, Gender.valueOf(gender_s));
-        }
-
         // set gender, and key this record so the three gender groups stay distinct
         setGender(gender_s);
         key = new PanelEntityKey(genderKeyId(gender_s));
 
-        // dhm score
-        CrossSection.Double personsDhm = new CrossSection.Double(model.getPersons(), Person.DoublesVariables.Dhm); // Get cross section of simulated individuals and their mental health using the IDoubleSource interface implemented by Person class.
-        personsDhm.setFilter(ageGenderCSfilter);
+        var filter = Filters.ageRange(25, 64);
+        if (!gender_s.equals("Total")) {
+            filter = filter.and(Filters.gender(Gender.valueOf(gender_s)));
+        }
+
+        var filteredPop = new FilteredCollection<>(model::getPersons, filter).once();
 
 
-        MeanArrayFunction dhm_mean_f = new MeanArrayFunction(personsDhm); // Create MeanArrayFunction
-        dhm_mean_f.applyFunction();
-        setHealthWbScore0to36Avg(dhm_mean_f.getDoubleValue(IDoubleSource.Variables.Default));
+        // dhm score (mental health)
+        var dhm_cs = new CrossSection<>(filteredPop, Person::getHealthWbScore0to36);
+        var dhm_stats = new Stats(dhm_cs.get()).descrStats();
+        setHealthWbScore0to36Avg(dhm_stats.getMean());
+        setHealthWbScore0to36P10(dhm_stats.getPercentile(10.0));
+        setHealthWbScore0to36P25(dhm_stats.getPercentile(25.0));
+        setHealthWbScore0to36P50(dhm_stats.getPercentile(50.0));
+        setHealthWbScore0to36P75(dhm_stats.getPercentile(75.0));
+        setHealthWbScore0to36P90(dhm_stats.getPercentile(90.0));
 
-        PercentileArrayFunction percDhm_f = new PercentileArrayFunction(personsDhm);
-        percDhm_f.applyFunction();
+        // mcs score (mental health)
+        var mcs_cs = new CrossSection<>(filteredPop, Person::getHealthMentalMcs);
+        var mcs_stats = new Stats(mcs_cs.get()).descrStats();
+        setHealthMentalMcsAvg(mcs_stats.getMean());
+        setHealthMentalMcsP10(mcs_stats.getPercentile(10.0));
+        setHealthMentalMcsP25(mcs_stats.getPercentile(25.0));
+        setHealthMentalMcsP50(mcs_stats.getPercentile(50.0));
+        setHealthMentalMcsP75(mcs_stats.getPercentile(75.0));
+        setHealthMentalMcsP90(mcs_stats.getPercentile(90.0));
 
-        setHealthWbScore0to36P10(percDhm_f.getDoubleValue(PercentileArrayFunction.Variables.P10));
-        setHealthWbScore0to36P25(percDhm_f.getDoubleValue(PercentileArrayFunction.Variables.P25));
-        setHealthWbScore0to36P50(percDhm_f.getDoubleValue(PercentileArrayFunction.Variables.P50));
-        setHealthWbScore0to36P75(percDhm_f.getDoubleValue(PercentileArrayFunction.Variables.P75));
-        setHealthWbScore0to36P90(percDhm_f.getDoubleValue(PercentileArrayFunction.Variables.P90));
-
-        // mcs score
-        CrossSection.Double personsMCS = new CrossSection.Double(model.getPersons(), Person.DoublesVariables.Dhe_mcs);
-        personsMCS.setFilter(ageGenderCSfilter);
-
-
-        MeanArrayFunction dhe_mcs_mean_f = new MeanArrayFunction(personsMCS); // Create MeanArrayFunction
-        dhe_mcs_mean_f.applyFunction();
-        setHealthMentalMcsAvg(dhe_mcs_mean_f.getDoubleValue(IDoubleSource.Variables.Default));
-
-        PercentileArrayFunction perc_dhe_mcs_f = new PercentileArrayFunction(personsMCS);
-        perc_dhe_mcs_f.applyFunction();
-
-        setHealthMentalMcsP10(perc_dhe_mcs_f.getDoubleValue(PercentileArrayFunction.Variables.P10));
-        setHealthMentalMcsP25(perc_dhe_mcs_f.getDoubleValue(PercentileArrayFunction.Variables.P25));
-        setHealthMentalMcsP50(perc_dhe_mcs_f.getDoubleValue(PercentileArrayFunction.Variables.P50));
-        setHealthMentalMcsP75(perc_dhe_mcs_f.getDoubleValue(PercentileArrayFunction.Variables.P75));
-        setHealthMentalMcsP90(perc_dhe_mcs_f.getDoubleValue(PercentileArrayFunction.Variables.P90));
-
-        // pcs score
-        CrossSection.Double personsPCS = new CrossSection.Double(model.getPersons(), Person.DoublesVariables.Dhe_pcs);
-        personsPCS.setFilter(ageGenderCSfilter);
-
-
-        MeanArrayFunction dhe_pcs_mean_f = new MeanArrayFunction(personsPCS); // Create MeanArrayFunction
-        dhe_pcs_mean_f.applyFunction();
-        setHealthPhysicalPcsAvg(dhe_pcs_mean_f.getDoubleValue(IDoubleSource.Variables.Default));
-
-        PercentileArrayFunction perc_dhe_pcs_f = new PercentileArrayFunction(personsPCS);
-        perc_dhe_pcs_f.applyFunction();
-
-        setHealthPhysicalPcsP10(perc_dhe_pcs_f.getDoubleValue(PercentileArrayFunction.Variables.P10));
-        setHealthPhysicalPcsP25(perc_dhe_pcs_f.getDoubleValue(PercentileArrayFunction.Variables.P25));
-        setHealthPhysicalPcsP50(perc_dhe_pcs_f.getDoubleValue(PercentileArrayFunction.Variables.P50));
-        setHealthPhysicalPcsP75(perc_dhe_pcs_f.getDoubleValue(PercentileArrayFunction.Variables.P75));
-        setHealthPhysicalPcsP90(perc_dhe_pcs_f.getDoubleValue(PercentileArrayFunction.Variables.P90));
+        // pcs score (physical well-being)
+        var pcs_cs = new CrossSection<>(filteredPop, Person::getHealthPhysicalPcs);
+        var pcs_stats = new Stats(pcs_cs.get()).descrStats();
+        setHealthPhysicalPcsAvg(pcs_stats.getMean());
+        setHealthPhysicalPcsP10(pcs_stats.getPercentile(10.0));
+        setHealthPhysicalPcsP25(pcs_stats.getPercentile(25.0));
+        setHealthPhysicalPcsP50(pcs_stats.getPercentile(50.0));
+        setHealthPhysicalPcsP75(pcs_stats.getPercentile(75.0));
+        setHealthPhysicalPcsP90(pcs_stats.getPercentile(90.0));
 
         // Life Satisfaction score
-        CrossSection.Double personsDls = new CrossSection.Double(model.getPersons(), Person.DoublesVariables.Dls);
-        personsDls.setFilter(ageGenderCSfilter);
-
-
-        MeanArrayFunction dls_mean_f = new MeanArrayFunction(personsDls); // Create MeanArrayFunction
-        dls_mean_f.applyFunction();
-        setDemLifeSatScore0to10Avg(dls_mean_f.getDoubleValue(IDoubleSource.Variables.Default));
-
-        PercentileArrayFunction perc_dls_f = new PercentileArrayFunction(personsDls);
-        perc_dls_f.applyFunction();
-
-        setDemLifeSatScore0to10P10(perc_dls_f.getDoubleValue(PercentileArrayFunction.Variables.P10));
-        setDemLifeSatScore0to10P25(perc_dls_f.getDoubleValue(PercentileArrayFunction.Variables.P25));
-        setDemLifeSatScore0to10P50(perc_dls_f.getDoubleValue(PercentileArrayFunction.Variables.P50));
-        setDemLifeSatScore0to10P75(perc_dls_f.getDoubleValue(PercentileArrayFunction.Variables.P75));
-        setDemLifeSatScore0to10P90(perc_dls_f.getDoubleValue(PercentileArrayFunction.Variables.P90));
+        var dls_cs = new CrossSection<>(filteredPop, Person::getDemLifeSatScore0to10);
+        var dls_stats = new Stats(dls_cs.get()).descrStats();
+        setDemLifeSatScore0to10Avg(dls_stats.getMean());
+        setDemLifeSatScore0to10P10(dls_stats.getPercentile(10.0));
+        setDemLifeSatScore0to10P25(dls_stats.getPercentile(25.0));
+        setDemLifeSatScore0to10P50(dls_stats.getPercentile(50.0));
+        setDemLifeSatScore0to10P75(dls_stats.getPercentile(75.0));
+        setDemLifeSatScore0to10P90(dls_stats.getPercentile(90.0));
 
         // QALYS as sum of EQ5D
-        CrossSection.Double personEQ5D = new CrossSection.Double(model.getPersons(), Person.DoublesVariables.He_eq5d);
-        personEQ5D.setFilter(ageGenderCSfilter);
-
-        SumArrayFunction.Double qalys = new SumArrayFunction.Double(personEQ5D);
-        qalys.applyFunction();
-        setQalys(qalys.getDoubleValue(IDoubleSource.Variables.Default));
+        var eq5d_cs = new CrossSection<>(filteredPop, Person::getDemLifeSatEQ5D);
+        var eq5d_stats = new Stats(eq5d_cs.get());
+        setQalys(eq5d_stats.sum());
 
         // WELLBYs as sum of 'points' in 0-10-scale life satisfaction (adjusted)
-
-        SumArrayFunction.Double wellbys = new SumArrayFunction.Double(personsDls);
-        wellbys.applyFunction();
-
-
-        setWellbys(wellbys.getDoubleValue(IDoubleSource.Variables.Default));
+        setWellbys(dls_stats.getSum());
 
         // count
-        CrossSection.Integer n_persons = new CrossSection.Integer(model.getPersons(), Person.class, "getPersonCount", true);
-        n_persons.setFilter(ageGenderCSfilter);
-
-        SumArrayFunction.Integer count_f = new SumArrayFunction.Integer(n_persons);
-        count_f.applyFunction();
-        setN(count_f.getIntValue(IDoubleSource.Variables.Default));
+        setN(filteredPop.get().size());
     }
 }
