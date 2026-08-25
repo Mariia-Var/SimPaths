@@ -20,7 +20,7 @@ import simpaths.model.enums.*;
  *
  */
 @Entity
-public class AlignmentAdjustmentFactors {
+public class AlignmentStatistics {
 
     @Id
     private PanelEntityKey key = new PanelEntityKey(1L);

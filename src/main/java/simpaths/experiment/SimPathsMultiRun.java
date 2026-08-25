@@ -42,6 +42,7 @@ public class SimPathsMultiRun extends MultiRun {
 	private static int startYear;
 	private static int endYear = 2020;
 	private static int maxNumberOfRuns = 25;
+	private static boolean multiRunMode = false;
 	private static Long randomSeed = 615L;
 	public static boolean executeWithGui = true;
 
@@ -76,6 +77,8 @@ public class SimPathsMultiRun extends MultiRun {
 	 *
 	 */
 	public static void main(String[] args) {
+
+		multiRunMode = true;
 
 		// process Yaml config file
 		if (!parseYamlConfig(args)) {
@@ -587,6 +590,14 @@ public class SimPathsMultiRun extends MultiRun {
 		}
 	}
 	
+	public static int getMaxNumberOfRuns() {
+		return maxNumberOfRuns;
+	}
+
+	public static boolean isMultiRunMode() {
+		return multiRunMode;
+	}
+
 	@Override
 	public boolean nextModel() {
 		counter++;

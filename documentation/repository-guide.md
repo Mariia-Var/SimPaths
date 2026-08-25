@@ -64,12 +64,15 @@ SimPaths/
 ├── output/                         # Simulation outputs
 │   ├── [timestamp]_[seed]_[run]/   # Timestamped output folders
 │   │   ├── csv/
-│   │   │   ├── Statistics1.csv          # Income distribution, Gini, S-Index
-│   │   │   ├── Statistics2<N>.csv       # Demographics by age and gender
-│   │   │   ├── Statistics3<N>.csv       # Alignment diagnostics
-│   │   │   ├── Person<N>.csv            # Person-level output
-│   │   │   ├── BenefitUnit<N>.csv       # Benefit-unit-level output
-│   │   │   └── Household<N>.csv         # Household-level output
+│   │   │   ├── WealthIncomeStatistics.csv  # Income and wealth; Gini, S-Index
+│   │   │   ├── DemographicStatistics.csv   # Demographics by age band
+│   │   │   ├── AlignmentStatistics.csv     # Alignment diagnostics
+│   │   │   ├── LabourStatistics.csv        # Labour market transitions and participation
+│   │   │   ├── HealthStatistics.csv        # Population health by age band
+│   │   │   ├── WellbeingByGender.csv       # Wellbeing by gender, ages 25-64
+│   │   │   ├── Person.csv               # Person-level output
+│   │   │   ├── BenefitUnit.csv          # Benefit-unit-level output
+│   │   │   └── Household.csv            # Household-level output
 │   │   ├── database/                    # Run-specific persistence output
 │   │   └── input/                       # Copied run input artifacts
 │   └── logs/                       # Log files (with -f flag on multirun)
