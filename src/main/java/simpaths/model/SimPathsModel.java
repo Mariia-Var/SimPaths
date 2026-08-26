@@ -532,6 +532,9 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         // Align the level of education if required
         addEventToAllYears(Processes.EducationLevelAlignment);
 
+        // Check whether adult children leave the parental home - runs after education so that those in continuous education are excluded
+        yearlySchedule.addCollectionEvent(persons, Person.Processes.ConsiderLeavingHome);
+
         // Homeownership status
         yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.Homeownership);
 
@@ -3129,8 +3132,16 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         return unionMatchingMethod;
     }
 
+    public void setUnionMatchingMethod(String value) {
+        this.unionMatchingMethod = (value == null || value.isBlank())
+                ? UnionMatchingMethod.ParametricNoRegion
+                : UnionMatchingMethod.valueOf(value);
+    }
+
     public void setUnionMatchingMethod(UnionMatchingMethod unionMatchingMethod) {
-        this.unionMatchingMethod = unionMatchingMethod;
+        this.unionMatchingMethod = unionMatchingMethod == null
+                ? UnionMatchingMethod.ParametricNoRegion
+                : unionMatchingMethod;
     }
 
     public boolean isAlignFertility() {
@@ -3163,6 +3174,12 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
     }
 
     public boolean isAlignInSchool() { return alignInSchool;    }
+
+    public boolean isAlignPopulation() { return alignPopulation; }
+
+    public boolean isAlignEducation() { return alignEducation; }
+
+    public boolean isEnableIntertemporalOptimisations() { return enableIntertemporalOptimisations; }
 
     public double getInSchoolAdjustment() {
         if (!alignInSchool) {

@@ -88,7 +88,7 @@ All behavioural equations are estimated externally and loaded at startup from Ex
 
 ### Alignment
 
-Several demographic processes are aligned to external targets (ONS projections, LFS shares) via `ActivityAlignmentV2`, `FertilityAlignment`, `PartnershipAlignment`, `InSchoolAlignment`, `SocialCareAlignment`. Alignment factors are exported to `AlignmentAdjustmentFactors1.csv` each run.
+Several demographic processes are aligned to external targets (ONS projections, LFS shares) via `ActivityAlignmentV2`, `FertilityAlignment`, `PartnershipAlignment`, `InSchoolAlignment`, `SocialCareAlignment`. Alignment factors are exported to `AlignmentStatistics.csv` each run.
 
 ### Configuration
 
@@ -97,10 +97,14 @@ Runs are configured via YAML files in `config/`. `default.yml` documents all ava
 ### Output
 
 Output is written to `output/<run-timestamp>/csv/` by `SimPathsCollector`. Key files:
-- `Statistics1.csv` — income distribution (Gini, percentiles, S-Index)
-- `Statistics2.csv` — demographic validation (partnership, employment, health by age/gender)
-- `EmploymentStatistics.csv`, `HealthStatistics.csv` — domain-specific time series
-- `AlignmentAdjustmentFactors1.csv` — alignment diagnostics
+- `WealthIncomeStatistics.csv` — income and wealth (Gini, percentiles, S-Index, plus income and wealth by age band)
+- `DemographicStatistics.csv` — demographics by age band (partnership, dependent children, population counts)
+- `HealthStatistics.csv` — population health by age band (self-rated health, disability shares)
+- `LabourStatistics.csv` — labour market transitions, participation, full-time/part-time shares by age band
+- `AlignmentStatistics.csv` — alignment diagnostics
+- `WellbeingByGender.csv` — wellbeing and quality of life (SF-12, GHQ-12, EQ-5D), ages 25–64, three rows per year (Total/Male/Female)
+
+The four age-band outputs share one population traversal per year via `AgeBandAggregates`; the bands are 18–29, 30–54 and 55–74.
 
 ### Integration tests
 

@@ -7,7 +7,6 @@ import microsim.engine.SimulationEngine;
 import microsim.event.EventListener;
 import microsim.statistics.IDoubleSource;
 import microsim.statistics.IIntSource;
-import microsim.statistics.Series;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.logging.log4j.LogManager;
@@ -17,7 +16,7 @@ import simpaths.data.ManagerRegressions;
 import simpaths.data.MultiValEvent;
 import simpaths.data.Parameters;
 import simpaths.data.RegressionName;
-import simpaths.data.filters.FertileFilter;
+import simpaths.data.filters.Filters;
 import simpaths.model.annotations.Lag;
 import simpaths.model.annotations.NullInitialised;
 import simpaths.model.annotations.UpdateManager;
@@ -162,9 +161,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 //	individual in the simulated population, in each simulated period.
     @Column(name="labWageHrly") private Double labWageFullTimeHrly;		//Is hourly rate.  Initialised with value: ils_earns / (4.34 * lhw), where lhw is the weekly hours a person worked in EUROMOD input data
     @Lag(field="labWageFullTimeHrly") @Column(name="labWageFullTimeHrlyL1") private Double labWageFullTimeHrlyL1; // Lag(1) of potentialHourlyEarnings
-    @Transient private Series.Double yDispEquivYear;
     @NullInitialised private Double xEquivYear;
-    @Transient private Series.Double xEquivYearL1;
     private Integer demPartnerNYear; //Number of years in partnership
     @Transient private Integer demPartnerNYearL1; //Lag(1) of number of years in partnership
     private Double yNonBenPersGrossMonth; // asinh of personal non-benefit income per month
@@ -300,8 +297,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         labHrsWorkWeek = getLabourSupplyWeekly().getHours(this);
         idHh = mother.getBenefitUnit().getHousehold().getId();
 //		setDeviationFromMeanRetirementAge();			//This would normally be done within initialisation, but the line above has been commented out for reasons given...
-        yDispEquivYear = new Series.Double(this, DoublesVariables.EquivalisedIncomeYearly);
-        xEquivYearL1 = new Series.Double(this, DoublesVariables.EquivalisedConsumptionYearly);
         xEquivYear = 0.;
         yLifeTime = 0.;
         demBornInSimFlag = true;
@@ -519,8 +514,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         yWageDesired = Objects.requireNonNullElseGet(originalPerson.yWageDesired, () -> sampleDifferentials[1]);
 
         demAdultChildFlag = originalPerson.demAdultChildFlag;
-        yDispEquivYear = new Series.Double(this, DoublesVariables.EquivalisedIncomeYearly);
-        xEquivYearL1 = new Series.Double(this, DoublesVariables.EquivalisedConsumptionYearly);
         xEquivYear = originalPerson.xEquivYear;
         demEthnC6 = originalPerson.demEthnC6;
         yBenReceivedFlag = originalPerson.yBenReceivedFlag;
@@ -771,6 +764,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     public enum Processes {
         Aging,
         Cohabitation,
+        ConsiderLeavingHome,
         ConsiderMortality,
         ConsiderRetirement,
         Fertility,
@@ -823,6 +817,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             }
             case PartnershipDissolution -> {
                 partnershipDissolution();
+            }
+            case ConsiderLeavingHome -> {
+                considerLeavingHome();
             }
             case ConsiderMortality -> {
                 considerMortality();
@@ -919,7 +916,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     public void fertility(double probitAdjustment) {
 
         demGiveBirthFlag = false;
-        var filter = new FertileFilter<Person>();
+        var filter = Filters.fertile();
 
         if (filter.test(this)) {
 
@@ -1001,9 +998,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         demAgeSq = demAge * demAge;
         if (demAge == Parameters.AGE_TO_BECOME_RESPONSIBLE) {
             setupNewBenefitUnit(true);
-            considerLeavingHome();
-        } else if (demAge > Parameters.AGE_TO_BECOME_RESPONSIBLE && Indicator.True.equals(demAdultChildFlag)) {
-            considerLeavingHome();
         }
         updateAgeGroup();   //Update ageGroup as person ages
      }
@@ -1029,23 +1023,35 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     //This process should be applied to those at the age to become responsible / leave home OR above if they have the adultChildFlag set to True (i.e. people can move out, but not move back in).
     private void considerLeavingHome() {
 
-        //For those who are moving out, evaluate whether they should have stayed with parents and if yes, set the adultchildflag to true
+        //Age eligibility: only those within the age range to leave the parental home are considered
+        if (demAge < Parameters.MIN_AGE_LEAVE_PH || demAge > Parameters.MAX_AGE_ADULT_CHILD) {
+            return;
+        }
+
+        //Above the age to leave home, only those still living with their parents are considered (people can move out, but not move back in)
+        if (demAge > Parameters.MIN_AGE_LEAVE_PH && !Indicator.True.equals(demAdultChildFlag)) {
+            return;
+        }
+
+        //Those in continuous education are not allowed to leave home, to match the filtering condition of the estimated equation
+        if (Indicator.True.equals(eduSpellFlag)) {
+            demAdultChildFlag = Indicator.True;
+            return;
+        }
+
+        // Evaluate whether the person should leave the parental home:
+        //  - if not, set demAdultChildFlag to true (remains living with parents)
+        //  - if yes, set demAdultChildFlag to false and set up a new household
 
         double prob = Parameters.getRegLeaveHomeP1a().getProbability(this, Person.DoublesVariables.class);
         boolean toLeaveHome = (statInnovations.getDoubleDraw(21) < prob);
-        if (Les_c4.Student.equals(labC4)) {
+        if (!toLeaveHome) { //If at the age to leave home but regression outcome is negative, person has adultchildflag set to true (although they still set up a new benefitUnit in the simulation, it's treated differently in the labour supply)
 
-            demAdultChildFlag = Indicator.True; //Students not allowed to leave home to match filtering conditon
+            demAdultChildFlag = Indicator.True;
         } else {
 
-            if (!toLeaveHome) { //If at the age to leave home but regression outcome is negative, person has adultchildflag set to true (although they still set up a new benefitUnit in the simulation, it's treated differently in the labour supply)
-
-                demAdultChildFlag = Indicator.True;
-            } else {
-
-                demAdultChildFlag = Indicator.False;
-                setupNewHousehold(); //If person leaves home, they set up a new household
-            }
+            demAdultChildFlag = Indicator.False;
+            setupNewHousehold(); //If person leaves home, they set up a new household
         }
     }
 
@@ -2398,7 +2404,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             return (isToBePartnered())? 1 : 0;
 
         case isPsychologicallyDistressed:
-            return (healthPsyDstrss0to12 >= PSYCHOLOGICAL_DISTRESS_GHQ12_CASES_CUTOFF)? 1 : 0;
+            return this.isPsychologicallyDistressed();
 
         case isNeedSocialCare:
             return (Indicator.True.equals(careNeedFlag)) ? 1 : 0;
@@ -6892,6 +6898,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         this.healthPsyDstrss0to12 = dhm_ghq;
     }
 
+    public int isPsychologicallyDistressed() {
+        return (healthPsyDstrss0to12 >= PSYCHOLOGICAL_DISTRESS_GHQ12_CASES_CUTOFF) ? 1 : 0;
+    }
+
     public Ethnicity getDemEthnC6() {
         return demEthnC6;
     }
@@ -7180,28 +7190,12 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         this.idHh = idHh;
     }
 
-    public Series.Double getYDispEquivYear() {
-        return yDispEquivYear;
-    }
-
-    public void setYDispEquivYear(Series.Double yDispEquivYear) {
-        this.yDispEquivYear = yDispEquivYear;
-    }
-
     public Double getXEquivYear() {
         return xEquivYear;
     }
 
     public void setXEquivYear(Double xEquivYear) {
         this.xEquivYear = xEquivYear;
-    }
-
-    public Series.Double getXEquivYearL1() {
-        return xEquivYearL1;
-    }
-
-    public void setXEquivYearL1(Series.Double xEquivYearL1) {
-        this.xEquivYearL1 = xEquivYearL1;
     }
 
     public Integer getLabHrsWorkNewL1() {
