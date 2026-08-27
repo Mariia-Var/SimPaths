@@ -146,3 +146,4 @@ input/EUROMODoutput/baseline/*
 .DS_Store
 
 input/InitialPopulations/original/*
+input/InitialPopulations/base/*

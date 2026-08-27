@@ -441,7 +441,7 @@ process_regression, domain("socialcare") process("S3b") sheet("S3b") ///
 	
 			
 	
-/******************* OLS care hours provided, Singles  (S3c) ******************/
+/************** Ordered logit care hours provided, Singles (S3c) **************/
 display "${s3c_if_condition}"
 /*
 reg HrsProvidedInformalIHS HrsProvidedInformalIHS_L1 Dgn ///
@@ -458,8 +458,22 @@ process_regression, domain("socialcare") process("S3c") sheet("S3c_orig") ///
 	gofrow(31) goflabel("S3c - Hours of informal care provided, Singles") ///
 	ifcond("${s3c_if_condition}")
 	*/
-	
-reg careHrsProvidedWeekIhs ///
+
+* Ordered outcome for weekly informal-care hours provided.  The category values
+* are representative hours for the seven bands: 2, 7, 14.5, 27, 42, 74.5, 120.
+cap drop careHrsProvidedWeekCategory
+gen byte careHrsProvidedWeekCategory = .
+replace careHrsProvidedWeekCategory = 1 if careHoursProvidedWeekly > 0 & careHoursProvidedWeekly <= 4
+replace careHrsProvidedWeekCategory = 2 if careHoursProvidedWeekly > 4 & careHoursProvidedWeekly <= 9
+replace careHrsProvidedWeekCategory = 3 if careHoursProvidedWeekly > 9 & careHoursProvidedWeekly <= 19
+replace careHrsProvidedWeekCategory = 4 if careHoursProvidedWeekly > 19 & careHoursProvidedWeekly <= 34
+replace careHrsProvidedWeekCategory = 5 if careHoursProvidedWeekly > 34 & careHoursProvidedWeekly <= 49
+replace careHrsProvidedWeekCategory = 6 if careHoursProvidedWeekly > 49 & careHoursProvidedWeekly <= 99
+replace careHrsProvidedWeekCategory = 7 if careHoursProvidedWeekly >= 100 & careHoursProvidedWeekly < .
+label define careHrsProvidedWeekCategoryLabel 1 "2" 2 "7" 3 "14.5" 4 "27" 5 "42" 6 "74.5" 7 "120", replace
+label values careHrsProvidedWeekCategory careHrsProvidedWeekCategoryLabel
+
+ologit careHrsProvidedWeekCategory ///
     careHrsProvidedWeekIhsL1 ///
     demMaleFlag ///
 	demAge20to24 demAge25to29 demAge30to34 demAge35to39 demAge40to44 demAge45to49 demAge50to54 ///
@@ -468,32 +482,17 @@ reg careHrsProvidedWeekIhs ///
 	eduHighestC4High eduHighestC4Medium eduHighestC4Low   ///	
 	yHhQuintilesMonthC5Q2 yHhQuintilesMonthC5Q3 yHhQuintilesMonthC5Q4 yHhQuintilesMonthC5Q5 ///	
 	demYear2020 demYear2021 $regions  $ethnicity /// 
-  if ${s3c_if_condition} [pweight=${weight}], vce(r)
+  if ${s3c_if_condition} [pweight=${weight}], vce(robust)
 
-process_regression, domain("socialcare") process("S3c") sheet("S3c") ///
+process_ologit, domain("socialcare") process("S3c") sheet("S3c") ///
 	title("Process S3c: Informal care hours provided, Singles") ///
 	gofrow(31) goflabel("S3c - Hours of informal care provided, Singles") ///
 	ifcond("${s3c_if_condition}")
-	
-* Calculate RMSE
-cap drop residuals squared_residuals  
-predict residuals, residuals
-gen squared_residuals = residuals^2
 
-preserve
-keep if ${s3c_if_condition}
-
-sum squared_residuals [w=${weight}], meanonly
-scalar rmse = sqrt(r(mean))
-di "RMSE for Informal care hours provided, Singles: " rmse
-
-putexcel set "$dir_results/reg_RMSE.xlsx", sheet("UK") modify
-putexcel A11 = ("S3c") B11 = (rmse)
-
-restore	
+	* RMSE is not defined for the ordered-logit outcome.
 		
 
-/****************** OLS care hours provided, Partnered  (S3d) *****************/
+/************* Ordered logit care hours provided, Partnered (S3d) *************/
 display "${s3d_if_condition}"
 /*
 reg HrsProvidedInformalIHS HrsProvidedInformalIHS_L1 Dgn ///
@@ -513,7 +512,7 @@ process_regression, domain("socialcare") process("S3d") sheet("S3d_orig") ///
 	ifcond("${s3d_if_condition}")
 	*/
 
-reg careHrsProvidedWeekIhs ///
+ologit careHrsProvidedWeekCategory ///
     careHrsProvidedWeekIhsL1 ///
 	demMaleFlag ///
 	demAge20to24 demAge25to29 demAge30to34 demAge35to39 demAge40to44 demAge45to49 demAge50to54 ///
@@ -524,29 +523,14 @@ reg careHrsProvidedWeekIhs ///
 	eduHighestC4High eduHighestC4Medium  ///	
 	yHhQuintilesMonthC5Q2 yHhQuintilesMonthC5Q3 yHhQuintilesMonthC5Q4 yHhQuintilesMonthC5Q5 ///	
 	demYear2020 demYear2021 $regions  $ethnicity /// 
-   if ${s3d_if_condition} [pweight=${weight}], vce(r)
+   if ${s3d_if_condition} [pweight=${weight}], vce(robust)
 
-process_regression, domain("socialcare") process("S3d") sheet("S3d") ///
+process_ologit, domain("socialcare") process("S3d") sheet("S3d") ///
 	title("Process S3d: Informal care hours provided, Partnered") ///
 	gofrow(35) goflabel("S3d - Hours of informal care provided, Partnered") ///
 	ifcond("${s3d_if_condition}")
 	
-	* Calculate RMSE
-cap drop residuals squared_residuals  
-predict residuals, residuals
-gen squared_residuals = residuals^2
-
-preserve
-keep if ${s3d_if_condition}
-
-sum squared_residuals [w=${weight}], meanonly
-scalar rmse = sqrt(r(mean))
-di "RMSE for Informal care hours provided, Partnered: " rmse
-
-putexcel set "$dir_results/reg_RMSE.xlsx", sheet("UK") modify
-putexcel A12 = ("S3d") B12 = (rmse)
-
-restore		
+	* RMSE is not defined for the ordered-logit outcome.
 	
 
 display "Social care analysis complete!"

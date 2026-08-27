@@ -1613,21 +1613,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             boolean provideCare = (statInnovations.getDoubleDraw(37) < probProvideAny);
             if (!Parameters.flagSuppressSocialCareCosts && provideCare) {
 
-                double score;
-                double rmse;
-                if (partner == null) {
-
-                    // S3c: informal care hours provided, singles (conditional on providing care).
-                    score = Parameters.getRegCareHoursProvS3c().getScore(this, Person.DoublesVariables.class);
-                    rmse = Parameters.getRMSEForRegression("S3c");
-                } else {
-
-                    // S3d: informal care hours provided, partnered (conditional on providing care).
-                    score = Parameters.getRegCareHoursProvS3d().getScore(this, Person.DoublesVariables.class);
-                    rmse = Parameters.getRMSEForRegression("S3d");
-                }
-                double gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(statInnovations.getDoubleDraw(14));
-                careHrsProvidedWeek = Math.min(Parameters.MAX_HOURS_WEEKLY_INFORMAL_CARE, Math.sinh(score + rmse * gauss));
+                // S3c/S3d: ordered-logit category of informal care hours, conditional on providing care.
+                RegressionName regression = (partner == null) ? RegressionName.SocialCareS3c : RegressionName.SocialCareS3d;
+                CareHoursProvidedCategory category = ManagerRegressions.getEvent(this, regression, statInnovations.getDoubleDraw(14));
+                careHrsProvidedWeek = category.getRepresentativeHours();
                 careProvidedFlag = Indicator.True;
             }
         }
