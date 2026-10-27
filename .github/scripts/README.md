@@ -20,8 +20,13 @@ build rather than an unsafe skip. This avoids the changed-file limits of workflo
 path filters and API listings.
 
 Builds use the triggering revision. Only deployment jobs share the Pages queue,
-so an unrelated push cannot displace a pending documentation build. Before
-publishing, a build is rejected if newer website/API changes exist on `develop`;
+so an unrelated push cannot displace a pending documentation build. The queue
+uses `queue: max` to retain pending deployments when builds finish out of order:
+an older build must not replace a newer deployment waiting to run. GitHub allows
+up to 100 pending jobs in this mode and cancels additional jobs when full; a
+manual run can retry publication if that limit is reached. See
+[GitHub's concurrency documentation](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency).
+Before publishing, a build is rejected if newer website/API changes exist on `develop`;
 unrelated commits do not prevent publication. A manual deployment from `develop`
 can retry a failed publication without requiring another content edit.
 
