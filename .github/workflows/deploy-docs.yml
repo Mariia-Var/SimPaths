@@ -67,6 +67,8 @@ jobs:
     concurrency:
       group: pages
       cancel-in-progress: false
+      # Preserve pending deployments even when builds finish out of order.
+      queue: max
     permissions:
       contents: read
       pages: write
